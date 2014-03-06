@@ -3,6 +3,7 @@ package net.folds.hexciv;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 
 import java.io.File;
 import java.io.IOException;
@@ -21,34 +22,27 @@ public class Porter {
     static void exportMap(WorldMap map, String filename) {
         MapBaggage baggage = new MapBaggage(map);
         ObjectMapper mapper = new ObjectMapper();
+        mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
         try {
+            // http://jackson-users.ning.com/forum/topics/
+            //          newbie-question-how-to-write-with-line-breaks
             mapper.writeValue(new File(filename), baggage);
         } catch (IOException e) {
             // System.out.println("Exception in Porter.exportMap(map, "+filename+")");
             e.printStackTrace();
         }
-/*
-        try {
-            String jsonString = mapper.writeValueAsString(baggage);
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-        }
-*/
     }
 
     static String exportMapToString(WorldMap map) {
         MapBaggage baggage = new MapBaggage(map);
         ObjectMapper mapper = new ObjectMapper();
+        mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
         try {
             return mapper.writeValueAsString(baggage);
         } catch (JsonProcessingException e) {
             e.printStackTrace();
         }
         return "";
-    }
-
-    static void importMap() {
-        importMap("getMap.json");
     }
 
     static WorldMap importMap(File file) {
