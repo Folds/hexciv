@@ -10,7 +10,7 @@ import java.util.Vector;
  * Created by jasper on Feb 10, 2014.
  */
 public class TerrainPalette extends Panel {
-    public TerrainPalette(GameScreen parent) {
+    public TerrainPalette(CellDescriber parent) {
         super(parent);
         this.parent = parent;
         TerrainPaletteMouseListener m = new TerrainPaletteMouseListener();

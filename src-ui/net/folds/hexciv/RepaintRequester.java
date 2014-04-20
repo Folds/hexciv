@@ -6,9 +6,9 @@ import java.util.Vector;
  * Created by jasper on Mar 03, 2014.
  */
 public class RepaintRequester implements EditListener {
-    GameScreen parent;
+    PaintableScreen parent;
 
-    protected RepaintRequester(GameScreen parent) {
+    protected RepaintRequester(PaintableScreen parent) {
         this.parent = parent;
     }
 

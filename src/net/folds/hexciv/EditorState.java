@@ -11,6 +11,7 @@ import java.util.Vector;
  * Created by jasper on Feb 16, 2014.
  */
 public class EditorState {
+    private static EditorState singleton;
     protected WorldMap map = new WorldMap();
     private TerrainTypes terrain;
     private boolean bonus;
@@ -24,7 +25,18 @@ public class EditorState {
 
     protected File file;
 
-    protected EditorState() {
+    public static synchronized EditorState get() {
+        if (singleton == null) {
+            singleton = new EditorState();
+        }
+        return singleton;
+    }
+
+    public Object clone() throws CloneNotSupportedException {
+        throw new CloneNotSupportedException();
+    }
+
+    private EditorState() {
         terrain = TerrainTypes.ocean;
         String filename = "civMap.txt";
         bonus = false;

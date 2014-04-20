@@ -13,7 +13,7 @@ public class TestEditorState {
     EditorState editorState;
 
     public TestEditorState() {
-        editorState = new EditorState();
+        editorState = EditorState.get();
     }
 
     @Test

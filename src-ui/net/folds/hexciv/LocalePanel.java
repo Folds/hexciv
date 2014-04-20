@@ -1,6 +1,5 @@
 package net.folds.hexciv;
 
-import javax.swing.*;
 import java.awt.*;
 
 /**
@@ -12,7 +11,7 @@ public class LocalePanel extends Panel {
     // private int cellId;
     private CellSnapshot cellSnapshot;
 
-    public LocalePanel(GameScreen parent) {
+    public LocalePanel(CellDescriber parent) {
         super(parent);
         int cellId = 0;
         cellSnapshot = parent.getCellSnapshot(cellId);

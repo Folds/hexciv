@@ -1,6 +1,5 @@
 package net.folds.hexciv;
 
-import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -12,7 +11,7 @@ import java.util.Vector;
  */
 public class FeaturePalette extends Panel {
 
-    public FeaturePalette(GameScreen parent) {
+    public FeaturePalette(CellDescriber parent) {
         super(parent);
         FeaturePaletteMouseListener m = new FeaturePaletteMouseListener();
         addMouseListener(m);

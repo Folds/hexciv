@@ -10,12 +10,12 @@ import java.awt.event.MouseMotionListener;
  * Created by Jasper on Sep 24, 2011.
  */
 public class MapPanel extends JPanel {
-    private GameScreen parent;
+    private MovableMap parent;
     private WorldMap map;
     private int recentHexWidthInPixels;
     private int recentHexSideInPixels;
 
-    public MapPanel(GameScreen parent) {
+    public MapPanel(MovableMap parent) {
         super();
         this.parent = parent;
         this.map = parent.getMap();

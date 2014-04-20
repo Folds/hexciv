@@ -1,6 +1,5 @@
 package net.folds.hexciv;
 
-import javax.swing.*;
 import java.awt.*;
 
 /**
@@ -12,7 +11,7 @@ public class MousePanel extends Panel {
     private int cellId;
     private Features feature;
 
-    public MousePanel(GameScreen parent) {
+    public MousePanel(CellDescriber parent) {
         super(parent);
         setPreferredSize(new Dimension(150, 188));
     }

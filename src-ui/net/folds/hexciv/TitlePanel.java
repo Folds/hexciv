@@ -4,21 +4,20 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionListener;
 
 /**
  * Created by jasper on Feb 10, 2014.
  */
-public class TitlePanel extends Panel {
+public class TitlePanel extends JPanel {
+    Revertible parent;
     JLabel  lblFile = new JLabel();
     JButton cmdOpen = new JButton("Open");
     JButton cmdSave = new JButton("Save");
     JButton cmdUndo = new JButton("↶");
     JButton cmdRedo = new JButton("↷");
 
-    public TitlePanel(GameScreen parent) {
-        super(parent);
+    public TitlePanel(Revertible parent) {
+        this.parent = parent;
         setPreferredSize(new Dimension(100, 120));
         lblFile.setText("getMap.txt");
         this.add(lblFile);

@@ -7,10 +7,10 @@ import java.awt.*;
  * Created by jasper on Feb 10, 2014.
  */
 public class Panel extends JPanel {
-    GameScreen parent;
+    CellDescriber parent;
     TextDisplayer textDisplayer = new TextDisplayer();
 
-    public Panel(GameScreen parent) {
+    public Panel(CellDescriber parent) {
         super();
         this.parent = parent;
     }

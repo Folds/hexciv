@@ -1,5 +1,6 @@
 package net.folds.hexciv;
 
+import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -9,6 +10,7 @@ import java.awt.event.MouseMotionListener;
  * Created by jasper on Feb 10, 2014.
  */
 public class CanvasPanel extends Panel {
+    private MovableMap movableMap;
     private WorldMap map;
     private int centerCellId = 0;
     private int hexWidthInPixels;
@@ -16,8 +18,9 @@ public class CanvasPanel extends Panel {
     private CanvasLoupe loupe;
     private CanvasDrafter drafter;
 
-    public CanvasPanel(GameScreen parent, WorldMap map, int hexSideInPixels) {
-        super(parent);
+    public CanvasPanel(MovableMap movableMap, CellDescriber cellDescriber, WorldMap map, int hexSideInPixels) {
+        super(cellDescriber);
+        this.movableMap = movableMap;
         setPreferredSize(new Dimension(500, 400));
         this.map = map;
         this.hexSideInPixels = hexSideInPixels;
@@ -74,14 +77,14 @@ public class CanvasPanel extends Panel {
             int x = e.getX();
             int y = e.getY();
             int cellId = loupe.getCellId(x, y, getWidth()/2, getHeight()/2, centerCellId);
-            parent.recenterCanvas(cellId);
+            movableMap.recenterCanvas(cellId);
         }
 
         private void updateCell(MouseEvent e) {
             int x = e.getX();
             int y = e.getY();
             int cellId = loupe.getCellId(x, y, getWidth() /2, getHeight()/2, centerCellId);
-            parent.updateCell(cellId);
+            movableMap.updateCell(cellId);
         }
 
         private void updateLocale(MouseEvent e) {
@@ -89,7 +92,7 @@ public class CanvasPanel extends Panel {
             int y = e.getY();
             int cellId = loupe.getCellId(x, y, getWidth() /2, getHeight()/2, centerCellId);
             CellSnapshot cellSnapshot = getCellSnapshot(cellId);
-            parent.updateLocale(cellSnapshot, x, y);
+            movableMap.updateLocale(cellSnapshot, x, y);
         }
 
         private void updatePalettes(MouseEvent e) {
@@ -97,7 +100,7 @@ public class CanvasPanel extends Panel {
             int y = e.getY();
             int cellId = loupe.getCellId(x, y, getWidth() /2, getHeight()/2, centerCellId);
             if ((cellId >= 0) && (cellId < loupe.map.countCells())) {
-                parent.updatePalettes(cellId);
+                movableMap.updatePalettes(cellId);
             }
         }
     }
