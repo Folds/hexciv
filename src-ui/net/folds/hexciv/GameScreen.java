@@ -16,14 +16,18 @@ public class GameScreen extends JFrame implements PaintableScreen, MovableMap, C
     MapPanel mapPane;
     LocalePanel localePane;
     MousePanel mousePane;
+    EditListener listener;
 
     public GameScreen() {
         super("HexCiv");
         editorState = EditorState.get();
+        listener = new RepaintRequester(this);
+        editorState.addListener(listener);
+
         setSize(750, 600);
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         mapPane        = new MapPanel(this);
-        mapPane.setPreferredSize(new Dimension(750, 376));
+        mapPane.setPreferredSize(new Dimension(665, 376));
         localePane     = new LocalePanel(this);
         mousePane      = new MousePanel(this);
 
@@ -50,8 +54,9 @@ public class GameScreen extends JFrame implements PaintableScreen, MovableMap, C
         getContentPane().add(multiSplitPane);
     }
 
-    public Vector<Boolean> getDesiredFeatures() {
-        return editorState.getFeatures();
+    public static void main(String[] arguments) {
+        GameScreen gs = new GameScreen();
+        gs.setVisible(true);
     }
 
     public void chooseTerrain(TerrainTypes terrain) {
@@ -61,14 +66,24 @@ public class GameScreen extends JFrame implements PaintableScreen, MovableMap, C
         }
     }
 
+    public int getAdjacentCellId(int cellId, Directions dir) {
+        return editorState.getAdjacentCellId(cellId, dir);
+    }
+
+    public CellSnapshot getCellSnapshot(int cellId) {
+        return editorState.getCellSnapshot(cellId);
+    }
+
+    public Vector<Boolean> getDesiredFeatures() {
+        return editorState.getFeatures();
+    }
+
     public TerrainTypes getDesiredTerrain() {
         return editorState.getTerrain();
     }
 
-    public void updateLocale(Features feature, int x, int y) {
-        mousePane.setFeature(feature);
-        mousePane.setX(x);
-        mousePane.setY(y);
+    public WorldMap getMap() {
+        return editorState.map;
     }
 
     public void toggleFeature(Features feature) {
@@ -78,30 +93,11 @@ public class GameScreen extends JFrame implements PaintableScreen, MovableMap, C
         }
     }
 
-    public CellSnapshot getCellSnapshot(int cellId) {
-        return editorState.getCellSnapshot(cellId);
-    }
-
-    public int getAdjacentCellId(int cellId, Directions dir) {
-        return editorState.getAdjacentCellId(cellId, dir);
-    }
-
-    public WorldMap getMap() {
-        return editorState.map;
-    }
-
     public void recenterCanvas(int cellId) {}
 
-    public void updateLocale(int cellId, int x, int y) {}
-
-    public static void main(String[] arguments) {
-        GameScreen gs = new GameScreen();
-        gs.setVisible(true);
+    public void repaintMaps() {
+        mapPane.repaint();
     }
-
-    public void repaintOopses() {}
-
-    public void repaintMaps() {}
 
     public void repaintMaps(Vector<Integer> cellIds) {
         if (cellIds.size() == 0) {
@@ -113,9 +109,28 @@ public class GameScreen extends JFrame implements PaintableScreen, MovableMap, C
         }
     }
 
-    public void repaintMaps(int cellId) {}
+    public void repaintMaps(int cellId) {
+        mapPane.repaint(cellId);
+    }
+
+
+    public void repaintOopses() {}
 
     public void repaintPalettes() {}
+
+    public void updateCell(int cellId) {
+        boolean updated = editorState.updateCell(cellId);
+        if (updated) {
+            repaintMaps(cellId);
+        }
+    }
+
+    public void updateLocale(int cellId, int x, int y) {
+        localePane.setCellId(cellId);
+        mousePane.setCellId(cellId);
+        mousePane.setX(x);
+        mousePane.setY(y);
+    }
 
     public void updateLocale(CellSnapshot cellSnapshot, int x, int y) {
         localePane.setCell(cellSnapshot);
@@ -124,17 +139,16 @@ public class GameScreen extends JFrame implements PaintableScreen, MovableMap, C
         mousePane.setY(y);
     }
 
+    public void updateLocale(Features feature, int x, int y) {
+        mousePane.setFeature(feature);
+        mousePane.setX(x);
+        mousePane.setY(y);
+    }
+
     public void updatePalettes(int cellId) {
         boolean updated = editorState.updatePalettes(cellId);
         if (updated) {
             repaintPalettes();
-        }
-    }
-
-    public void updateCell(int cellId) {
-        boolean updated = editorState.updateCell(cellId);
-        if (updated) {
-            repaintMaps(cellId);
         }
     }
 }

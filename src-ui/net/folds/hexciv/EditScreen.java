@@ -82,6 +82,84 @@ public class EditScreen extends JFrame implements PaintableScreen, MovableMap, C
         getContentPane().add(multiSplitPane);
     }
 
+    public static void main(String[] arguments) {
+        EditScreen gs = new EditScreen();
+        gs.setVisible(true);
+    }
+
+    public void chooseTerrain(TerrainTypes terrain) {
+        boolean updated = editorState.setTerrain(terrain);
+        if (updated) {
+            terrainPalette.repaint();
+            featurePalette.repaint();
+        }
+    }
+
+    public int getAdjacentCellId(int cellId, Directions dir) {
+        return editorState.getAdjacentCellId(cellId, dir);
+    }
+
+    public CellSnapshot getCellSnapshot(int cellId) {
+        return editorState.getCellSnapshot(cellId);
+    }
+
+    public Vector<Boolean> getDesiredFeatures() {
+        return editorState.getFeatures();
+    }
+
+    public TerrainTypes getDesiredTerrain() {
+        return editorState.getTerrain();
+    }
+
+    public WorldMap getMap() {
+        return editorState.map;
+    }
+
+    public void open() {
+        updateFileChooser();
+        int returnVal = fileChooser.showOpenDialog(this);
+        if (returnVal == JFileChooser.APPROVE_OPTION) {
+            File file = fileChooser.getSelectedFile();
+            setFile(file);
+            editorState.map = Porter.importMap(editorState.file);
+            canvasPane.setMap(editorState.map);
+            mapPane.setMap(editorState.map);
+            canvasPane.repaint();
+            mapPane.repaint();
+        }
+    }
+
+    public void recenterCanvas(int cellId) {
+        canvasPane.setCenterCell(cellId);
+    }
+
+    public void redo() {
+        try {
+            editorState.redo();
+        } catch (CannotRedoException ignored) {
+        }
+    }
+
+    public void repaintMaps() {
+        canvasPane.repaint();
+        mapPane.repaint();
+    }
+
+    public void repaintMaps(int cellId) {
+        canvasPane.repaint(cellId);
+        mapPane.repaint(cellId);
+    }
+
+    public void repaintMaps(Vector<Integer> cellIds) {
+        if (cellIds.size() == 0) {
+            repaintMaps();
+        } else {
+            for (int cellId : cellIds) {
+                repaintMaps(cellId);
+            }
+        }
+    }
+
     public void repaintOopses() {
         titlePane.enableUndo(editorState.canUndo());
         titlePane.enableRedo(editorState.canRedo());
@@ -89,13 +167,62 @@ public class EditScreen extends JFrame implements PaintableScreen, MovableMap, C
         titlePane.setRedoText(editorState.getRedoText());
     }
 
-    public static void main(String[] arguments) {
-        EditScreen gs = new EditScreen();
-        gs.setVisible(true);
+    public void repaintPalettes() {
+        terrainPalette.repaint();
+        featurePalette.repaint();
     }
 
-    public CellSnapshot getCellSnapshot(int cellId) {
-        return editorState.getCellSnapshot(cellId);
+    public void save() {
+        updateFileChooser();
+        int returnVal = fileChooser.showSaveDialog(this);
+        if (returnVal == JFileChooser.APPROVE_OPTION) {
+            File file = fileChooser.getSelectedFile();
+            setFile(file);
+            Porter.exportMap(editorState.map, editorState.file);
+        }
+    }
+
+    protected void setFile(File file) {
+        editorState.file = file;
+        titlePane.lblFile.setText(file.getName());
+    }
+
+    public void toggleFeature(Features feature) {
+        boolean updated = editorState.toggleFeature(feature);
+        if (updated) {
+            terrainPalette.repaint();
+            featurePalette.repaint();
+        }
+    }
+
+    public void undo() {
+        try {
+            editorState.undo();
+        } catch (CannotUndoException ignored) {
+        }
+    }
+
+    public void updateCell(int cellId) {
+        boolean updated = editorState.updateCell(cellId);
+        if (updated) {
+            repaintMaps(cellId);
+        }
+    }
+
+    protected void updateFileChooser() {
+        if (fileChooser == null) {
+            fileChooser = new JFileChooser();
+        }
+        fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        fileChooser.setMultiSelectionEnabled(false);
+        FileNameExtensionFilter filter = new FileNameExtensionFilter(
+                "HexCiv files (.civ,.txt,.json)", "civ", "txt", "json");
+        fileChooser.setFileFilter(filter);
+
+        // http://www.java-forums.org/awt-swing/13733-set-jfilechooser-default-details-view.html
+        AbstractButton button = SwingUtils.getDescendantOfType(AbstractButton.class,
+                fileChooser, "Icon", UIManager.getIcon("FileChooser.detailsViewIcon"));
+        button.doClick();
     }
 
     public void updateLocale(int cellId, int x, int y) {
@@ -118,137 +245,10 @@ public class EditScreen extends JFrame implements PaintableScreen, MovableMap, C
         mousePane.setY(y);
     }
 
-    public int getAdjacentCellId(int cellId, Directions dir) {
-        return editorState.getAdjacentCellId(cellId, dir);
-    }
-
-    public TerrainTypes getDesiredTerrain() {
-        return editorState.getTerrain();
-    }
-
-    public Vector<Boolean> getDesiredFeatures() {
-        return editorState.getFeatures();
-    }
-
-    public void chooseTerrain(TerrainTypes terrain) {
-        boolean updated = editorState.setTerrain(terrain);
-        if (updated) {
-            terrainPalette.repaint();
-            featurePalette.repaint();
-        }
-    }
-
-    public void toggleFeature(Features feature) {
-        boolean updated = editorState.toggleFeature(feature);
-        if (updated) {
-            terrainPalette.repaint();
-            featurePalette.repaint();
-        }
-    }
-
-    public void updateCell(int cellId) {
-        boolean updated = editorState.updateCell(cellId);
-        if (updated) {
-            repaintMaps(cellId);
-        }
-    }
-
-    public void repaintMaps() {
-        canvasPane.repaint();
-        mapPane.repaint();
-    }
-
-    public void repaintMaps(Vector<Integer> cellIds) {
-        if (cellIds.size() == 0) {
-            repaintMaps();
-        } else {
-            for (int cellId : cellIds) {
-                repaintMaps(cellId);
-            }
-        }
-    }
-
-    public void repaintMaps(int cellId) {
-        canvasPane.repaint(cellId);
-        mapPane.repaint(cellId);
-    }
-
     public void updatePalettes(int cellId) {
         boolean updated = editorState.updatePalettes(cellId);
         if (updated) {
             repaintPalettes();
         }
-    }
-
-    public void repaintPalettes() {
-        terrainPalette.repaint();
-        featurePalette.repaint();
-    }
-
-    public WorldMap getMap() {
-        return editorState.map;
-    }
-
-    public void recenterCanvas(int cellId) {
-        canvasPane.setCenterCell(cellId);
-    }
-
-    public void open() {
-        updateFileChooser();
-        int returnVal = fileChooser.showOpenDialog(this);
-        if (returnVal == JFileChooser.APPROVE_OPTION) {
-            File file = fileChooser.getSelectedFile();
-            setFile(file);
-            editorState.map = Porter.importMap(editorState.file);
-            canvasPane.setMap(editorState.map);
-            mapPane.setMap(editorState.map);
-            canvasPane.repaint();
-            mapPane.repaint();
-        }
-    }
-
-    public void save() {
-        updateFileChooser();
-        int returnVal = fileChooser.showSaveDialog(this);
-        if (returnVal == JFileChooser.APPROVE_OPTION) {
-            File file = fileChooser.getSelectedFile();
-            setFile(file);
-            Porter.exportMap(editorState.map, editorState.file);
-        }
-    }
-
-    public void undo() {
-        try {
-            editorState.undo();
-        } catch (CannotUndoException ignored) {
-        }
-    }
-
-    public void redo() {
-        try {
-            editorState.redo();
-        } catch (CannotRedoException ignored) {
-        }
-    }
-
-    protected void setFile(File file) {
-        editorState.file = file;
-        titlePane.lblFile.setText(file.getName());
-    }
-
-    protected void updateFileChooser() {
-        if (fileChooser == null) {
-            fileChooser = new JFileChooser();
-        }
-        fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        fileChooser.setMultiSelectionEnabled(false);
-        FileNameExtensionFilter filter = new FileNameExtensionFilter(
-                "HexCiv files (.civ,.txt,.json)", "civ", "txt", "json");
-        fileChooser.setFileFilter(filter);
-
-        // http://www.java-forums.org/awt-swing/13733-set-jfilechooser-default-details-view.html
-        AbstractButton button = SwingUtils.getDescendantOfType(AbstractButton.class,
-                fileChooser, "Icon", UIManager.getIcon("FileChooser.detailsViewIcon"));
-        button.doClick();
     }
 }
