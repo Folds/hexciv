@@ -9,20 +9,23 @@ import java.awt.event.MouseEvent;
  * Created by jasper on Feb 10, 2014.
  */
 public class MasterPanel extends JPanel {
-    Savable parent;
+    Playable parent;
     JLabel  lblFile = new JLabel();
     JButton cmdOpen = new JButton("Open");
     JButton cmdSave = new JButton("Save");
+    JButton cmdStart = new JButton("Start");
 
-    public MasterPanel(Savable parent) {
+    public MasterPanel(Playable parent) {
         this.parent = parent;
         setPreferredSize(new Dimension(100, 120));
         lblFile.setText("getMap.txt");
         this.add(lblFile);
         this.add(cmdOpen);
         this.add(cmdSave);
+        this.add(cmdStart);
         cmdOpen.addMouseListener(new OpenButtonListener());
         cmdSave.addMouseListener(new SaveButtonListener());
+        cmdStart.addMouseListener(new StartButtonListener());
     }
 
     public void paintComponent(Graphics comp) {
@@ -43,6 +46,12 @@ public class MasterPanel extends JPanel {
     private class SaveButtonListener extends MouseAdapter {
         public void mouseReleased(MouseEvent e) {
             parent.save();
+        }
+    }
+
+    private class StartButtonListener extends MouseAdapter {
+        public void mouseReleased(MouseEvent e) {
+            parent.startGame();
         }
     }
 }

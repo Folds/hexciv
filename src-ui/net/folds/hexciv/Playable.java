@@ -3,7 +3,8 @@ package net.folds.hexciv;
 /**
  * Created by jasper on Apr 19, 2014.
  */
-public interface Savable {
+public interface Playable {
     void open();
     void save();
+    void startGame();
 }

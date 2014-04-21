@@ -7,13 +7,16 @@ import org.jdesktop.swingx.MultiSplitLayout;
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.Vector;
 
 /**
  * Created by jasper on Apr 18, 2014.
  */
-public class GameScreen extends JFrame implements PaintableScreen, MovableMap, CellDescriber, Savable {
+public class GameScreen extends JFrame
+        implements PaintableScreen, MovableMap, CellDescriber, Playable, GameListener, ActionListener {
     EditorState editorState;
     JXMultiSplitPane multiSplitPane;
     MapPanel mapPane;
@@ -23,12 +26,15 @@ public class GameScreen extends JFrame implements PaintableScreen, MovableMap, C
     MousePanel mousePane;
     JFileChooser fileChooser;
     EditListener listener;
+    GameState gameState;
+    Timer timer;
 
     public GameScreen() {
         super("HexCiv");
         editorState = EditorState.get();
         listener = new RepaintRequester(this);
         editorState.addListener(listener);
+        gameState = new GameState(this, 1);
 
         setSize(750, 600);
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
@@ -38,6 +44,7 @@ public class GameScreen extends JFrame implements PaintableScreen, MovableMap, C
         logPane        = new LogPanel();
         localePane     = new LocalePanel(this);
         mousePane      = new MousePanel(this);
+        timer = new Timer(50, this);
 
         // The SwingX JXMultiSplitNode allows laying out multiple
         // components in a panel, without creating nested components.
@@ -58,7 +65,7 @@ public class GameScreen extends JFrame implements PaintableScreen, MovableMap, C
         multiSplitPane = new JXMultiSplitPane();
         multiSplitPane.setDividerSize(3);
         multiSplitPane.getMultiSplitLayout().setModel(modelRoot);
-        multiSplitPane.add(masterPane,     "master");
+        multiSplitPane.add(masterPane, "master");
         multiSplitPane.add(logPane,        "log");
         multiSplitPane.add(mapPane,        "world.getMap");
         multiSplitPane.add(localePane,     "locale");
@@ -69,6 +76,38 @@ public class GameScreen extends JFrame implements PaintableScreen, MovableMap, C
     public static void main(String[] arguments) {
         GameScreen gs = new GameScreen();
         gs.setVisible(true);
+    }
+
+    public void actionPerformed(ActionEvent event) {
+        if (gameState.isGameOver()) {
+            timer.stop();
+            celebrateEnd();
+            return;
+        }
+        if (!gameState.isTurnInProgress) {
+            gameState.playTurn();
+        }
+    }
+
+    public void celebrateEnd() {
+        logPane.log("Game over.  Play again?");
+    }
+
+    public void celebrateYear(int year) {
+        logPane.log("Reached year " + formatYear(year));
+    }
+
+    protected void tryToSleep(long milliseconds) {
+        try {
+            Thread.sleep(milliseconds);
+        } catch (InterruptedException ignored) {
+        }
+    }
+
+    protected String formatYear(int year) {
+        if (year == 0) { return "1 A.D."; }
+        if (year > 0)  { return year + " A.D."; }
+        return -year + " B.C.";
     }
 
     public void chooseTerrain(TerrainTypes terrain) {
@@ -111,13 +150,6 @@ public class GameScreen extends JFrame implements PaintableScreen, MovableMap, C
         }
     }
 
-    public void toggleFeature(Features feature) {
-        boolean updated = editorState.toggleFeature(feature);
-        if (updated) {
-            repaintPalettes();
-        }
-    }
-
     public void recenterCanvas(int cellId) {}
 
     public void repaintMaps() {
@@ -153,9 +185,21 @@ public class GameScreen extends JFrame implements PaintableScreen, MovableMap, C
         }
     }
 
+    public void startGame() {
+        gameState.initialize();
+        timer.start();
+    }
+
     protected void setFile(File file) {
         editorState.file = file;
         masterPane.lblFile.setText(file.getName());
+    }
+
+    public void toggleFeature(Features feature) {
+        boolean updated = editorState.toggleFeature(feature);
+        if (updated) {
+            repaintPalettes();
+        }
     }
 
     public void updateCell(int cellId) {

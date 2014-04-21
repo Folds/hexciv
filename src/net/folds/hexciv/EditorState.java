@@ -52,24 +52,16 @@ public class EditorState {
         undoStack.addListener(listener);
     }
 
-    protected void undo() throws CannotUndoException {
-        undoStack.undo();
-    }
-
-    protected void resetUndoStack() {
-        undoStack.discardAllEdits();
-    }
-
-    protected void redo() throws CannotUndoException {
-        undoStack.redo();
+    protected boolean canRedo() {
+        return undoStack.canRedo();
     }
 
     protected boolean canUndo() {
         return undoStack.canUndo();
     }
 
-    protected boolean canRedo() {
-        return undoStack.canRedo();
+    protected int getAdjacentCellId(int cellId, Directions dir) {
+        return map.getAdjacentCellId(cellId, dir);
     }
 
     protected int getIndexOfNextAdd(UndoManager undoManager) {
@@ -115,16 +107,51 @@ public class EditorState {
         return map.getCellSnapshot(cellId);
     }
 
-    protected int getAdjacentCellId(int cellId, Directions dir) {
-        return map.getAdjacentCellId(cellId, dir);
+    protected Vector<Boolean> getFeatures() {
+        Vector<Boolean> result = new Vector<>(6);
+        result.add(bonus);
+        result.add(road);
+        result.add(railroad);
+        result.add(irrigation);
+        result.add(village);
+        result.add(city);
+        return result;
     }
 
-    // returns whether the request changed the state.
-    protected boolean updateCell(int cellId) {
-        markUndoStack();
-        boolean terrainUpdated = setCellTerrain(cellId, terrain);
-        boolean featuresUpdated = setCellFeatures(cellId, getFeatures());
-        return (terrainUpdated || featuresUpdated);
+    protected String getRedoText() {
+        return undoStack.getRedoText();
+    }
+
+    protected TerrainTypes getTerrain() {
+        return terrain;
+    }
+
+    protected String getUndoText() {
+        return undoStack.getUndoText();
+    }
+
+    protected boolean justSetCellFeatures(int cellId, Vector<Boolean> features) {
+        return map.setFeatures(cellId, features);
+    }
+
+    // The "justSet" methods are meant to be called by the undo manager.
+    // The "justSet" methods do not create new undo Edits.
+    protected boolean justSetCellTerrain(int cellId, TerrainTypes terrain) {
+        return map.setTerrain(cellId, terrain);
+    }
+
+    protected void markUndoStack() {
+        SignificantMarker edit = new SignificantMarker();
+        undoStack.postEdit(edit);
+//        undoSupport.postEdit(edit);
+    }
+
+    protected void redo() throws CannotUndoException {
+        undoStack.redo();
+    }
+
+    protected void resetUndoStack() {
+        undoStack.discardAllEdits();
     }
 
     protected boolean setCellTerrain(int cellId, TerrainTypes terrain) {
@@ -138,12 +165,6 @@ public class EditorState {
         return result;
     }
 
-    protected void markUndoStack() {
-        SignificantMarker edit = new SignificantMarker();
-        undoStack.postEdit(edit);
-//        undoSupport.postEdit(edit);
-    }
-
     protected boolean setCellFeatures(int cellId, Vector<Boolean> features) {
         Vector<Boolean> oldFeatures = map.getFeatures(cellId);
         boolean result = justSetCellFeatures(cellId, features);
@@ -155,35 +176,64 @@ public class EditorState {
         return justSetCellFeatures(cellId, features);
     }
 
-    // The "justSet" methods are meant to be called by the undo manager.
-    // The "justSet" methods do not create new undo Edits.
-    protected boolean justSetCellTerrain(int cellId, TerrainTypes terrain) {
-        return map.setTerrain(cellId, terrain);
+    // returns whether the request changed the state.
+    protected boolean setBonus(boolean bonus) {
+        if (this.bonus != bonus) {
+            this.bonus = bonus;
+            return true;
+        }
+        return false;
     }
 
-    protected boolean justSetCellFeatures(int cellId, Vector<Boolean> features) {
-        return map.setFeatures(cellId, features);
+    // returns whether the request changed the state.
+    protected boolean setCity(boolean city) {
+        if (this.city != city) {
+            this.city = city;
+            return true;
+        }
+        return false;
     }
 
-    protected TerrainTypes getTerrain() {
-        return terrain;
+    // returns whether the request changed the state.
+    protected boolean setIrrigation(boolean irrigation) {
+        if (this.irrigation != irrigation) {
+            this.irrigation = irrigation;
+            return true;
+        }
+        return false;
     }
 
-    protected Vector<Boolean> getFeatures() {
-        Vector<Boolean> result = new Vector<>(6);
-        result.add(bonus);
-        result.add(road);
-        result.add(railroad);
-        result.add(irrigation);
-        result.add(village);
-        result.add(city);
-        return result;
+    // returns whether the request changed the state.
+    protected boolean setRailroad(boolean railroad) {
+        if (this.railroad != railroad) {
+            this.railroad = railroad;
+            return true;
+        }
+        return false;
+    }
+
+    // returns whether the request changed the state.
+    protected boolean setRoad(boolean road) {
+        if (this.road != road) {
+            this.road = road;
+            return true;
+        }
+        return false;
     }
 
     // returns whether the request changed the state.
     protected boolean setTerrain(TerrainTypes terrain) {
         if (this.terrain != terrain) {
             this.terrain = terrain;
+            return true;
+        }
+        return false;
+    }
+
+    // returns whether the request changed the state.
+    protected boolean setVillage(boolean village) {
+        if (this.village != village) {
+            this.village = village;
             return true;
         }
         return false;
@@ -199,6 +249,18 @@ public class EditorState {
             case 5: return setCity(!city);
             case 0: default: return setBonus(!bonus);
         }
+    }
+
+    protected void undo() throws CannotUndoException {
+        undoStack.undo();
+    }
+
+    // returns whether the request changed the state.
+    protected boolean updateCell(int cellId) {
+        markUndoStack();
+        boolean terrainUpdated = setCellTerrain(cellId, terrain);
+        boolean featuresUpdated = setCellFeatures(cellId, getFeatures());
+        return (terrainUpdated || featuresUpdated);
     }
 
     // returns whether the request changed the state.
@@ -217,67 +279,5 @@ public class EditorState {
         setVillage(Features.village.isChosen(features));
         setCity(Features.city.isChosen(features));
         return true;
-    }
-
-    // returns whether the request changed the state.
-    protected boolean setBonus(boolean bonus) {
-        if (this.bonus != bonus) {
-            this.bonus = bonus;
-            return true;
-        }
-        return false;
-    }
-
-    // returns whether the request changed the state.
-    protected boolean setRoad(boolean road) {
-        if (this.road != road) {
-            this.road = road;
-            return true;
-        }
-        return false;
-    }
-
-    // returns whether the request changed the state.
-    protected boolean setRailroad(boolean railroad) {
-        if (this.railroad != railroad) {
-            this.railroad = railroad;
-            return true;
-        }
-        return false;
-    }
-
-    // returns whether the request changed the state.
-    protected boolean setIrrigation(boolean irrigation) {
-        if (this.irrigation != irrigation) {
-            this.irrigation = irrigation;
-            return true;
-        }
-        return false;
-    }
-
-    // returns whether the request changed the state.
-    protected boolean setVillage(boolean village) {
-        if (this.village != village) {
-            this.village = village;
-            return true;
-        }
-        return false;
-    }
-
-    // returns whether the request changed the state.
-    protected boolean setCity(boolean city) {
-        if (this.city != city) {
-            this.city = city;
-            return true;
-        }
-        return false;
-    }
-
-    protected String getUndoText() {
-        return undoStack.getUndoText();
-    }
-
-    protected String getRedoText() {
-        return undoStack.getRedoText();
     }
 }
