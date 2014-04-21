@@ -1,21 +1,27 @@
 package net.folds.hexciv;
 
+import darrylbu.util.SwingUtils;
 import org.jdesktop.swingx.JXMultiSplitPane;
 import org.jdesktop.swingx.MultiSplitLayout;
 
 import javax.swing.*;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
+import java.io.File;
 import java.util.Vector;
 
 /**
  * Created by jasper on Apr 18, 2014.
  */
-public class GameScreen extends JFrame implements PaintableScreen, MovableMap, CellDescriber {
+public class GameScreen extends JFrame implements PaintableScreen, MovableMap, CellDescriber, Savable {
     EditorState editorState;
     JXMultiSplitPane multiSplitPane;
     MapPanel mapPane;
+    MasterPanel masterPane;
+    LogPanel logPane;
     LocalePanel localePane;
     MousePanel mousePane;
+    JFileChooser fileChooser;
     EditListener listener;
 
     public GameScreen() {
@@ -28,6 +34,8 @@ public class GameScreen extends JFrame implements PaintableScreen, MovableMap, C
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         mapPane        = new MapPanel(this);
         mapPane.setPreferredSize(new Dimension(665, 376));
+        masterPane     = new MasterPanel(this);
+        logPane        = new LogPanel();
         localePane     = new LocalePanel(this);
         mousePane      = new MousePanel(this);
 
@@ -40,14 +48,18 @@ public class GameScreen extends JFrame implements PaintableScreen, MovableMap, C
         String layoutDef = "(COLUMN " +
                 "(LEAF name=world.getMap weight=0.0) " +
                 "(ROW weight=1.0 " +
-                "(LEAF name=locale weight=0.5) " +
-                "(LEAF name=mouse  weight=0.5) " +
+                "(LEAF name=master weight=0.0) " +
+                "(LEAF name=log    weight=1.0) " +
+                "(LEAF name=locale weight=0.0) " +
+                "(LEAF name=mouse  weight=0.0) " +
                 ")" +
                 ")";
         MultiSplitLayout.Node modelRoot = MultiSplitLayout.parseModel(layoutDef);
         multiSplitPane = new JXMultiSplitPane();
         multiSplitPane.setDividerSize(3);
         multiSplitPane.getMultiSplitLayout().setModel(modelRoot);
+        multiSplitPane.add(masterPane,     "master");
+        multiSplitPane.add(logPane,        "log");
         multiSplitPane.add(mapPane,        "world.getMap");
         multiSplitPane.add(localePane,     "locale");
         multiSplitPane.add(mousePane,      "mouse");
@@ -86,6 +98,18 @@ public class GameScreen extends JFrame implements PaintableScreen, MovableMap, C
         return editorState.map;
     }
 
+    public void open() {
+        updateFileChooser();
+        int returnVal = fileChooser.showOpenDialog(this);
+        if (returnVal == JFileChooser.APPROVE_OPTION) {
+            File file = fileChooser.getSelectedFile();
+            setFile(file);
+            editorState.map = Porter.importMap(editorState.file);
+            mapPane.setMap(editorState.map);
+            mapPane.repaint();
+        }
+    }
+
     public void toggleFeature(Features feature) {
         boolean updated = editorState.toggleFeature(feature);
         if (updated) {
@@ -118,11 +142,42 @@ public class GameScreen extends JFrame implements PaintableScreen, MovableMap, C
 
     public void repaintPalettes() {}
 
+    public void save() {
+        updateFileChooser();
+        int returnVal = fileChooser.showSaveDialog(this);
+        if (returnVal == JFileChooser.APPROVE_OPTION) {
+            File file = fileChooser.getSelectedFile();
+            setFile(file);
+            Porter.exportMap(editorState.map, editorState.file);
+        }
+    }
+
+    protected void setFile(File file) {
+        editorState.file = file;
+        masterPane.lblFile.setText(file.getName());
+    }
+
     public void updateCell(int cellId) {
         boolean updated = editorState.updateCell(cellId);
         if (updated) {
             repaintMaps(cellId);
         }
+    }
+
+    protected void updateFileChooser() {
+        if (fileChooser == null) {
+            fileChooser = new JFileChooser();
+        }
+        fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        fileChooser.setMultiSelectionEnabled(false);
+        FileNameExtensionFilter filter = new FileNameExtensionFilter(
+                "HexCiv files (.civ,.txt,.json)", "civ", "txt", "json");
+        fileChooser.setFileFilter(filter);
+
+        // http://www.java-forums.org/awt-swing/13733-set-jfilechooser-default-details-view.html
+        AbstractButton button = SwingUtils.getDescendantOfType(AbstractButton.class,
+                fileChooser, "Icon", UIManager.getIcon("FileChooser.detailsViewIcon"));
+        button.doClick();
     }
 
     public void updateLocale(int cellId, int x, int y) {
