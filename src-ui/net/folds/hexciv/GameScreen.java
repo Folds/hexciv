@@ -107,6 +107,7 @@ public class GameScreen extends JFrame implements PaintableScreen, MovableMap, C
             editorState.map = Porter.importMap(editorState.file);
             mapPane.setMap(editorState.map);
             mapPane.repaint();
+            logPane.log("Opened '" + editorState.file.getName() + "'");
         }
     }
 
