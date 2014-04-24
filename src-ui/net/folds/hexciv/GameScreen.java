@@ -31,10 +31,11 @@ public class GameScreen extends JFrame
 
     public GameScreen() {
         super("HexCiv");
-        editorState = EditorState.get();
+        WorldMap map =  WorldMap.getEarthMap();
+        editorState = EditorState.get(map);
         listener = new RepaintRequester(this);
         editorState.addListener(listener);
-        gameState = new GameState(this, 1);
+        gameState = new GameState(this, map, 1);
 
         setSize(750, 600);
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);

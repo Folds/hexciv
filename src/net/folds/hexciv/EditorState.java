@@ -12,7 +12,7 @@ import java.util.Vector;
  */
 public class EditorState {
     private static EditorState singleton;
-    protected WorldMap map = new WorldMap();
+    protected WorldMap map;
     private TerrainTypes terrain;
     private boolean bonus;
     private boolean road;
@@ -27,7 +27,15 @@ public class EditorState {
 
     public static synchronized EditorState get() {
         if (singleton == null) {
-            singleton = new EditorState();
+            WorldMap map = new WorldMap();
+            singleton = new EditorState(map);
+        }
+        return singleton;
+    }
+
+    public static synchronized EditorState get(WorldMap map) {
+        if (singleton == null) {
+            singleton = new EditorState(map);
         }
         return singleton;
     }
@@ -36,7 +44,8 @@ public class EditorState {
         throw new CloneNotSupportedException();
     }
 
-    private EditorState() {
+    private EditorState(WorldMap map) {
+        this.map = map;
         terrain = TerrainTypes.ocean;
         String filename = "civMap.txt";
         bonus = false;
