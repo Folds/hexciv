@@ -47,5 +47,12 @@ public class TestGameStart {
         Vector<Integer> locations = gameState.getDistinctLocations();
         int numLocations = locations.size();
         Assert.assertEquals(numLocations, numCivs);
+        Civilization civ = gameState.getCiv(0);
+        int cellId = civ.getCity(0).getUnit(0).getLocation();
+        int neighborId = civ.chooseFirstFarm(map, cellId);
+        int numFood = civ.countFood(map, cellId) + civ.countFood(map, neighborId);
+        Assert.assertTrue(numFood >= 3);
+        int numOre = civ.countOre(map, cellId) + civ.countOre(map, neighborId);
+        Assert.assertTrue(numOre >= 1);
     }
 }

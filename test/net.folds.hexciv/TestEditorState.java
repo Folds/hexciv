@@ -21,7 +21,7 @@ public class TestEditorState {
         editorState.resetUndoStack();
         TerrainTypes oldSouthPoleTerrain = editorState.map.getTerrain(0);
         Vector<Boolean> oldSouthPoleFeatures = editorState.map.getFeatures(0);
-        Vector<Boolean> desiredSouthPoleFeatures = getFeatures(true, true, true, true, true, true);
+        Vector<Boolean> desiredSouthPoleFeatures = getFeatures(true, true, true, true, true, true, true);
         int numFeatures = desiredSouthPoleFeatures.size();
         editorState.markUndoStack();
         editorState.setCellFeatures(0, desiredSouthPoleFeatures);
@@ -52,12 +52,14 @@ public class TestEditorState {
     }
 
     Vector<Boolean> getFeatures(boolean bonus, boolean road, boolean railroad,
-                                boolean irrigation, boolean village, boolean city) {
+                                boolean irrigation, boolean mine,
+                                boolean village, boolean city) {
         Vector<Boolean> result = new Vector<>(6);
         result.add(bonus);
         result.add(road);
         result.add(railroad);
         result.add(irrigation);
+        result.add(mine);
         result.add(village);
         result.add(city);
         return result;

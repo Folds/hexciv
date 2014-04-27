@@ -20,6 +20,7 @@ public class TestPorter {
                           "  \"roadString\" : \"\",\n"+
                           "  \"railroadString\" : \"\",\n"+
                           "  \"irrigationString\" : \"\",\n"+
+                          "  \"mineString\" : \"\",\n"+
                           "  \"villageString\" : \"\",\n"+
                           "  \"cityString\" : \"\"\n"+
                           "}";
@@ -50,6 +51,7 @@ public class TestPorter {
                           "  \"roadString\" : \"\",\n"+
                           "  \"railroadString\" : \"\",\n"+
                           "  \"irrigationString\" : \"\",\n"+
+                          "  \"mineString\" : \"\",\n"+
                           "  \"villageString\" : \"\",\n"+
                           "  \"cityString\" : \"\"\n"+
                           "}";
@@ -77,6 +79,7 @@ public class TestPorter {
                           "  \"roadString\" : \"\",\n"+
                           "  \"railroadString\" : \"\",\n"+
                           "  \"irrigationString\" : \"\",\n"+
+                          "  \"mineString\" : \"\",\n"+
                           "  \"villageString\" : \"\",\n"+
                           "  \"cityString\" : \"\"\n"+
                           "}";

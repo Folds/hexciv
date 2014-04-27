@@ -1,5 +1,6 @@
 package net.folds.hexciv;
 
+import java.util.Random;
 import java.util.Vector;
 
 /**
@@ -467,6 +468,37 @@ public class IcosahedralMesh {
     int getDistanceInCells(int cellId1, int cellId2) {
         Vector<Integer> path = proposePath(cellId1, cellId2);
         return path.size() - 1;
+    }
+
+    protected Vector<Integer> getRegion(int cellId, int radius) {
+        if (radius < 0) {
+            return null;
+        }
+        int numCells = radius * (radius + 1) / 2;
+        if (numCells >= countCells()) {
+            numCells = countCells();
+        }
+        Vector<Integer> results = new Vector<>(numCells);
+        results.add(cellId);
+        Vector<Integer> increment = new Vector<>(6 * radius);
+        increment.add(cellId);
+        Vector<Integer> prevIncrement = new Vector<>(6 * radius);
+        for (int i = 0; i < radius; i++) {
+            prevIncrement.clear();
+            prevIncrement.addAll(increment);
+            increment.clear();
+
+            for (int edgeCell : prevIncrement) {
+                Vector<Integer> possibilities = getNeighbors(edgeCell);
+                for (Integer possibility : possibilities) {
+                    if ((!results.contains(possibility)) && (!increment.contains(possibility))) {
+                        increment.add(possibility);
+                    }
+                }
+            }
+            results.addAll(increment);
+        }
+        return results;
     }
 
     // Assumes 0 <= fromCellId <= countCells() - 1
@@ -1060,4 +1092,8 @@ public class IcosahedralMesh {
         return result;
     }
 
+    protected int randomCell() {
+        Random random = new Random();
+        return random.nextInt(countCells());
+    }
 }

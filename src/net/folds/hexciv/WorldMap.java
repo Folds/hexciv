@@ -2,6 +2,7 @@ package net.folds.hexciv;
 
 import java.awt.*;
 import java.util.BitSet;
+import java.util.Random;
 import java.util.Vector;
 
 /**
@@ -15,6 +16,7 @@ public class WorldMap {
     private BitSet roads;
     private BitSet railroads;
     private BitSet irrigation;
+    private BitSet mines;
     private BitSet villages;
     private BitSet cities;
 
@@ -31,6 +33,7 @@ public class WorldMap {
         roads = new BitSet(numCells);
         railroads = new BitSet(numCells);
         irrigation = new BitSet(numCells);
+        mines = new BitSet(numCells);
         villages = new BitSet(numCells);
         cities = new BitSet(numCells);
         for(int i = 0; i < numCells; i++) {
@@ -53,6 +56,7 @@ public class WorldMap {
         roads = Porter.stringToBits(baggage.roadString, numCells);
         railroads = Porter.stringToBits(baggage.railroadString, numCells);
         irrigation = Porter.stringToBits(baggage.irrigationString, numCells);
+        mines = Porter.stringToBits(baggage.mineString, numCells);
         villages = Porter.stringToBits(baggage.villageString, numCells);
         cities = Porter.stringToBits(baggage.cityString, numCells);
     }
@@ -82,6 +86,10 @@ public class WorldMap {
 
     String stringifyIrrigation() {
         return BitSetPorter.bitsToString(irrigation);
+    }
+
+    String stringifyMines() {
+        return BitSetPorter.bitsToString(mines);
     }
 
     String stringifyVillages() {
@@ -226,6 +234,7 @@ public class WorldMap {
         result.add(roads.get(cellId));
         result.add(railroads.get(cellId));
         result.add(irrigation.get(cellId));
+        result.add(mines.get(cellId));
         result.add(villages.get(cellId));
         result.add(cities.get(cellId));
         return result;
@@ -236,11 +245,13 @@ public class WorldMap {
             return false;
         }
         bonuses.set(   cellId, features.get(0));
-        roads.set(     cellId, features.get(1));
-        railroads.set( cellId, features.get(2));
+        roads.set(cellId, features.get(1));
+        railroads.set(cellId, features.get(2));
         irrigation.set(cellId, features.get(3));
-        villages.set(  cellId, features.get(4));
-        cities.set(cellId, features.get(5));         return true;        
+        mines.set(cellId, features.get(4));
+        villages.set(cellId, features.get(5));
+        cities.set(cellId, features.get(6));
+        return true;
     }
 
     double getAreaInSquareKilometers(int cellId) {
@@ -273,6 +284,84 @@ public class WorldMap {
 
     double getPolarCircumferenceInKilometers() {
         return planet.polarCircumferenceInKilometers();
+    }
+
+    int getDistanceInCells(int cellId1, int cellId2) {
+        return mesh.getDistanceInCells(cellId1, cellId2);
+    }
+
+    Vector<Integer> getNeighbors(int cellId) {
+        return mesh.getNeighbors(cellId);
+    }
+
+    boolean hasBonus(int cellId) {
+        return bonuses.get(cellId);
+    }
+
+    boolean hasIrrigation(int cellId) {
+        return irrigation.get(cellId);
+    }
+
+    boolean hasMine(int cellId) {
+        return mines.get(cellId);
+    }
+
+    boolean hasRoad(int cellId) {
+        return roads.get(cellId);
+    }
+
+    boolean hasRailroad(int cellId) {
+        return railroads.get(cellId);
+    }
+
+    protected void setBonus(int cellId) {
+        if ((cellId >= 0) && (cellId < countCells())) {
+            bonuses.set(cellId);
+        }
+    }
+
+    protected int randomCell() {
+        return mesh.randomCell();
+    }
+
+    protected Vector<Integer> getRegion(int cellId, int radius) {
+        return mesh.getRegion(cellId, radius);
+    }
+
+    protected Vector<Integer> getContinent(int cellId) {
+        if (!isLand(cellId)) {
+            return null;
+        }
+        Vector<Integer> increment = new Vector<Integer>(6);
+        increment.add(cellId);
+        Vector<Integer> results = new Vector<Integer>(7);
+        results.addAll(increment);
+        while(increment.size() > 0) {
+            Vector<Integer> nextIncrement = new Vector<Integer>(6);
+            for (int edgeCellId : increment) {
+                Vector<Integer> possibilities = getEarthMap().getNeighbors(edgeCellId);
+                for (int possibility : possibilities) {
+                    if (isLand(possibility)) {
+                        if(   (!increment.contains(possibility))
+                           && (!results.contains(possibility))
+                           && (!nextIncrement.contains(possibility))
+                          ) {
+                            nextIncrement.add(possibility);
+                        }
+                    }
+                }
+            }
+            increment.clear();
+            increment.addAll(nextIncrement);
+            nextIncrement.clear();
+            results.addAll(increment);
+        }
+        return results;
+    }
+
+    protected boolean isLand(int cellId) {
+        TerrainTypes terrain = getTerrain(cellId);
+        return terrain.isLand();
     }
 
     protected static String earthString() {
@@ -312,6 +401,7 @@ public class WorldMap {
             "  \"roadString\" : \"\",\n" +
             "  \"railroadString\" : \"\",\n" +
             "  \"irrigationString\" : \"\",\n" +
+            "  \"mineString\" : \"\",\n" +
             "  \"villageString\" : \"\",\n" +
             "  \"cityString\" : \"\"\n" +
                "}";

@@ -31,6 +31,12 @@ public class GameState {
     protected void initialize() {
         turn = 0;
         isTurnInProgress = false;
+        for (int cellId = 0; cellId < map.countCells(); cellId++) {
+            TerrainTypes terrain = map.getTerrain(cellId);
+            if (randomBonus(terrain)) {
+                map.setBonus(cellId);
+            }
+        }
         int numCivilizations = civs.size();
         Vector<Integer> foreignLocations = new Vector<>(numCivilizations);
         for (Civilization civ : civs) {
@@ -39,6 +45,22 @@ public class GameState {
             Collections.sort(foreignLocations);
             Util.deduplicate(foreignLocations);
         }
+    }
+
+    protected boolean randomBonus(TerrainTypes terrain) {
+        if (terrain == TerrainTypes.grass) {
+            return false;
+        }
+        double value = Math.random();
+        if (value < 0.0625) {
+            return true;
+        }
+        if (terrain == TerrainTypes.sea) {
+            if (value < 0.25) {
+                return true;
+            }
+        }
+        return false;
     }
 
     protected int countCities() {

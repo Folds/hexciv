@@ -39,4 +39,12 @@ public class GovernmentType {
         }
         return result;
     }
+
+    protected int bonus() {
+        if (name.equalsIgnoreCase("Anarchy"))   { return -1; }
+        if (name.equalsIgnoreCase("Despotism")) { return -1; }
+        if (name.equalsIgnoreCase("Republic"))  { return  1; }
+        if (name.equalsIgnoreCase("Democracy")) { return  1; }
+        return 0;
+    }
 }
