@@ -91,16 +91,20 @@ public class GameScreen extends JFrame
     }
 
     public void celebrateEnd() {
-        logPane.log("Game over.  Play again?");
-    }
-
-    public void celebrateYear(int year) {
-        logPane.log("Reached year " + formatYear(year));
+        logPane.log("Game over.");
+//        for (Civilization civ : gameState.civs) {
+//            logPane.log(civ.getBrag());
+//        }
+        logPane.log("Play again?");
     }
 
     public void celebrateNewCity(Unit unit, String cityName) {
         int year = gameState.getYear();
         logPane.log(cityName + " est. " + formatYear(year));
+    }
+
+    public void celebrateYear(int year) {
+        logPane.log("Reached year " + formatYear(year));
     }
 
     public void bemoanDisorder(City city) {
@@ -123,10 +127,10 @@ public class GameScreen extends JFrame
         logPane.log(city.name + " forced to sell " + improvementType.name);
     }
 
-    protected void tryToSleep(long milliseconds) {
-        try {
-            Thread.sleep(milliseconds);
-        } catch (InterruptedException ignored) {
+    public void chooseTerrain(TerrainTypes terrain) {
+        boolean updated = editorState.setTerrain(terrain);
+        if (updated) {
+            repaintPalettes();
         }
     }
 
@@ -134,13 +138,6 @@ public class GameScreen extends JFrame
         if (year == 0) { return "1 A.D."; }
         if (year > 0)  { return year + " A.D."; }
         return -year + " B.C.";
-    }
-
-    public void chooseTerrain(TerrainTypes terrain) {
-        boolean updated = editorState.setTerrain(terrain);
-        if (updated) {
-            repaintPalettes();
-        }
     }
 
     public int getAdjacentCellId(int cellId, Directions dir) {
@@ -196,7 +193,6 @@ public class GameScreen extends JFrame
         mapPane.repaint(cellId);
     }
 
-
     public void repaintOopses() {}
 
     public void repaintPalettes() {}
@@ -211,20 +207,27 @@ public class GameScreen extends JFrame
         }
     }
 
-    public void startGame() {
-        gameState.initialize();
-        timer.start();
-    }
-
     protected void setFile(File file) {
         editorState.file = file;
         masterPane.lblFile.setText(file.getName());
+    }
+
+    public void startGame() {
+        gameState.initialize();
+        timer.start();
     }
 
     public void toggleFeature(Features feature) {
         boolean updated = editorState.toggleFeature(feature);
         if (updated) {
             repaintPalettes();
+        }
+    }
+
+    protected void tryToSleep(long milliseconds) {
+        try {
+            Thread.sleep(milliseconds);
+        } catch (InterruptedException ignored) {
         }
     }
 
