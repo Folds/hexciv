@@ -23,6 +23,8 @@ public class GameState {
         governmentTypes = GovernmentType.getChoices();
         for (int i = 0; i < numCivilizations; i++) {
             Civilization civ = new Civilization(governmentTypes, unitTypes);
+            civ.setName(Civilization.proposeCivilizationName(i));
+            civ.setRulerName(Civilization.proposeRulerName(i));
             civs.add(civ);
         }
         initialize();
@@ -117,6 +119,9 @@ public class GameState {
 
         if (turn % 50 == 0) {
             parent.celebrateYear(getYear());
+        }
+        for (Civilization civ : civs) {
+            civ.playTurn(map, parent);
         }
         turn = turn + 1;
         isTurnInProgress = false;

@@ -11,7 +11,7 @@ public class UnitType {
     int defenseStrength;
     int mobility;
     int technologyIndex;
-    int maintenanceCost; // in shields per turn
+    int logisticsCost; // in shields per turn
     int feedingCost;     // in food per turn
     int range;
     boolean hasLimitedRange;
@@ -27,7 +27,7 @@ public class UnitType {
         this.defenseStrength = 1;
         this.mobility = 1;
         this.technologyIndex = -1; // available immediately
-        this.maintenanceCost = 1;
+        this.logisticsCost = 1;
         this.feedingCost = 0;
         this.range = 0;
         this.hasLimitedRange = false;

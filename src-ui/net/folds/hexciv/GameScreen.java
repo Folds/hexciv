@@ -98,6 +98,31 @@ public class GameScreen extends JFrame
         logPane.log("Reached year " + formatYear(year));
     }
 
+    public void celebrateNewCity(Unit unit, String cityName) {
+        int year = gameState.getYear();
+        logPane.log(cityName + " est. " + formatYear(year));
+    }
+
+    public void bemoanDisorder(City city) {
+        logPane.log("Disorder in " + city.name);
+    }
+
+    public void bemoanFamine(City city) {
+        if (city.size == 0) {
+            logPane.log(city.name + " dies out.");
+        } else {
+            logPane.log("Famine in " + city.name);
+        }
+    }
+
+    public void bemoanUnsupported(City city, Unit unit) {
+        logPane.log(city.name + " cannot support " + unit.unitType.name);
+    }
+
+    public void bemoanUnsupported(City city, ImprovementType improvementType) {
+        logPane.log(city.name + " forced to sell " + improvementType.name);
+    }
+
     protected void tryToSleep(long milliseconds) {
         try {
             Thread.sleep(milliseconds);

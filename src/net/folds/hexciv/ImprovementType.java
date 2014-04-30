@@ -7,7 +7,7 @@ public class ImprovementType {
     String name;
     int capitalCost;     // in shields
     int resaleValue;     // in gold
-    int maintenanceCost; // in gold
+    int upkeepCost; // in gold
     int defenseBonus;    // in percent
     int scienceBonus;    // in percent
     int productionBonus; // in percent
@@ -19,4 +19,8 @@ public class ImprovementType {
     boolean preventsFire;
     boolean isBarracks;
     int technologyIndex;
+
+    public static ImprovementType get(int index) {
+        return null;
+    }
 }

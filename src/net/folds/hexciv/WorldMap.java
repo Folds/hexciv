@@ -254,6 +254,10 @@ public class WorldMap {
         return true;
     }
 
+    void foundCity(int cellId) {
+        cities.set(cellId);
+    }
+
     double getAreaInSquareKilometers(int cellId) {
         if ((cellId < 0) || (cellId >= mesh.countCells())) {
             return 0;
@@ -296,6 +300,10 @@ public class WorldMap {
 
     boolean hasBonus(int cellId) {
         return bonuses.get(cellId);
+    }
+
+    boolean hasCity(int cellId) {
+        return cities.get(cellId);
     }
 
     boolean hasIrrigation(int cellId) {

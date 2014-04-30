@@ -11,11 +11,16 @@ public class Civilization {
     private Vector<City> cities;
     private int precedence;
     private int governmentTypeId;
+    private String name;
     private String ruler;
     private BitSet techs;
     private Vector<Relationship> relationships;
     private Vector<GovernmentType> governmentTypes;
     private Vector<UnitType> unitTypes;
+    private int storedMoney;
+    private int storedScience;
+    private int taxPercentage;
+    private int sciencePercentage;
 
     protected Civilization(Vector<GovernmentType> governmentTypes,
                            Vector<UnitType> unitTypes) {
@@ -25,8 +30,11 @@ public class Civilization {
 
     protected void initialize(WorldMap map, Vector<Integer> foreignLocations) {
         governmentTypeId = GovernmentType.proposeId("Despotism");
+        storedMoney = 0;
+        taxPercentage = 50;
+        sciencePercentage = 50;
         cities = new Vector<City>(1);
-        City none = new City(this);
+        City none = City.proposeNone(this);
         cities.add(none);
         UnitType settlerType = UnitType.lookupUnitType(unitTypes, "Settler");
         int cellId = chooseStartLocation(map, foreignLocations);
@@ -34,6 +42,65 @@ public class Civilization {
         none.add(settler);
     }
 
+    protected void setRulerName(String name) {
+        ruler = name;
+    }
+
+    protected void setName(String name) {
+        this.name = name;
+    }
+
+    protected static String proposeCivilizationName(int arg) {
+        if (arg == 0) { return "Amber"; }
+        if (arg == 1) { return "Bonny"; }
+        if (arg == 2) { return "Columbia"; }
+        if (arg == 3) { return "Durango"; }
+        if (arg == 4) { return "England"; }
+        if (arg == 5) { return "France"; }
+        if (arg == 6) { return "Germany"; }
+        return "Russia";
+    }
+
+    protected static String proposeRulerName(int arg) {
+        if (arg == 0) { return "Amber"; }
+        if (arg == 1) { return "Bonny"; }
+        if (arg == 2) { return "Colman"; }
+        if (arg == 3) { return "Doug"; }
+        if (arg == 4) { return "Emma"; }
+        if (arg == 5) { return "Frank"; }
+        if (arg == 6) { return "Geraldo"; }
+        return "Raisa";
+    }
+
+    protected int getLuxuryPercentage() {
+        int result = 100 - taxPercentage - sciencePercentage;
+        if (result < 0) {
+            fixSciencePercentage();
+            result = 100 - taxPercentage - sciencePercentage;
+        }
+        if (result > 100) {
+            fixSciencePercentage();
+            result = 100 - taxPercentage - sciencePercentage;
+        }
+        return result;
+    }
+
+    protected void fixSciencePercentage() {
+        if ((taxPercentage < 0) || (taxPercentage > 100)) {
+            fixTaxPercentage();
+        }
+        sciencePercentage = 100 - taxPercentage;
+    }
+
+    protected void fixTaxPercentage() {
+        if (taxPercentage > 100) {
+            taxPercentage = 100;
+            return;
+        }
+        if (taxPercentage < 0) {
+            taxPercentage = 0;
+        }
+    }
     protected int chooseStartLocation(WorldMap map, Vector<Integer> foreignLocations) {
         int numCells = 30;
         int result = -1;
@@ -73,41 +140,6 @@ public class Civilization {
             result = result + countOre(map, id);
         }
         return result;
-    }
-
-    protected boolean isAdequateStartLocation(WorldMap map, int cellId, Vector<Integer> foreignLocations) {
-        int neighborId = chooseFirstFarm(map, cellId);
-        int ore = countOre(map, cellId) + countOre(map, neighborId);
-        if (ore < 1) {
-            return false;
-        }
-        int food = countFood(map, cellId) + countFood(map, neighborId);
-        if (food < 3) {
-            return false;
-        }
-        for (int foreignLocation : foreignLocations) {
-            if (map.getDistanceInCells(cellId, foreignLocation) < 4) {
-                return false;
-            }
-        }
-        Vector<Integer> region = map.getRegion(cellId, 2);
-        Collections.sort(region);
-        Vector<Integer> continent = map.getContinent(cellId);
-        if (continent == null) {
-            return false;
-        }
-        int numLandCells = 1;
-        for (Integer regionCell : region) {
-            if (regionCell != cellId) {
-                if (continent.contains(regionCell)) {
-                    numLandCells = numLandCells + 1;
-                }
-            }
-        }
-        if (numLandCells < 5) {
-            return false;
-        }
-        return true;
     }
 
     protected Vector<Integer> getRandomCells(WorldMap map, int numDesiredCells) {
@@ -201,6 +233,9 @@ public class Civilization {
     }
 
     protected int countFood(WorldMap map, int cellId) {
+        if (cellId < 0) {
+            return 0;
+        }
         TerrainTypes terrain = map.getTerrain(cellId);
         boolean hasBonus = map.hasBonus(cellId);
         int irrigationBonus = 0;
@@ -258,6 +293,9 @@ public class Civilization {
     }
 
     protected int countOre(WorldMap map, int cellId) {
+        if (cellId < 0) {
+            return 0;
+        }
         TerrainTypes terrain = map.getTerrain(cellId);
         boolean hasBonus = map.hasBonus(cellId);
         int miningBonus = 0;
@@ -303,6 +341,9 @@ public class Civilization {
     }
 
     protected int countMoney(WorldMap map, int cellId) {
+        if (cellId < 0) {
+            return 0;
+        }
         TerrainTypes terrain = map.getTerrain(cellId);
         boolean hasBonus = map.hasBonus(cellId);
         int roadBonus = 0;
@@ -339,4 +380,464 @@ public class Civilization {
         }
         return result;
     }
+
+    protected int chooseFarm(WorldMap map, City city) {
+        int result = -1;
+        Vector<Integer> region = map.getRegion(city.location, 2);
+        int bestMetricSoFar = -1;
+        if (city.farms.size() == 18) {
+            return result;
+        }
+        for (Integer farm : region) {
+            if ((farm != city.location) && (!city.farms.contains(farm))) {
+                int metric = countOre(map, farm) + countFood(map, farm) + countMoney(map, farm);
+                if (metric > bestMetricSoFar) {
+                    bestMetricSoFar = metric;
+                    result = farm;
+                }
+            }
+        }
+        return result;
+    }
+
+    protected int chooseWorstFarm(WorldMap map, City city) {
+        int result = -1;
+        int worstMetricSoFar = 999;
+        for (int farm : city.farms) {
+            int metric = countOre(map, farm) + countFood(map, farm) + countMoney(map, farm);
+            if (metric < worstMetricSoFar) {
+                worstMetricSoFar = metric;
+                result = farm;
+            }
+        }
+        return result;
+    }
+
+    protected int getIndexOfFurthestSettler(WorldMap map, City city) {
+        int furthestSoFar = -1;
+        int result = -1;
+        for (int i = 0; i < city.units.size(); i++) {
+            Unit unit = city.units.get(i);
+            if (unit.unitType.isSettler) {
+                int metric = map.getDistanceInCells(city.location, unit.getLocation());
+                if (metric > furthestSoFar) {
+                    metric = furthestSoFar;
+                    result = i;
+                }
+            }
+        }
+        return result;
+    }
+
+    // http://www.freegameempire.com/games/Civilization/manual
+
+    protected int countMilitaryUnitsIn(City city) {
+        int result = 0;
+        for (City anyCity : cities) {
+            for (Unit unit : anyCity.units) {
+                if (unit.getLocation() == city.location) {
+                    if (canAttack(unit)) {
+                        result = result + 1;
+                    }
+                }
+            }
+        }
+        return result;
+    }
+
+    protected boolean canAttack(Unit unit) {
+        if ((unit.unitType.attackStrength > 0) && (unit.unitType.isTerrestrial)) {
+            return true;
+        }
+        return false;
+    }
+
+    protected int countDistantMilitaryUnits(WorldMap map, City city) {
+        int result = 0;
+        for (Unit unit : city.units) {
+            if (canAttack(unit)) {
+                if (map.getDistanceInCells(city.location, unit.getLocation()) > 2) {
+                    result = result + 1;
+                }
+            }
+        }
+        return result;
+    }
+
+    protected void playTurn(WorldMap map, City city, GameListener listener) {
+        if (city.location < 0) {
+            return;
+        }
+        if (city.storedFood < 0) {
+            if (city.countSettlers() > 0) {
+                int unitIndex = getIndexOfFurthestSettler(map, city);
+                listener.bemoanUnsupported(city, city.units.get(unitIndex));
+                city.units.remove(unitIndex);
+            } else {
+                city.size = city.size - 1;
+                city.storedFood = 0;
+                listener.bemoanFamine(city);
+                if (city.farms.size() > city.size) {
+                    Integer farm = chooseWorstFarm(map, city);
+                    city.farms.remove(farm);
+                } else {
+                    if (city.numTaxMen > 0) {
+                        city.numTaxMen = city.numTaxMen - 1;
+                    } else if (city.numScientists > 0) {
+                        city.numScientists = city.numScientists - 1;
+                    } else if (city.numEntertainers > 0) {
+                        city.numEntertainers = city.numEntertainers - 1;
+                    }
+                }
+            }
+        }
+        if (city.storedFood >= 10 * city.size + 10) {
+            city.size = city.size + 1;
+            if (city.hasGranary()) {
+                city.storedFood = city.storedFood - 5 * city.size;
+            } else {
+                city.storedFood = city.storedFood - 10 * city.size;
+            }
+            int newFarm = chooseFarm(map, city);
+            if (newFarm >= 0) {
+                city.farms.add(newFarm);
+            }
+        }
+        int food = 0;
+        food = city.storedFood + countFood(map, city.location);
+        for (Integer farm : city.farms) {
+            food = food + countFood(map, farm);
+        }
+        food = food - 2 * city.size;
+        food = food - city.countSettlers();
+        if (!isMilitarist()) {
+            food = food - city.countSettlers();
+        }
+
+        int ore = 0;
+        int money = 0;
+        ore = countOre(map, city.location);
+        money = countMoney(map, city.location);
+        for (Integer farm : city.farms) {
+            ore = ore + countOre(map, farm);
+            money = money + countMoney(map, farm);
+        }
+        int luxuries = 2 * city.numEntertainers;
+        luxuries = luxuries + (money * getLuxuryPercentage()) / 100;
+        int science = 2 * city.numScientists;
+        science = science + (money * sciencePercentage) / 100;
+        int tax = 2 * city.numTaxMen;
+        tax = money - luxuries - science;
+        luxuries = (luxuries * getLuxuryFactor(city)) / 100;
+        science = (science * getScienceFactor(city)) / 100;
+        tax = (tax * getTaxFactor(city)) / 100;
+        int content = city.size;
+        if (content > 3) {
+            content = 3;
+        }
+        int unhappy = city.size - content;
+        int sadness = 0;
+        if (isMilitarist()) {
+            if (unhappy > 0) {
+                int occupiers = countMilitaryUnitsIn(city);
+                if (unhappy < occupiers) {
+                    content = content + unhappy;
+                    unhappy = 0;
+                } else {
+                    content = content + occupiers;
+                    unhappy = unhappy - occupiers;
+                }
+            }
+        } else {
+            int farUnits = countDistantMilitaryUnits(map, city);
+            sadness = farUnits * getUnhappinessOfEachRemoteMilitaryUnit();
+            if (sadness > content) {
+                unhappy = unhappy + content;
+                sadness = sadness - content;
+                content = 0;
+            } else {
+                unhappy = unhappy + sadness;
+                content = content - sadness;
+                sadness = 0;
+            }
+        }
+        int happy = 0;
+        int usedLuxuries = 0;
+        if (2 * sadness < luxuries - usedLuxuries) {
+            usedLuxuries = usedLuxuries + 2 * sadness;
+            sadness = 0;
+        } else {
+            sadness = sadness - ((luxuries - usedLuxuries) / 2);
+            usedLuxuries = usedLuxuries + 2 * ((luxuries - usedLuxuries) / 2);
+        }
+        if (2 * content < luxuries - usedLuxuries) {
+            usedLuxuries = usedLuxuries + 2 * content;
+            happy = happy + content;
+            content = 0;
+        } else {
+            int affected = (luxuries - usedLuxuries) / 2;
+            if (luxuries < usedLuxuries) {
+                affected = 0;
+            }
+            usedLuxuries = usedLuxuries + 2 * affected;
+            happy = happy + affected;
+            content = content - affected;
+        }
+        if (4 * unhappy < luxuries - usedLuxuries) {
+            usedLuxuries = usedLuxuries + 4 * unhappy;
+            happy = happy + unhappy;
+            unhappy = 0;
+        } else {
+            int affected = (luxuries - usedLuxuries) / 4;
+            if (luxuries < usedLuxuries) {
+                affected = 0;
+            }
+            usedLuxuries = usedLuxuries + 4 * affected;
+            happy = happy + affected;
+            unhappy = unhappy - affected;
+        }
+        if (2 * unhappy < luxuries - usedLuxuries) {
+            usedLuxuries = usedLuxuries + 2 * unhappy;
+            content = content + unhappy;
+            unhappy = 0;
+        } else {
+            int affected = (luxuries - usedLuxuries) / 2;
+            if (luxuries < usedLuxuries) {
+                affected = 0;
+            }
+            usedLuxuries = usedLuxuries + 2 * affected;
+            content = content + affected;
+            unhappy = unhappy - affected;
+        }
+        // To-do:  effects of improvements.
+        // To-do:  effects of wonders.
+        if (unhappy > happy) {
+            bemoanDisorder(city, listener);
+            tax = 0;
+            if (!isMilitarist()) {
+                ore = 0;
+            }
+        } else {
+            int logisticsCost = getLogisticsCost(city);
+            while (logisticsCost > ore + city.storedProduction) {
+                abandonFurthestUnitThatNeedsMaintenance(map, city, listener);
+                logisticsCost = getLogisticsCost(city);
+            }
+            int upkeepCost = city.getUpkeepCost();
+            if (upkeepCost > tax + storedMoney) {
+                pawnLowestValueImprovement(city, listener);
+            }
+        }
+
+        city.storedFood = city.storedFood + food;
+        city.storedProduction = city.storedProduction + ore;
+        storedMoney = storedMoney + tax;
+    }
+
+    protected void pawnLowestValueImprovement(City city, GameListener listener) {
+        int improvementIndex = -1;
+        int value = 9999;
+        for (int i = 0; i < city.improvementFlags.size(); i++) {
+            if (city.improvementFlags.get(i)) {
+
+            }
+        }
+        if (improvementIndex >= 0) {
+            ImprovementType improvementType = ImprovementType.get(improvementIndex);
+            if (improvementType != null) {
+                listener.bemoanUnsupported(city, improvementType);
+                city.improvementFlags.clear(improvementIndex);
+                storedMoney = storedMoney + improvementType.resaleValue;
+            }
+        }
+    }
+
+    protected void abandonFurthestUnitThatNeedsMaintenance(WorldMap map, City city, GameListener listener) {
+        int unitId = -1;
+        int furthestDistance = -1;
+        for (int i = 0; i < city.units.size(); i++) {
+            int distance = map.getDistanceInCells(city.location, city.units.get(i).getLocation());
+            if (distance > furthestDistance) {
+                furthestDistance = distance;
+                unitId = i;
+            }
+        }
+        listener.bemoanUnsupported(city, city.units.get(unitId));
+        city.units.remove(unitId);
+    }
+
+    protected int getLogisticsCost(City city) {
+        int result = 0;
+        if (isAnarchist()) {
+            return result;
+        }
+        for (Unit unit : city.units) {
+            if (unit.unitType.logisticsCost > 0) {
+                result = result + unit.unitType.logisticsCost;
+            }
+        }
+        if (isDespotic()) {
+            if (result < city.size) {
+                result = 0;
+            } else {
+                result = result - city.size;
+            }
+        }
+        return result;
+    }
+
+    protected boolean isMilitarist() {
+        if (   (governmentTypes.get(governmentTypeId).name.equals("Republic"))
+            || (governmentTypes.get(governmentTypeId).name.equals("Democracy"))
+            ) {
+            return false;
+        }
+        return true;
+    }
+
+    protected boolean isDespotic() {
+        if (governmentTypes.get(governmentTypeId).name.equals("Despotism")) {
+            return true;
+        }
+        return false;
+    }
+
+    protected int getUnhappinessOfEachRemoteMilitaryUnit() {
+        int result = 0;
+        if (!isMilitarist()) {
+            return result;
+        }
+        if (governmentTypes.get(governmentTypeId).name.equals("Republic")) {
+            result = 1;
+        }
+        if (governmentTypes.get(governmentTypeId).name.equals("Democracy")) {
+            result = 2;
+        }
+        if (isTimocratic()) {
+            result = result - 1;
+        }
+        return result;
+    }
+
+    protected boolean isTimocratic() {
+        return false;
+    }
+
+    protected boolean isAnarchist() {
+        if (governmentTypes.get(governmentTypeId).name.equals("Anarchy")) {
+            return true;
+        }
+        return false;
+    }
+
+    protected void bemoanDisorder(City city, GameListener listener) {
+        listener.bemoanDisorder(city);
+    }
+
+    protected int getLuxuryFactor(City city) {
+        return 100;
+    }
+
+    protected int getScienceFactor(City city) {
+        return 100;
+    }
+
+    protected int getTaxFactor(City city) {
+        return 100;
+    }
+
+    protected String foundCity(WorldMap map, int cellId) {
+        map.foundCity(cellId);
+        City city = new City(this, cellId, name + "_" + countCities());
+        cities.add(city);
+        return city.name;
+    }
+
+    protected boolean isGoodLocationForNewCity(WorldMap map, int cellId) {
+        Vector<Integer> cityLocations = getCityLocations();
+        return isAdequateStartLocation(map, cellId, cityLocations);
+    }
+
+    protected boolean isAdequateStartLocation(WorldMap map, int cellId, Vector<Integer> foreignLocations) {
+        if (map.hasCity(cellId)) {
+            return false;
+        }
+        int neighborId = chooseFirstFarm(map, cellId);
+        int ore = countOre(map, cellId) + countOre(map, neighborId);
+        if (ore < 1) {
+            return false;
+        }
+        int food = countFood(map, cellId) + countFood(map, neighborId);
+        if (food < 3) {
+            return false;
+        }
+        for (int foreignLocation : foreignLocations) {
+            if (map.getDistanceInCells(cellId, foreignLocation) < 4) {
+                return false;
+            }
+        }
+        Vector<Integer> region = map.getRegion(cellId, 2);
+        Collections.sort(region);
+        Vector<Integer> continent = map.getContinent(cellId);
+        if (continent == null) {
+            return false;
+        }
+        int numLandCells = 1;
+        for (Integer regionCell : region) {
+            if (regionCell != cellId) {
+                if (continent.contains(regionCell)) {
+                    numLandCells = numLandCells + 1;
+                }
+            }
+        }
+        if (numLandCells < 5) {
+            return false;
+        }
+        return true;
+    }
+
+    protected void playTurn(WorldMap map, GameListener listener) {
+        for (City city : cities) {
+            if (!city.isNone()) {
+                playTurn(map, city, listener);
+            }
+        }
+        for (int c = countCities(); c > 0; c--) {
+            if (cities.get(c).size == 0) {
+                cities.removeElementAt(c);
+            }
+        }
+        for (int i = 0; i < cities.size(); i++) {
+            City city = cities.get(i);
+            if (city != null) {
+                if (city.units != null) {
+                    Vector<Integer> toBeDeleted = new Vector<>();
+                    for (int j = 0; j < city.units.size(); j++) {
+                        Unit unit = city.units.get(j);
+                        boolean keepUnit = playTurn(map, unit, listener);
+                        if (!keepUnit) {
+                            toBeDeleted.add((Integer) j);
+                        }
+                    }
+                    for (int k = toBeDeleted.size() - 1; k >= 0; k--) {
+                        city.units.removeElementAt(toBeDeleted.get(k));
+                    }
+                }
+            }
+        }
+    }
+
+    // returns false if the unit should be deleted.
+    protected boolean playTurn(WorldMap map, Unit unit, GameListener listener) {
+        boolean result = true;
+        if (unit.unitType.name.equals("Settler")) {
+            if (isGoodLocationForNewCity(map, unit.getLocation())) {
+                String cityName = foundCity(map, unit.getLocation());
+                listener.celebrateNewCity(unit, cityName);
+                result = false;
+            }
+        }
+        return result;
+    }
+
 }

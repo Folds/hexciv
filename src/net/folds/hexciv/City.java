@@ -14,19 +14,32 @@ public class City {
     int storedFood;
     int storedProduction;
     int location;
-    private BitSet improvementIndexes;
+    int numTaxMen;
+    int numScientists;
+    int numEntertainers;
+
+    protected BitSet improvementFlags;
     Vector<Unit> units;
-    Vector<Integer> terrain;
+    Vector<Integer> farms;
     Vector<Integer> tradePartnerLocations;
 
-    protected City(Civilization civ) {
+    protected City(Civilization civ, int cellId, String name) {
         this.civ = civ;
         // To-do:  initialize improvementIndexes to all false,
         //         for each possible city improvement.
+        this.name = name;
+        size = 1;
+        storedFood = 0;
+        storedProduction = 0;
+        location = cellId;
+        numTaxMen = 0;
+        numScientists = 0;
+        numEntertainers = 1;
         tradePartnerLocations = new Vector<Integer>(3);
         for (int i = 0; i < 3; i++) {
             tradePartnerLocations.add(-1);
         }
+
     }
 
     protected void add(Unit unit) {
@@ -37,6 +50,20 @@ public class City {
             return;
         }
         units.add(unit);
+    }
+
+    protected boolean hasGranary() {
+        return false;
+    }
+
+    protected int countSettlers() {
+        int result = 0;
+        for (Unit unit : units) {
+            if (unit.unitType.isSettler) {
+                result = result + 1;
+            }
+        }
+        return result;
     }
 
     protected int countUnits() {
@@ -65,13 +92,31 @@ public class City {
     }
 
     protected static City proposeNone(Civilization civ) {
-        City none = new City(civ);
-        none.name = "None";
+        City none = new City(civ, -1, "None");
         none.size = 0;
         none.precedence = 0;
         none.storedFood = 0;
         none.storedProduction = 0;
-        none.location = -1;
         return none;
+    }
+
+    protected boolean isNone() {
+        if (location < 0) {
+            return false;
+        }
+        return true;
+    }
+
+    protected int getUpkeepCost() {
+        int result = 0;
+        for (int i = 0; i < improvementFlags.size(); i++) {
+            if (improvementFlags.get(i)) {
+                ImprovementType improvementType = ImprovementType.get(i);
+                if (improvementType != null) {
+                    result = result + improvementType.upkeepCost;
+                }
+            }
+        }
+        return result;
     }
 }

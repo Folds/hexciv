@@ -6,4 +6,9 @@ package net.folds.hexciv;
 public interface GameListener {
     void celebrateEnd();
     void celebrateYear(int year);
+    void celebrateNewCity(Unit unit, String cityName);
+    void bemoanDisorder(City city);
+    void bemoanFamine(City city);
+    void bemoanUnsupported(City city, Unit unit);
+    void bemoanUnsupported(City city, ImprovementType improvementType);
 }
