@@ -42,6 +42,20 @@ public class City {
 
     }
 
+    protected int countWonders() {
+        int result = 0;
+        if (improvementFlags == null) {
+            return result;
+        }
+        for (int i = 0; i < improvementFlags.size(); i++) {
+            ImprovementType improvementType = ImprovementType.get(i);
+            if (improvementType.isWonder()) {
+                result = result + 1;
+            }
+        }
+        return result;
+    }
+
     protected void add(Unit unit) {
         if (units == null) {
             units = new Vector<Unit>(1);
@@ -58,6 +72,9 @@ public class City {
 
     protected int countSettlers() {
         int result = 0;
+        if (units == null) {
+            return result;
+        }
         for (Unit unit : units) {
             if (unit.unitType.isSettler) {
                 result = result + 1;
@@ -85,6 +102,9 @@ public class City {
     protected Vector<Integer> getUnitLocations() {
         int numUnits = countUnits();
         Vector<Integer> result = new Vector<>(numUnits);
+        if (numUnits == 0) {
+            return result;
+        }
         for (Unit unit : units) {
             result.add(unit.getLocation());
         }
@@ -109,6 +129,9 @@ public class City {
 
     protected int getUpkeepCost() {
         int result = 0;
+        if (improvementFlags == null) {
+            return result;
+        }
         for (int i = 0; i < improvementFlags.size(); i++) {
             if (improvementFlags.get(i)) {
                 ImprovementType improvementType = ImprovementType.get(i);

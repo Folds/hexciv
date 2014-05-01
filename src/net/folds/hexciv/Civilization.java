@@ -1,5 +1,6 @@
 package net.folds.hexciv;
 
+import java.text.DecimalFormat;
 import java.util.BitSet;
 import java.util.Collections;
 import java.util.Vector;
@@ -21,11 +22,16 @@ public class Civilization {
     private int storedScience;
     private int taxPercentage;
     private int sciencePercentage;
+    private int longestPeaceAD;
+    private int currentPeaceAD;
 
     protected Civilization(Vector<GovernmentType> governmentTypes,
                            Vector<UnitType> unitTypes) {
         this.governmentTypes = governmentTypes;
         this.unitTypes = unitTypes;
+        longestPeaceAD = 0;
+        currentPeaceAD = 0;
+        techs = new BitSet(72);
     }
 
     protected void initialize(WorldMap map, Vector<Integer> foreignLocations) {
@@ -146,6 +152,91 @@ public class Civilization {
         return cities.size() - 1;
     }
 
+    protected int countContentCitizens(WorldMap map) {
+        int result = 0;
+        for (City city : cities) {
+            result = result + countContentCitizens(map, city);
+        }
+        return result;
+    }
+
+    protected int countContentCitizens(WorldMap map, City city) {
+        if (city.location < 0) {
+            return 0;
+        }
+        int luxuries = countLuxuries(map, city);
+        int content = city.size;
+        if (content > 3) {
+            content = 3;
+        }
+        int unhappy = city.size - content;
+        int sadness = 0;
+        if (isMilitarist()) {
+            if (unhappy > 0) {
+                int occupiers = countMilitaryUnitsIn(city);
+                if (unhappy < occupiers) {
+                    content = content + unhappy;
+                    unhappy = 0;
+                } else {
+                    content = content + occupiers;
+                    unhappy = unhappy - occupiers;
+                }
+            }
+        } else {
+            int farUnits = countDistantMilitaryUnits(map, city);
+            sadness = farUnits * getUnhappinessOfEachRemoteMilitaryUnit();
+            if (sadness > content) {
+                unhappy = unhappy + content;
+                sadness = sadness - content;
+                content = 0;
+            } else {
+                unhappy = unhappy + sadness;
+                content = content - sadness;
+                sadness = 0;
+            }
+        }
+        int usedLuxuries = 0;
+        if (2 * sadness < luxuries - usedLuxuries) {
+            usedLuxuries = usedLuxuries + 2 * sadness;
+        } else {
+            usedLuxuries = usedLuxuries + 2 * ((luxuries - usedLuxuries) / 2);
+        }
+        if (2 * content < luxuries - usedLuxuries) {
+            usedLuxuries = usedLuxuries + 2 * content;
+            content = 0;
+        } else {
+            int affected = (luxuries - usedLuxuries) / 2;
+            if (luxuries < usedLuxuries) {
+                affected = 0;
+            }
+            usedLuxuries = usedLuxuries + 2 * affected;
+            content = content - affected;
+        }
+        if (4 * unhappy < luxuries - usedLuxuries) {
+            usedLuxuries = usedLuxuries + 4 * unhappy;
+            unhappy = 0;
+        } else {
+            int affected = (luxuries - usedLuxuries) / 4;
+            if (luxuries < usedLuxuries) {
+                affected = 0;
+            }
+            usedLuxuries = usedLuxuries + 4 * affected;
+            unhappy = unhappy - affected;
+        }
+        if (2 * unhappy < luxuries - usedLuxuries) {
+            content = content + unhappy;
+        } else {
+            int affected = (luxuries - usedLuxuries) / 2;
+            if (luxuries < usedLuxuries) {
+                affected = 0;
+            }
+            content = content + affected;
+        }
+        // To-do:  effects of improvements.
+        // To-do:  effects of wonders.
+        return content;
+    }
+
     protected int countDistantMilitaryUnits(WorldMap map, City city) {
         int result = 0;
         for (Unit unit : city.units) {
@@ -214,6 +305,91 @@ public class Civilization {
         return result;
     }
 
+    protected int countFutureTech() {
+        int result = 0;
+        result = result + techs.cardinality(); // number of bits that are set.
+        result = result - 72;
+        if (result < 0) {
+            result = 0;
+        }
+        return result;
+    }
+
+    protected int countHappyCitizens(WorldMap map) {
+        int result = 0;
+        for (City city : cities) {
+            result = result + countHappyCitizens(map, city);
+        }
+        return result;
+    }
+
+    protected int countHappyCitizens(WorldMap map, City city) {
+        if (city.location < 0) {
+            return 0;
+        }
+        int luxuries = countLuxuries(map, city);
+        int content = city.size;
+        if (content > 3) {
+            content = 3;
+        }
+        int unhappy = city.size - content;
+        int sadness = 0;
+        if (isMilitarist()) {
+            if (unhappy > 0) {
+                int occupiers = countMilitaryUnitsIn(city);
+                if (unhappy < occupiers) {
+                    content = content + unhappy;
+                    unhappy = 0;
+                } else {
+                    content = content + occupiers;
+                    unhappy = unhappy - occupiers;
+                }
+            }
+        } else {
+            int farUnits = countDistantMilitaryUnits(map, city);
+            sadness = farUnits * getUnhappinessOfEachRemoteMilitaryUnit();
+            if (sadness > content) {
+                unhappy = unhappy + content;
+                sadness = sadness - content;
+                content = 0;
+            } else {
+                unhappy = unhappy + sadness;
+                content = content - sadness;
+                sadness = 0;
+            }
+        }
+        int happy = 0;
+        int usedLuxuries = 0;
+        if (2 * sadness < luxuries - usedLuxuries) {
+            usedLuxuries = usedLuxuries + 2 * sadness;
+        } else {
+            usedLuxuries = usedLuxuries + 2 * ((luxuries - usedLuxuries) / 2);
+        }
+        if (2 * content < luxuries - usedLuxuries) {
+            usedLuxuries = usedLuxuries + 2 * content;
+            happy = happy + content;
+        } else {
+            int affected = (luxuries - usedLuxuries) / 2;
+            if (luxuries < usedLuxuries) {
+                affected = 0;
+            }
+            usedLuxuries = usedLuxuries + 2 * affected;
+            happy = happy + affected;
+        }
+        if (4 * unhappy < luxuries - usedLuxuries) {
+            happy = happy + unhappy;
+        } else {
+            int affected = (luxuries - usedLuxuries) / 4;
+            if (luxuries < usedLuxuries) {
+                affected = 0;
+            }
+            happy = happy + affected;
+        }
+        // To-do:  effects of improvements.
+        // To-do:  effects of wonders.
+        return happy;
+    }
+
     protected int countMilitaryUnitsIn(City city) {
         int result = 0;
         for (City anyCity : cities) {
@@ -269,6 +445,16 @@ public class Civilization {
         return result;
     }
 
+    protected int countMyriads() {
+        int result = 0;
+        for (City city : cities) {
+            int size = city.size;
+            int increment = size * (size + 1) / 2;
+            result = result + increment;
+        }
+        return result;
+    }
+
     protected int countOre(WorldMap map, int cellId) {
         if (cellId < 0) {
             return 0;
@@ -317,6 +503,20 @@ public class Civilization {
         return result;
     }
 
+    protected int countThousands() {
+        return 10 * countMyriads();
+    }
+
+    protected int countUnhappyCitizens(WorldMap map, City city) {
+        if (city.location < 0) {
+            return 0;
+        }
+        int total = city.size;
+        int happy = countHappyCitizens(map, city);
+        int content = countContentCitizens(map, city);
+        return total - happy - content;
+    }
+
     protected int countUnits() {
         int result = 0;
         if (cities == null) {
@@ -324,6 +524,14 @@ public class Civilization {
         }
         for (City city : cities) {
             result = result + city.countUnits();
+        }
+        return result;
+    }
+
+    protected int countWonders() {
+        int result = 0;
+        for (City city : cities) {
+            result = result + city.countWonders();
         }
         return result;
     }
@@ -354,6 +562,19 @@ public class Civilization {
         City city = new City(this, cellId, name + "_" + countCities());
         cities.add(city);
         return city.name;
+    }
+
+    protected String formatPopulation() {
+        int numThousands = countThousands();
+        if (numThousands == 0) {
+            return "no people";
+        }
+        DecimalFormat formatter = new DecimalFormat("#,###");
+        return formatter.format(numThousands) + ",000 people";
+    }
+
+    protected String getBrag(WorldMap map) {
+        return name + " has " + formatPopulation() + ", and scores " + getScore(map) + ".";
     }
 
     protected City getCity(int id) {
@@ -461,6 +682,17 @@ public class Civilization {
 
     protected int getScienceFactor(City city) {
         return 100;
+    }
+
+    protected int getScore(WorldMap map) {
+        int result = 0;
+        result = result +  2 * countHappyCitizens(map);
+        result = result +      countContentCitizens(map);
+        result = result +  3 * longestPeaceAD;
+        result = result + 20 * countWonders();
+        result = result +  5 * countFutureTech();
+        result = result - 10 * map.countPollution();
+        return result;
     }
 
     protected int getStartLocationMetric(WorldMap map, int cellId) {
@@ -597,6 +829,72 @@ public class Civilization {
 
     // http://www.freegameempire.com/games/Civilization/manual
 
+    protected int countMoney(WorldMap map, City city) {
+        if (city.location < 0) {
+            return 0;
+        }
+        int result = countMoney(map, city.location);
+        if (city.farms == null) {
+            return result;
+        }
+        for (Integer farm : city.farms) {
+            result = result + countMoney(map, farm);
+        }
+        return result;
+    }
+
+    protected int countOre(WorldMap map, City city) {
+        if (city.location < 0) {
+            return 0;
+        }
+        int result = countOre(map, city.location);
+        if (city.farms == null) {
+            return result;
+        }
+        for (Integer farm : city.farms) {
+            result = result + countOre(map, farm);
+        }
+        return result;
+    }
+
+    protected int countFood(WorldMap map, City city) {
+        if (city.location < 0) {
+            return 0;
+        }
+        int result = countFood(map, city.location);
+        if (city.farms == null) {
+            return result;
+        }
+        for (Integer farm : city.farms) {
+            result = result + countFood(map, farm);
+        }
+        return result;
+    }
+
+    protected int countLuxuries(WorldMap map, City city) {
+        int money = countMoney(map, city);
+        int result = 2 * city.numEntertainers;
+        result = result + (money * getLuxuryPercentage()) / 100;
+        result = (result * getLuxuryFactor(city)) / 100;
+        return result;
+    }
+
+    protected int countScience(WorldMap map, City city) {
+        int money = countMoney(map, city);
+        int result = 2 * city.numScientists;
+        result = result + (money * sciencePercentage) / 100;
+        result = (result * getScienceFactor(city)) / 100;
+        return result;
+    }
+
+    protected int countTax(WorldMap map, City city) {
+        int money = countMoney(map, city);
+        int result = 2 * city.numTaxMen;
+        result = result + money - countLuxuries(map, city) - countScience(map, city);
+        result = (result * getTaxFactor(city)) / 100;
+        return result;
+    }
+
     protected void playTurn(WorldMap map, City city, GameListener listener) {
         if (city.location < 0) {
             return;
@@ -636,114 +934,18 @@ public class Civilization {
                 city.farms.add(newFarm);
             }
         }
-        int food = 0;
-        food = city.storedFood + countFood(map, city.location);
-        for (Integer farm : city.farms) {
-            food = food + countFood(map, farm);
-        }
+        int food = city.storedFood + countFood(map, city);
         food = food - 2 * city.size;
         food = food - city.countSettlers();
         if (!isMilitarist()) {
             food = food - city.countSettlers();
         }
-
-        int ore = 0;
-        int money = 0;
-        ore = countOre(map, city.location);
-        money = countMoney(map, city.location);
-        for (Integer farm : city.farms) {
-            ore = ore + countOre(map, farm);
-            money = money + countMoney(map, farm);
-        }
-        int luxuries = 2 * city.numEntertainers;
-        luxuries = luxuries + (money * getLuxuryPercentage()) / 100;
-        int science = 2 * city.numScientists;
-        science = science + (money * sciencePercentage) / 100;
-        int tax = 2 * city.numTaxMen;
-        tax = money - luxuries - science;
-        luxuries = (luxuries * getLuxuryFactor(city)) / 100;
-        science = (science * getScienceFactor(city)) / 100;
-        tax = (tax * getTaxFactor(city)) / 100;
-        int content = city.size;
-        if (content > 3) {
-            content = 3;
-        }
-        int unhappy = city.size - content;
-        int sadness = 0;
-        if (isMilitarist()) {
-            if (unhappy > 0) {
-                int occupiers = countMilitaryUnitsIn(city);
-                if (unhappy < occupiers) {
-                    content = content + unhappy;
-                    unhappy = 0;
-                } else {
-                    content = content + occupiers;
-                    unhappy = unhappy - occupiers;
-                }
-            }
-        } else {
-            int farUnits = countDistantMilitaryUnits(map, city);
-            sadness = farUnits * getUnhappinessOfEachRemoteMilitaryUnit();
-            if (sadness > content) {
-                unhappy = unhappy + content;
-                sadness = sadness - content;
-                content = 0;
-            } else {
-                unhappy = unhappy + sadness;
-                content = content - sadness;
-                sadness = 0;
-            }
-        }
-        int happy = 0;
-        int usedLuxuries = 0;
-        if (2 * sadness < luxuries - usedLuxuries) {
-            usedLuxuries = usedLuxuries + 2 * sadness;
-            sadness = 0;
-        } else {
-            sadness = sadness - ((luxuries - usedLuxuries) / 2);
-            usedLuxuries = usedLuxuries + 2 * ((luxuries - usedLuxuries) / 2);
-        }
-        if (2 * content < luxuries - usedLuxuries) {
-            usedLuxuries = usedLuxuries + 2 * content;
-            happy = happy + content;
-            content = 0;
-        } else {
-            int affected = (luxuries - usedLuxuries) / 2;
-            if (luxuries < usedLuxuries) {
-                affected = 0;
-            }
-            usedLuxuries = usedLuxuries + 2 * affected;
-            happy = happy + affected;
-            content = content - affected;
-        }
-        if (4 * unhappy < luxuries - usedLuxuries) {
-            usedLuxuries = usedLuxuries + 4 * unhappy;
-            happy = happy + unhappy;
-            unhappy = 0;
-        } else {
-            int affected = (luxuries - usedLuxuries) / 4;
-            if (luxuries < usedLuxuries) {
-                affected = 0;
-            }
-            usedLuxuries = usedLuxuries + 4 * affected;
-            happy = happy + affected;
-            unhappy = unhappy - affected;
-        }
-        if (2 * unhappy < luxuries - usedLuxuries) {
-            usedLuxuries = usedLuxuries + 2 * unhappy;
-            content = content + unhappy;
-            unhappy = 0;
-        } else {
-            int affected = (luxuries - usedLuxuries) / 2;
-            if (luxuries < usedLuxuries) {
-                affected = 0;
-            }
-            usedLuxuries = usedLuxuries + 2 * affected;
-            content = content + affected;
-            unhappy = unhappy - affected;
-        }
-        // To-do:  effects of improvements.
-        // To-do:  effects of wonders.
+        int ore = countOre(map, city);
+        int luxuries = countLuxuries(map, city);
+        int science = countScience(map, city);
+        int tax = countTax(map, city);
+        int happy = countHappyCitizens(map, city);
+        int unhappy = countUnhappyCitizens(map, city);
         if (unhappy > happy) {
             bemoanDisorder(city, listener);
             tax = 0;
@@ -761,8 +963,7 @@ public class Civilization {
                 pawnLowestValueImprovement(city, listener);
             }
         }
-
-        city.storedFood = city.storedFood + food;
+        city.storedFood = food;
         city.storedProduction = city.storedProduction + ore;
         storedMoney = storedMoney + tax;
     }
@@ -795,6 +996,24 @@ public class Civilization {
                     }
                 }
             }
+        }
+    }
+
+    protected boolean atPeace() {
+        if ((countCities() == 0) && (countUnits() == 0)) {
+            return false;
+        }
+        return true;
+    }
+
+    protected void recordPeace() {
+        if (atPeace()) {
+            currentPeaceAD = currentPeaceAD + 1;
+        } else {
+            currentPeaceAD = 0;
+        }
+        if (currentPeaceAD > longestPeaceAD) {
+            longestPeaceAD = currentPeaceAD;
         }
     }
 

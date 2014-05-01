@@ -17,6 +17,7 @@ public class MapBaggage {
     public String bonusString;
     public String roadString;
     public String railroadString;
+    public String pollutionString;
     public String irrigationString;
     public String mineString;
     public String villageString;
@@ -29,6 +30,7 @@ public class MapBaggage {
         bonusString = map.stringifyBonuses();
         roadString = map.stringifyRoads();
         railroadString = map.stringifyRailroads();
+        pollutionString = map.stringifyPollution();
         irrigationString = map.stringifyIrrigation();
         mineString = map.stringifyMines();
         villageString = map.stringifyVillages();

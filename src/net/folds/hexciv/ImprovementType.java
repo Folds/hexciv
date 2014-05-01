@@ -23,4 +23,11 @@ public class ImprovementType {
     public static ImprovementType get(int index) {
         return null;
     }
+
+    public boolean isWonder() {
+        if ((resaleValue == 0) && (upkeepCost == 0)) {
+            return true;
+        }
+        return false;
+    }
 }

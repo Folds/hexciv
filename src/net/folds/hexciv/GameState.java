@@ -123,6 +123,11 @@ public class GameState {
         for (Civilization civ : civs) {
             civ.playTurn(map, parent);
         }
+        if (turn >= 200) {
+            for (Civilization civ : civs) {
+                civ.recordPeace();
+            }
+        }
         turn = turn + 1;
         isTurnInProgress = false;
     }

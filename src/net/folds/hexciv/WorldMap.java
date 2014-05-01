@@ -15,6 +15,7 @@ public class WorldMap {
     private BitSet bonuses;
     private BitSet roads;
     private BitSet railroads;
+    private BitSet pollution;
     private BitSet irrigation;
     private BitSet mines;
     private BitSet villages;
@@ -32,6 +33,7 @@ public class WorldMap {
         bonuses = new BitSet(numCells);
         roads = new BitSet(numCells);
         railroads = new BitSet(numCells);
+        pollution = new BitSet(numCells);
         irrigation = new BitSet(numCells);
         mines = new BitSet(numCells);
         villages = new BitSet(numCells);
@@ -55,6 +57,7 @@ public class WorldMap {
         bonuses = Porter.stringToBits(baggage.bonusString, numCells);
         roads = Porter.stringToBits(baggage.roadString, numCells);
         railroads = Porter.stringToBits(baggage.railroadString, numCells);
+        pollution = Porter.stringToBits(baggage.pollutionString, numCells);
         irrigation = Porter.stringToBits(baggage.irrigationString, numCells);
         mines = Porter.stringToBits(baggage.mineString, numCells);
         villages = Porter.stringToBits(baggage.villageString, numCells);
@@ -84,8 +87,16 @@ public class WorldMap {
         return BitSetPorter.bitsToString(railroads);
     }
 
+    String stringifyPollution() {
+        return BitSetPorter.bitsToString(pollution);
+    }
+
     String stringifyIrrigation() {
         return BitSetPorter.bitsToString(irrigation);
+    }
+
+    int countPollution() {
+        return pollution.cardinality(); // counts set bits.
     }
 
     String stringifyMines() {

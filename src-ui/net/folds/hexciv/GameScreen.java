@@ -92,9 +92,9 @@ public class GameScreen extends JFrame
 
     public void celebrateEnd() {
         logPane.log("Game over.");
-//        for (Civilization civ : gameState.civs) {
-//            logPane.log(civ.getBrag());
-//        }
+        for (Civilization civ : gameState.civs) {
+            logPane.log(civ.getBrag(gameState.map));
+        }
         logPane.log("Play again?");
     }
 
