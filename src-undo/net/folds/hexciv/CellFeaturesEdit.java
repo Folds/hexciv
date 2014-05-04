@@ -2,6 +2,7 @@ package net.folds.hexciv;
 
 import javax.swing.undo.AbstractUndoableEdit;
 import javax.swing.undo.CannotUndoException;
+import java.util.BitSet;
 import java.util.Vector;
 
 /**
@@ -12,11 +13,11 @@ import java.util.Vector;
  */
 public class CellFeaturesEdit extends AbstractEdit {
     EditorState editorState;
-    Vector<Boolean> oldValue;
-    Vector<Boolean> newValue;
+    BitSet oldValue;
+    BitSet newValue;
     int cellId;
 
-    public CellFeaturesEdit(EditorState editorState, Vector<Boolean> oldValue, Vector<Boolean> newValue, int cellId) {
+    public CellFeaturesEdit(EditorState editorState, BitSet oldValue, BitSet newValue, int cellId) {
         this.editorState = editorState;
         this.oldValue = oldValue;
         this.newValue = newValue;
@@ -46,7 +47,7 @@ public class CellFeaturesEdit extends AbstractEdit {
         return "change cell features";
     }
 
-    protected int countDifferences(Vector<Boolean> oldValue, Vector<Boolean> newValue) {
+    protected int countDifferences(BitSet oldValue, BitSet newValue) {
         if (oldValue.equals(newValue)) {
             return 0;
         }

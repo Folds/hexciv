@@ -2,6 +2,7 @@ package net.folds.hexciv;
 
 import java.awt.*;
 import java.awt.geom.Rectangle2D;
+import java.util.BitSet;
 import java.util.Vector;
 
 /**
@@ -14,12 +15,12 @@ public class FeaturePaletteDrafter extends Drafter {
         super(graphics2D, hexSideInPixels, textDisplayer,  margins);
     }
 
-    public void drawPalette(int spanInPixels, TerrainTypes terrain, Vector<Boolean> desiredFeatures) {
-        String[] features = {"Bonus","Road","Railroad","Irrigation","Village","City"};
-        String[] abbr     = {"+",    "",    "",        "i",         "V",      "1"};
+    public void drawPalette(int spanInPixels, TerrainTypes terrain, BitSet desiredFeatures) {
+        String[] features = {"Bonus","Road","Railroad","Pollution","Irrigation","Mine","Village","City"};
+        String[] abbr     = {"+",    "",    "",        "P",        "i",         "m" ,  "V",      "1"};
         features[0] = terrain.getBonusDescription();
-        boolean[] valid = {true, true, true, terrain.isIrrigable(),
-                           terrain.isLand(), terrain.isLand()};
+        boolean[] valid = {true, true, true, true, terrain.isIrrigable(),
+                terrain.isLand(), terrain.isLand(), terrain.isLand()};
         int numCells = features.length;
 
         int internalMarginInPixels = (spanInPixels - numCells * 2 * hexSideInPixels) / (numCells - 1);

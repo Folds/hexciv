@@ -4,6 +4,7 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.util.BitSet;
 import java.util.Vector;
 
 /**
@@ -31,7 +32,7 @@ public class FeaturePalette extends Panel {
         FeaturePaletteDrafter drafter = new FeaturePaletteDrafter(comp2D, hexSideInPixels, textDisplayer, margins);
         int spanInPixels = (int) h - 9;
         TerrainTypes desiredTerrain = parent.getDesiredTerrain();
-        Vector<Boolean> desiredFeatures = parent.getDesiredFeatures();
+        BitSet desiredFeatures = parent.getDesiredFeatures();
         drafter.drawPalette(spanInPixels, desiredTerrain, desiredFeatures);
     }
 

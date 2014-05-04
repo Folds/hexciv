@@ -2,6 +2,7 @@ package net.folds.hexciv;
 
 import java.awt.*;
 import java.awt.geom.Rectangle2D;
+import java.util.BitSet;
 import java.util.Vector;
 
 /**
@@ -215,7 +216,7 @@ public class Drafter {
         }
     }
 
-    protected void labelFeatures(Point cellCenter, TerrainTypes terrain, Vector<Boolean> features) {
+    protected void labelFeatures(Point cellCenter, TerrainTypes terrain, BitSet features) {
         String label = Features.toString(terrain, features);
         int featuresWidth = getWidthInPixels(label);
         int x = cellCenter.x - featuresWidth / 2;

@@ -5,6 +5,7 @@ import com.sun.javaws.Globals;
 import javax.swing.undo.*;
 import java.io.File;
 import java.lang.reflect.Field;
+import java.util.BitSet;
 import java.util.Vector;
 
 /**
@@ -17,7 +18,9 @@ public class EditorState {
     private boolean bonus;
     private boolean road;
     private boolean railroad;
+    private boolean pollution;
     private boolean irrigation;
+    private boolean mines;
     private boolean village;
     private boolean city;
 
@@ -51,7 +54,9 @@ public class EditorState {
         bonus = false;
         road = false;
         railroad = false;
+        pollution = false;
         irrigation = false;
+        mines = false;
         village = false;
         city = false;
         undoStack = new UndoStack();
@@ -116,14 +121,16 @@ public class EditorState {
         return map.getCellSnapshot(cellId);
     }
 
-    protected Vector<Boolean> getFeatures() {
-        Vector<Boolean> result = new Vector<>(6);
-        result.add(bonus);
-        result.add(road);
-        result.add(railroad);
-        result.add(irrigation);
-        result.add(village);
-        result.add(city);
+    protected BitSet getFeatures() {
+        BitSet result = new BitSet(8);
+        result.set(0, bonus);
+        result.set(1, road);
+        result.set(2, railroad);
+        result.set(3, pollution);
+        result.set(4, irrigation);
+        result.set(5, mines);
+        result.set(6, village);
+        result.set(7, city);
         return result;
     }
 
@@ -139,7 +146,7 @@ public class EditorState {
         return undoStack.getUndoText();
     }
 
-    protected boolean justSetCellFeatures(int cellId, Vector<Boolean> features) {
+    protected boolean justSetCellFeatures(int cellId, BitSet features) {
         return map.setFeatures(cellId, features);
     }
 
@@ -174,8 +181,8 @@ public class EditorState {
         return result;
     }
 
-    protected boolean setCellFeatures(int cellId, Vector<Boolean> features) {
-        Vector<Boolean> oldFeatures = map.getFeatures(cellId);
+    protected boolean setCellFeatures(int cellId, BitSet features) {
+        BitSet oldFeatures = map.getFeatures(cellId);
         boolean result = justSetCellFeatures(cellId, features);
         if (result) {
             CellFeaturesEdit edit = new CellFeaturesEdit(this, oldFeatures, features, cellId);
@@ -275,8 +282,8 @@ public class EditorState {
     // returns whether the request changed the state.
     protected boolean updatePalettes(int cellId) {
         TerrainTypes terrain = map.getTerrain(cellId);
-        Vector<Boolean> features = map.getFeatures(cellId);
-        Vector<Boolean> currentFeatures = this.getFeatures();
+        BitSet features = map.getFeatures(cellId);
+        BitSet currentFeatures = this.getFeatures();
         if ((this.terrain.equals(terrain)) && (currentFeatures.equals(features))) {
             return false;
         }

@@ -5,6 +5,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.undo.CannotRedoException;
 import javax.swing.undo.CannotUndoException;
 import java.io.File;
+import java.util.BitSet;
 import java.util.Vector;
 
 import darrylbu.util.SwingUtils;
@@ -103,7 +104,7 @@ public class EditScreen extends JFrame implements PaintableScreen, MovableMap, C
         return editorState.getCellSnapshot(cellId);
     }
 
-    public Vector<Boolean> getDesiredFeatures() {
+    public BitSet getDesiredFeatures() {
         return editorState.getFeatures();
     }
 

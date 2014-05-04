@@ -1,6 +1,7 @@
 package net.folds.hexciv;
 
 import java.awt.*;
+import java.util.BitSet;
 import java.util.Vector;
 
 /**
@@ -14,14 +15,14 @@ public class CellSnapshot {
     double  meanDiameterInKilometers;
     double  longitude;
     double  latitude;
-    Vector<Boolean> features;
+    BitSet  features;
     String  description;
     Color   color;
 
     CellSnapshot(int id, int row, int positionInRow,
                  double areaInSquareKilometers, double meanDiameterInKilometers,
                  double longitude, double latitude,
-                 Vector<Boolean> features, String description, Color color) {
+                 BitSet features, String description, Color color) {
         this.id = id;
         this.row = row;
         this.positionInRow = positionInRow;

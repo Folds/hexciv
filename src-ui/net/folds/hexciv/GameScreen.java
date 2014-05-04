@@ -10,6 +10,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.util.BitSet;
 import java.util.Vector;
 
 /**
@@ -148,7 +149,7 @@ public class GameScreen extends JFrame
         return editorState.getCellSnapshot(cellId);
     }
 
-    public Vector<Boolean> getDesiredFeatures() {
+    public BitSet getDesiredFeatures() {
         return editorState.getFeatures();
     }
 

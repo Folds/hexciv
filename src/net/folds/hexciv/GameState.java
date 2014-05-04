@@ -6,7 +6,7 @@ import java.util.Vector;
 /**
  * Created by jasper on Apr 21, 2014.
  */
-public class GameState {
+public class GameState implements ClaimReferee {
     GameListener parent;
     Vector<Civilization> civs;
     Vector<UnitType> unitTypes;
@@ -49,22 +49,6 @@ public class GameState {
         }
     }
 
-    protected boolean randomBonus(TerrainTypes terrain) {
-        if (terrain == TerrainTypes.grass) {
-            return false;
-        }
-        double value = Math.random();
-        if (value < 0.0625) {
-            return true;
-        }
-        if (terrain == TerrainTypes.sea) {
-            if (value < 0.25) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     protected int countCities() {
         int result = 0;
         for (Civilization civ : civs) {
@@ -104,6 +88,40 @@ public class GameState {
         return result;
     }
 
+    protected int getYear() {
+        if (turn <= 0)   { return -4004; }
+        if (turn == 200) { return 1; }
+        if (turn <= 250) { return 20 * turn - 4000; }
+        if (turn <= 300) { return 10 * turn - 1500; }
+        if (turn <= 350) { return  5 * turn; }
+        if (turn <= 400) { return  2 * turn + 1050; }
+        return turn + 1450;
+    }
+
+    public boolean isAvailable(int cellId, Civilization civ) {
+        Vector<Integer> cityLocations = civ.getCityLocations();
+        if (cityLocations != null) {
+            for (int location : cityLocations) {
+                if (cellId == location) {
+                    return false;
+                }
+            }
+        }
+        for (Civilization otherCiv : civs) {
+            if (civ != otherCiv) {
+                Vector<Integer> locations = civ.getLocations();
+                if (locations != null) {
+                    for (int location : locations) {
+                        if (cellId == location) {
+                            return false;
+                        }
+                    }
+                }
+            }
+        }
+        return true;
+    }
+
     protected boolean isGameOver() {
         if (turn > 550) {
             return true;
@@ -121,7 +139,7 @@ public class GameState {
             parent.celebrateYear(getYear());
         }
         for (Civilization civ : civs) {
-            civ.playTurn(map, parent);
+            civ.playTurn(map, parent, this);
         }
         if (turn >= 200) {
             for (Civilization civ : civs) {
@@ -132,13 +150,20 @@ public class GameState {
         isTurnInProgress = false;
     }
 
-    protected int getYear() {
-        if (turn <= 0)   { return -4004; }
-        if (turn == 200) { return 1; }
-        if (turn <= 250) { return 20 * turn - 4000; }
-        if (turn <= 300) { return 10 * turn - 1500; }
-        if (turn <= 350) { return  5 * turn; }
-        if (turn <= 400) { return  2 * turn + 1050; }
-        return turn + 1450;
+    protected boolean randomBonus(TerrainTypes terrain) {
+        if (terrain == TerrainTypes.grass) {
+            return false;
+        }
+        double value = Math.random();
+        if (value < 0.0625) {
+            return true;
+        }
+        if (terrain == TerrainTypes.sea) {
+            if (value < 0.25) {
+                return true;
+            }
+        }
+        return false;
     }
+
 }

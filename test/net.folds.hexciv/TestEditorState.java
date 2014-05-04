@@ -4,6 +4,7 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.swing.undo.CannotUndoException;
+import java.util.BitSet;
 import java.util.Vector;
 
 /**
@@ -20,12 +21,12 @@ public class TestEditorState {
     public void testUndo() {
         editorState.resetUndoStack();
         TerrainTypes oldSouthPoleTerrain = editorState.map.getTerrain(0);
-        Vector<Boolean> oldSouthPoleFeatures = editorState.map.getFeatures(0);
-        Vector<Boolean> desiredSouthPoleFeatures = getFeatures(true, true, true, true, true, true, true);
+        BitSet oldSouthPoleFeatures = editorState.map.getFeatures(0);
+        BitSet desiredSouthPoleFeatures = getFeatures(true, true, true, true, true, true, true, true);
         int numFeatures = desiredSouthPoleFeatures.size();
         editorState.markUndoStack();
         editorState.setCellFeatures(0, desiredSouthPoleFeatures);
-        Vector<Boolean> newSouthPoleFeatures = editorState.map.getFeatures(0);
+        BitSet newSouthPoleFeatures = editorState.map.getFeatures(0);
         Assert.assertEquals(newSouthPoleFeatures, desiredSouthPoleFeatures,
                 "Expected south pole to be changed to have all " + numFeatures + " features.");
         editorState.markUndoStack();
@@ -38,7 +39,7 @@ public class TestEditorState {
         Assert.assertEquals(newerSouthPoleTerrain, oldSouthPoleTerrain,
                 "Expected south pole terrain to be reverted to " + oldSouthPoleTerrain.toString() + ".");
         editorState.undo();
-        Vector<Boolean> newerSouthPoleFeatures = editorState.map.getFeatures(0);
+        BitSet newerSouthPoleFeatures = editorState.map.getFeatures(0);
         Assert.assertEquals(newerSouthPoleFeatures, oldSouthPoleFeatures,
                 "Expected south pole features to be reverted to have no features.");
         try {
@@ -51,17 +52,18 @@ public class TestEditorState {
         editorState.resetUndoStack();
     }
 
-    Vector<Boolean> getFeatures(boolean bonus, boolean road, boolean railroad,
+    BitSet getFeatures(boolean bonus, boolean road, boolean railroad, boolean pollution,
                                 boolean irrigation, boolean mine,
                                 boolean village, boolean city) {
-        Vector<Boolean> result = new Vector<>(6);
-        result.add(bonus);
-        result.add(road);
-        result.add(railroad);
-        result.add(irrigation);
-        result.add(mine);
-        result.add(village);
-        result.add(city);
+        BitSet result = new BitSet(8);
+        result.set(0, bonus);
+        result.set(1, road);
+        result.set(2, railroad);
+        result.set(3, pollution);
+        result.set(4, irrigation);
+        result.set(5, mine);
+        result.set(6, village);
+        result.set(7, city);
         return result;
     }
 }

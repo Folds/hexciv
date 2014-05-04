@@ -2,6 +2,7 @@ package net.folds.hexciv;
 
 import java.awt.*;
 import java.awt.geom.Rectangle2D;
+import java.util.BitSet;
 import java.util.Vector;
 
 /**
@@ -15,7 +16,7 @@ public class TerrainPaletteDrafter extends Drafter {
     }
 
     public void drawPalette(int spanInPixels, int heightInPixels,
-                            TerrainTypes desiredTerrain, Vector<Boolean> desiredFeatures) {
+                            TerrainTypes desiredTerrain, BitSet desiredFeatures) {
         TerrainTypes[] allTypes = TerrainTypes.values();
         int numCells = allTypes.length;
 

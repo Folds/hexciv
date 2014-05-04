@@ -1,6 +1,7 @@
 package net.folds.hexciv;
 
 import java.awt.*;
+import java.util.BitSet;
 import java.util.Vector;
 
 /**
@@ -45,14 +46,11 @@ public enum Features {
         }
     }
 
-    boolean isChosen(Vector<Boolean> choices) {
-        if (choices.size() > value) {
-            return choices.get(value);
-        }
-        return false;
+    boolean isChosen(BitSet choices) {
+        return choices.get(value);
     }
 
-    static protected String toString(TerrainTypes terrain, Vector<Boolean> features) {
+    static protected String toString(TerrainTypes terrain, BitSet features) {
         String result = new String();
         if ((terrain.isLand()) && (city.isChosen(features))) {
             result = "1";

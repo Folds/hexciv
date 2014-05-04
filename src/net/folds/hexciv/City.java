@@ -28,13 +28,18 @@ public class City {
         // To-do:  initialize improvementIndexes to all false,
         //         for each possible city improvement.
         this.name = name;
-        size = 1;
         storedFood = 0;
         storedProduction = 0;
         location = cellId;
+        if (cellId < 0) {
+            size = 0;
+            numEntertainers = 0;
+        } else {
+            size = 1;
+            numEntertainers = 1;
+        }
         numTaxMen = 0;
         numScientists = 0;
-        numEntertainers = 1;
         tradePartnerLocations = new Vector<Integer>(3);
         for (int i = 0; i < 3; i++) {
             tradePartnerLocations.add(-1);
@@ -122,9 +127,9 @@ public class City {
 
     protected boolean isNone() {
         if (location < 0) {
-            return false;
+            return true;
         }
-        return true;
+        return false;
     }
 
     protected int getUpkeepCost() {

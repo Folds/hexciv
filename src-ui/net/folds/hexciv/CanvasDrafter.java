@@ -1,6 +1,7 @@
 package net.folds.hexciv;
 
 import java.awt.*;
+import java.util.BitSet;
 import java.util.Vector;
 
 /**
@@ -124,7 +125,7 @@ public class CanvasDrafter extends Drafter {
                 if ((cellId >= 0) && (cellId < map.countCells())) {
                     Point cellCenter = getCellCenter(row, col);
                     TerrainTypes terrain = map.getTerrain(cellId);
-                    Vector<Boolean> features = map.getFeatures(cellId);
+                    BitSet features = map.getFeatures(cellId);
                     labelFeatures(cellCenter, terrain, features);
                 }
             }
@@ -203,7 +204,7 @@ public class CanvasDrafter extends Drafter {
 
     private boolean doesIndexPointToFeature(int index, Directions dir, Features feature) {
         int neighboringCellId = insetMap.getNeighboringCellIdIgnoringRotation(index, dir);
-        Vector<Boolean> neighborFeatures = map.getFeatures(neighboringCellId);
+        BitSet neighborFeatures = map.getFeatures(neighboringCellId);
         return feature.isChosen(neighborFeatures);
     }
 
@@ -231,7 +232,7 @@ public class CanvasDrafter extends Drafter {
                 int index = getIndex(item);
                 int cellId = insetMap.getCellId(index);
                 boolean isVoid = isVoid(index);
-                Vector<Boolean> cellFeatures = map.getFeatures(cellId);
+                BitSet cellFeatures = map.getFeatures(cellId);
                 boolean railroad = Features.railroad.isChosen(cellFeatures);
                 if (railroad) {
                     if (roadInProgress) {
@@ -318,7 +319,7 @@ public class CanvasDrafter extends Drafter {
                 int index = getIndex(item);
                 int cellId = insetMap.getCellId(index);
                 boolean isVoid = isVoid(index);
-                Vector<Boolean> cellFeatures = map.getFeatures(cellId);
+                BitSet cellFeatures = map.getFeatures(cellId);
                 boolean road = Features.road.isChosen(cellFeatures);
                 boolean railroad = Features.railroad.isChosen(cellFeatures);
                 if (road) {

@@ -214,7 +214,7 @@ public class WorldMap {
         double longitude = mesh.getLongitudeInDegrees(cellId);
         double latitude = mesh.getLatitudeInDegrees(cellId);
         if ((cellId >= 0) && (cellId <= countCells() - 1)) {
-            Vector<Boolean> hasFeatures = getFeatures(cellId);
+            BitSet hasFeatures = getFeatures(cellId);
             String description = terrain[cellId].getDescription(Features.bonus.isChosen(hasFeatures));
             Color color = terrain[cellId].getColor();
 
@@ -228,40 +228,38 @@ public class WorldMap {
                                 noFeatures(), description, color);
     }
 
-    Vector<Boolean> noFeatures() {
-        Vector<Boolean> result = new Vector<>(Features.count());
-        for (int i = 0; i < Features.count(); i++) {
-            result.add(false);
-        }
-        return result;
+    BitSet noFeatures() {
+        return new BitSet(Features.count());
     }
 
-    Vector<Boolean> getFeatures(int cellId) {
+    BitSet getFeatures(int cellId) {
         if ((cellId < 0) || (cellId >= countCells())) {
             return noFeatures();
         }
-        Vector<Boolean> result = new Vector<>(6);
-        result.add(bonuses.get(cellId));
-        result.add(roads.get(cellId));
-        result.add(railroads.get(cellId));
-        result.add(irrigation.get(cellId));
-        result.add(mines.get(cellId));
-        result.add(villages.get(cellId));
-        result.add(cities.get(cellId));
+        BitSet result = new BitSet(8);
+        result.set(0, bonuses.get(cellId));
+        result.set(1, roads.get(cellId));
+        result.set(2, railroads.get(cellId));
+        result.set(3, pollution.get(cellId));
+        result.set(4, irrigation.get(cellId));
+        result.set(5, mines.get(cellId));
+        result.set(6, villages.get(cellId));
+        result.set(7, cities.get(cellId));
         return result;
     }
 
-    protected boolean setFeatures(int cellId, Vector<Boolean> features) {
+    protected boolean setFeatures(int cellId, BitSet features) {
         if (getFeatures(cellId).equals(features)) {
             return false;
         }
         bonuses.set(   cellId, features.get(0));
         roads.set(cellId, features.get(1));
         railroads.set(cellId, features.get(2));
-        irrigation.set(cellId, features.get(3));
-        mines.set(cellId, features.get(4));
-        villages.set(cellId, features.get(5));
-        cities.set(cellId, features.get(6));
+        pollution.set(cellId, features.get(3));
+        irrigation.set(cellId, features.get(4));
+        mines.set(cellId, features.get(5));
+        villages.set(cellId, features.get(6));
+        cities.set(cellId, features.get(7));
         return true;
     }
 
@@ -314,6 +312,9 @@ public class WorldMap {
     }
 
     boolean hasCity(int cellId) {
+        if (cellId < 0) {
+            return false;
+        }
         return cities.get(cellId);
     }
 
