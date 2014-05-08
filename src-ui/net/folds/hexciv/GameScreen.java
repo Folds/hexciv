@@ -214,7 +214,10 @@ public class GameScreen extends JFrame
     }
 
     public void startGame() {
+        mapPane.hideAll();
         gameState.initialize();
+        mapPane.seeCells(gameState.getSeenCells());
+        mapPane.repaint();
         timer.start();
     }
 
@@ -280,5 +283,9 @@ public class GameScreen extends JFrame
         if (updated) {
             repaintPalettes();
         }
+    }
+
+    public void updateSeenCells(BitSet seenCells) {
+        mapPane.seeCells(seenCells);
     }
 }

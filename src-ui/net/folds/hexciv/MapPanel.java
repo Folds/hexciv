@@ -5,6 +5,7 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.util.BitSet;
 
 /**
  * Created by Jasper on Sep 24, 2011.
@@ -14,11 +15,14 @@ public class MapPanel extends JPanel {
     private WorldMap map;
     private int recentHexWidthInPixels;
     private int recentHexSideInPixels;
+    private BitSet seenCells;
 
     public MapPanel(MovableMap parent) {
         super();
         this.parent = parent;
         this.map = parent.getMap();
+        seenCells = new BitSet(map.countCells());
+        seeAll();
         MapMouseListener m = new MapMouseListener();
         addMouseListener(m);
         addMouseMotionListener(m);
@@ -28,11 +32,30 @@ public class MapPanel extends JPanel {
     public MapPanel(WorldMap map) {
         super();
         this.map = map;
+        seenCells = new BitSet(map.countCells());
+        seeAll();
         setPreferredSize(new Dimension(440, 188));
+    }
+
+    protected void seeAll() {
+        seenCells.clear();
+        seenCells.set(0, map.countCells());
     }
 
     protected void setMap(WorldMap map) {
         this.map = map;
+    }
+
+    void hideAll() {
+        seenCells.clear();
+        repaint();
+    }
+
+    protected void seeCells(BitSet seenCells) {
+        BitSet newCells = (BitSet) seenCells.clone();
+        newCells.andNot(this.seenCells);
+        this.seenCells.or(newCells);
+        repaint(newCells);
     }
 
     int getMapHeightInHexSides() {
@@ -78,15 +101,25 @@ public class MapPanel extends JPanel {
         }
     }
 
+    protected void repaint(BitSet updatedCells) {
+        for (int i = 0; i < map.countCells(); i++) {
+            if (updatedCells.get(i)) {
+                repaint(i);
+            }
+        }
+    }
+
     protected void repaint(int cellId) {
-        int leftMarginInPixels = 2 + recentHexWidthInPixels / 4 + 1;
-        int topMarginInPixels = 2;
-        Rectangle margins = new Rectangle(leftMarginInPixels, topMarginInPixels,
-                getWidth() - leftMarginInPixels - 2,
-                getHeight() - topMarginInPixels - 2);
-        MapLoupe loupe = new MapLoupe(map, recentHexWidthInPixels, recentHexSideInPixels, margins);
-        Rectangle rect = loupe.getAffectedArea(cellId);
-        repaint(rect.x, rect.y, rect.width, rect.height);
+        if (seenCells.get(cellId)) {
+            int leftMarginInPixels = 2 + recentHexWidthInPixels / 4 + 1;
+            int topMarginInPixels = 2;
+            Rectangle margins = new Rectangle(leftMarginInPixels, topMarginInPixels,
+                    getWidth() - leftMarginInPixels - 2,
+                    getHeight() - topMarginInPixels - 2);
+            MapLoupe loupe = new MapLoupe(map, recentHexWidthInPixels, recentHexSideInPixels, margins);
+            Rectangle rect = loupe.getAffectedArea(cellId);
+            repaint(rect.x, rect.y, rect.width, rect.height);
+        }
     }
 
     public void paintComponent(Graphics comp) {
@@ -101,7 +134,7 @@ public class MapPanel extends JPanel {
         int topMarginInPixels = 2;
         Rectangle margins = new Rectangle(leftMarginInPixels, topMarginInPixels, w, h);
         MapDrafter drafter = new MapDrafter(map, comp2D, recentHexSideInPixels, margins);
-        drafter.drawMap();
+        drafter.drawMap(seenCells);
     }
 
     public int hexSideInPixels(int availableWidthForMapInPixels,

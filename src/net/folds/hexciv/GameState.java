@@ -1,5 +1,6 @@
 package net.folds.hexciv;
 
+import java.util.BitSet;
 import java.util.Collections;
 import java.util.Vector;
 
@@ -49,6 +50,14 @@ public class GameState implements ClaimReferee {
         }
     }
 
+    BitSet collateSeenCells() {
+        BitSet result = new BitSet(map.countCells());
+        for (Civilization civ : civs) {
+            result.or(civ.getSeenCells());
+        }
+        return result;
+    }
+
     protected int countCities() {
         int result = 0;
         for (Civilization civ : civs) {
@@ -59,6 +68,11 @@ public class GameState implements ClaimReferee {
 
     protected int countCivs() {
         return civs.size();
+    }
+
+    protected int countSeenCells() {
+        BitSet seenCells = getSeenCells();
+        return seenCells.cardinality();
     }
 
     protected int countUnits() {
@@ -84,6 +98,14 @@ public class GameState implements ClaimReferee {
         Vector<Integer> result = new Vector<Integer>(numPossibleLocations);
         for (Civilization civ : civs) {
             result.addAll(civ.getLocations());
+        }
+        return result;
+    }
+
+    protected BitSet getSeenCells() {
+        BitSet result = new BitSet(map.countCells());
+        for (Civilization civ : civs) {
+            result.or(civ.getSeenCells());
         }
         return result;
     }
@@ -134,6 +156,9 @@ public class GameState implements ClaimReferee {
             return;
         }
         isTurnInProgress = true;
+
+        BitSet seenCells = collateSeenCells();
+        parent.updateSeenCells(seenCells);
 
         if (turn % 50 == 0) {
             parent.celebrateYear(getYear());

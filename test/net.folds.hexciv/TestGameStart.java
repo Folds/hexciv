@@ -73,6 +73,8 @@ public class TestGameStart {
         int location = gameState.getDistinctLocations().get(0);
         Assert.assertTrue(location >= 0);
         Assert.assertTrue(location < 19); // Only the southernmost 19 cells of Polara are land.
+        Assert.assertEquals(civ.countSeenCells(), 7); // So none of those 19 cells is a pentagon.
+        Assert.assertEquals(gameState.countSeenCells(), 7);
 
         playTurns(gameState, 1);
         Assert.assertEquals(gameState.turn, 1);
@@ -89,27 +91,42 @@ public class TestGameStart {
         Assert.assertEquals(civ.countStoredFood(), 2);
         Assert.assertEquals(civ.countStoredProduction(), 2);
 
-        playTurns(gameState, 8);
+        playTurns(gameState, 4);
+        Assert.assertEquals(gameState.turn, 6);
+        Assert.assertEquals(civ.countCities(), 1);
+        Assert.assertEquals(civ.getScore(map), 1);
+        Assert.assertEquals(civ.countStoredFood(), 10);
+        Assert.assertEquals(civ.countStoredProduction(), 10);
+
+        playTurns(gameState, 1);
+        Assert.assertEquals(gameState.turn, 7);
+        Assert.assertEquals(civ.countCities(), 1);
+        Assert.assertEquals(civ.countUnits(), 1);
+        Assert.assertEquals(civ.getScore(map), 1);
+        Assert.assertEquals(civ.countStoredFood(), 12);
+        Assert.assertEquals(civ.countStoredProduction(), 2);
+        Assert.assertTrue(civ.countSeenCells() >= 10); // So none of those 19 cells is a pentagon.
+        Assert.assertTrue(gameState.countSeenCells() >= 10);
+
+        playTurns(gameState, 3);
         Assert.assertEquals(gameState.turn, 10);
         Assert.assertEquals(civ.countCities(), 1);
         Assert.assertEquals(civ.getScore(map), 1);
         Assert.assertEquals(civ.countStoredFood(), 18);
-        Assert.assertEquals(civ.countStoredProduction(), 18);
+        Assert.assertEquals(civ.countStoredProduction(), 8);
 
         playTurns(gameState, 1);
         Assert.assertEquals(gameState.turn, 11);
         Assert.assertEquals(civ.countCities(), 1);
         Assert.assertEquals(civ.getScore(map), 1);
         Assert.assertEquals(civ.countStoredFood(), 20);
-        Assert.assertEquals(civ.countStoredProduction(), 20);
+        Assert.assertEquals(civ.countStoredProduction(), 10);
 
         playTurns(gameState, 1);
         Assert.assertEquals(gameState.turn, 12);
         Assert.assertEquals(civ.countCities(), 1);
         Assert.assertEquals(civ.getScore(map), 2);
         Assert.assertEquals(civ.countStoredFood(), 2);
-        Assert.assertEquals(civ.countStoredProduction(), 23);
-
     }
 
 

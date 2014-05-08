@@ -1,6 +1,7 @@
 package net.folds.hexciv;
 
 import java.awt.*;
+import java.util.BitSet;
 
 /**
  * Created by Jasper on Jan 8, 2012.
@@ -16,30 +17,34 @@ public class MapDrafter extends Drafter {
     }
 
     public void drawMap() {
-        int numCells = (int) map.countCells();
-        int currentRow = map.getRow(0) - 1;
-        int currentSegment = map.getSegment(0);
-        TerrainTypes currentTerrain = TerrainTypes.ocean;
-        int firstCellInCurrentBatch = -1;
-        for (int i = 0; i < numCells; i++) {
-            int row = map.getRow(i);
-            int segment = map.getSegment(i);
-            TerrainTypes terrain = map.getTerrain(i);
-            if (   (row != currentRow)
-                || (segment != currentSegment)
-                || (terrain != currentTerrain)
-                || (i == numCells - 1)
-               ) {
-                if (firstCellInCurrentBatch >= 0) {
-                    drawCells(firstCellInCurrentBatch, i - 1);
+        BitSet seenCells = new BitSet(map.countCells());
+        seenCells.set(0, map.countCells() - 1);
+        drawMap(seenCells);
+    }
+
+    public void drawMap(BitSet seenCells) {
+        if (!seenCells.isEmpty()) {
+            int numCells = (int) map.countCells();
+            for (int i = seenCells.nextSetBit(0); (i >= 0) && (i < numCells); i = seenCells.nextSetBit(i + 1)) {
+                int currentRow = map.getRow(i);
+                int currentSegment = map.getSegment(i);
+                TerrainTypes currentTerrain = map.getTerrain(i);
+                for (int j = i + 1; j < numCells; j++) {
+                    if (   (map.getRow(j) != currentRow)
+                        || (map.getSegment(j) != currentSegment)
+                        || (map.getTerrain(j) != currentTerrain)
+                        || (!seenCells.get(j))
+                       ) {
+                        drawCells(i, j - 1);
+                        i = j - 1;
+                        break;
+                    }
                 }
-                currentRow = row;
-                currentSegment = segment;
-                currentTerrain = terrain;
-                firstCellInCurrentBatch = i;
+            }
+            if (seenCells.get(numCells - 1)) {
+                drawCells(numCells - 1, numCells - 1);
             }
         }
-        drawCells(numCells - 1, numCells - 1);
         drawLatitudes();
         drawLongitudes();
     }

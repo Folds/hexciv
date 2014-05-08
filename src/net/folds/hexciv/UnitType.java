@@ -11,8 +11,9 @@ public class UnitType {
     int defenseStrength;
     int mobility;
     int technologyIndex;
+    int capitalCost;   // in shields
     int logisticsCost; // in shields per turn
-    int feedingCost;     // in food per turn
+    int feedingCost;   // in food per turn
     int range;
     boolean hasLimitedRange;
     boolean isAerial;
@@ -27,6 +28,7 @@ public class UnitType {
         this.defenseStrength = 1;
         this.mobility = 1;
         this.technologyIndex = -1; // available immediately
+        this.capitalCost = 600;
         this.logisticsCost = 1;
         this.feedingCost = 0;
         this.range = 0;
@@ -49,11 +51,13 @@ public class UnitType {
 
     protected static UnitType proposeMilitia() {
         UnitType militia = new UnitType("Militia");
+        militia.capitalCost = 10;
         return militia;
     }
 
     protected static UnitType proposeSettler() {
         UnitType settler = new UnitType("Settler");
+        settler.capitalCost = 40;
         settler.attackStrength = 0;
         settler.feedingCost = 1;
         settler.isSettler = true;

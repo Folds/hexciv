@@ -22,6 +22,7 @@ public class City {
     Vector<Unit> units;
     Vector<Integer> farms;
     Vector<Integer> tradePartnerLocations;
+    ProductType wip;
 
     protected City(Civilization civ, int cellId, String name) {
         this.civ = civ;
@@ -61,6 +62,16 @@ public class City {
         return result;
     }
 
+    protected void produce() {
+        storedProduction = 0;
+        if (wip.isUnitType) {
+            Unit unit = new Unit(wip.unitType, location);
+            add(unit);
+        } else {
+
+        }
+    }
+
     protected void add(Unit unit) {
         if (units == null) {
             units = new Vector<Unit>(1);
@@ -89,6 +100,9 @@ public class City {
     }
 
     protected int countUnits() {
+        if (units == null) {
+            return 0;
+        }
         return units.size();
     }
 

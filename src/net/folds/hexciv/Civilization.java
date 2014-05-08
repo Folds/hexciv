@@ -3,6 +3,7 @@ package net.folds.hexciv;
 import java.text.DecimalFormat;
 import java.util.BitSet;
 import java.util.Collections;
+import java.util.Random;
 import java.util.Vector;
 
 /**
@@ -24,6 +25,7 @@ public class Civilization {
     private int sciencePercentage;
     private int longestPeaceAD;
     private int currentPeaceAD;
+    private BitSet seenCells;
 
     protected Civilization(Vector<GovernmentType> governmentTypes,
                            Vector<UnitType> unitTypes) {
@@ -46,6 +48,9 @@ public class Civilization {
         int cellId = chooseStartLocation(map, foreignLocations);
         Unit settler = new Unit(settlerType, cellId);
         none.add(settler);
+        seenCells = new BitSet(map.countCells());
+        seenCells.set(cellId);
+        seeNeighborsOf(map, cellId);
     }
 
     protected void abandonFurthestUnitThatNeedsMaintenance(WorldMap map, City city, GameListener listener) {
@@ -105,7 +110,10 @@ public class Civilization {
             }
         }
         for (Integer farm : region) {
-            if ((farm != cellId) && ((city.isNone()) || (!city.farms.contains(farm)))) {
+            if (   (farm != cellId)
+                && ((city.isNone()) || (!city.farms.contains(farm)))
+                && ((seenCells.get(farm)) || (map.getDistanceInCells(cellId, farm) == 1))
+               ) {
                 int metric = countOre(map, farm) + countFood(map, farm) + countMoney(map, farm);
                 if (metric > bestMetricSoFar) {
                     bestMetricSoFar = metric;
@@ -129,7 +137,9 @@ public class Civilization {
         int result = -1;
         int bestMetricSoFar = -1;
         for (int possibility : region) {
-            if (referee.isAvailable(possibility, this)) {
+            if (   (referee.isAvailable(possibility, this))
+                && ((seenCells == null) || (seenCells.get(possibility)) || (map.getDistanceInCells(cellId, possibility) == 1))
+               ) {
                 int metric = countFood(map, possibility) + countOre(map, possibility);
                 if (metric > bestMetricSoFar) {
                     result = possibility;
@@ -605,6 +615,10 @@ public class Civilization {
         return result;
     }
 
+    protected int countSeenCells() {
+        return seenCells.cardinality();
+    }
+
     protected int countStoredFood() {
         int result = 0;
         for (City city : cities) {
@@ -672,6 +686,64 @@ public class Civilization {
 
     protected String describeGovernment() {
         return getGovernmentType().name;
+    }
+
+    protected boolean doesRegionContainAtLeast5EasilyReachedLandCells(WorldMap map, int cellId) {
+        if (!map.isLand(cellId)) {
+            return false;
+        }
+        int numEasilyReachedCells = 1;
+        Vector<Integer> neighbors = map.getNeighbors(cellId);
+        for (int neighbor : neighbors) {
+            if (map.isLand(neighbor)) {
+                numEasilyReachedCells = numEasilyReachedCells + 1;
+            }
+        }
+        if (numEasilyReachedCells >= 5) {
+            return true;
+        }
+        if (numEasilyReachedCells == 1) {
+            return false;
+        }
+        Vector<Integer> fringe = map.getNeighbors(cellId);
+        for (int neighbor : neighbors) {
+            if (map.isLand(neighbor)) {
+                Vector<Integer> potentials = map.getNeighbors(neighbor);
+                for (Integer potential : potentials) {
+                    if (   ((int) potential != cellId)
+                            && (map.isLand((int) potential))
+                            && (!neighbors.contains(potential))
+                            && (!potentials.contains(potential))
+                            ) {
+                        potentials.add(potential);
+                        numEasilyReachedCells = numEasilyReachedCells + 1;
+                    }
+                }
+            }
+        }
+        if (numEasilyReachedCells >= 5) {
+            return true;
+        }
+        return false;
+//        Vector<Integer> region = map.getRegion(cellId, 2);
+//        Collections.sort(region);
+//        Vector<Integer> continent = map.getContinent(cellId);
+//        if (continent == null) {
+//            return false;
+//        }
+//        int numLandCells = 1;
+//        for (Integer regionCell : region) {
+//            if (regionCell != cellId) {
+//                if (continent.contains(regionCell)) {
+//                    numLandCells = numLandCells + 1;
+//                }
+//            }
+//        }
+//        if (numLandCells < 5) {
+//            return false;
+//        }
+//        return true;
+//
     }
 
     protected void fixSciencePercentage() {
@@ -841,6 +913,10 @@ public class Civilization {
         return result;
     }
 
+    protected BitSet getSeenCells() {
+        return (BitSet) seenCells.clone();
+    }
+
     protected int getStartLocationMetric(WorldMap map, int cellId) {
         int result = 0;
         Vector<Integer> region = map.getRegion(cellId, 7);
@@ -909,64 +985,6 @@ public class Civilization {
         return doesRegionContainAtLeast5EasilyReachedLandCells(map, cellId);
     }
 
-    protected boolean doesRegionContainAtLeast5EasilyReachedLandCells(WorldMap map, int cellId) {
-        if (!map.isLand(cellId)) {
-            return false;
-        }
-        int numEasilyReachedCells = 1;
-        Vector<Integer> neighbors = map.getNeighbors(cellId);
-        for (int neighbor : neighbors) {
-            if (map.isLand(neighbor)) {
-                numEasilyReachedCells = numEasilyReachedCells + 1;
-            }
-        }
-        if (numEasilyReachedCells >= 5) {
-            return true;
-        }
-        if (numEasilyReachedCells == 1) {
-            return false;
-        }
-        Vector<Integer> fringe = map.getNeighbors(cellId);
-        for (int neighbor : neighbors) {
-            if (map.isLand(neighbor)) {
-                Vector<Integer> potentials = map.getNeighbors(neighbor);
-                for (Integer potential : potentials) {
-                    if (   ((int) potential != cellId)
-                        && (map.isLand((int) potential))
-                        && (!neighbors.contains(potential))
-                        && (!potentials.contains(potential))
-                       ) {
-                        potentials.add(potential);
-                        numEasilyReachedCells = numEasilyReachedCells + 1;
-                    }
-                }
-            }
-        }
-        if (numEasilyReachedCells >= 5) {
-            return true;
-        }
-        return false;
-//        Vector<Integer> region = map.getRegion(cellId, 2);
-//        Collections.sort(region);
-//        Vector<Integer> continent = map.getContinent(cellId);
-//        if (continent == null) {
-//            return false;
-//        }
-//        int numLandCells = 1;
-//        for (Integer regionCell : region) {
-//            if (regionCell != cellId) {
-//                if (continent.contains(regionCell)) {
-//                    numLandCells = numLandCells + 1;
-//                }
-//            }
-//        }
-//        if (numLandCells < 5) {
-//            return false;
-//        }
-//        return true;
-//
-    }
-
     protected boolean isAnarchist() {
         if (governmentTypes.get(governmentTypeId).name.equals("Anarchy")) {
             return true;
@@ -1026,6 +1044,7 @@ public class Civilization {
         if (city.location < 0) {
             return;
         }
+        int prevFood = city.storedFood;
         if (city.storedFood < 0) {
             if (city.countSettlers() > 0) {
                 int unitIndex = getIndexOfFurthestSettler(map, city);
@@ -1060,6 +1079,10 @@ public class Civilization {
             if (newFarm >= 0) {
                 city.farms.add(newFarm);
             }
+            listener.repaintMaps(city.location);
+        }
+        if ((city.wip != null) && (city.storedProduction >= city.wip.getCapitalCost())) {
+            city.produce();
         }
         int food = city.storedFood + countFood(map, city);
         food = food - 2 * city.size;
@@ -1093,6 +1116,24 @@ public class Civilization {
         city.storedFood = food;
         city.storedProduction = city.storedProduction + ore;
         storedMoney = storedMoney + tax;
+        if ((city.wip == null) && (city.countUnits() == 0)) {
+            city.wip = new ProductType(UnitType.proposeMilitia());
+        }
+        if (isMilitarist() && (city.storedProduction < 5)) {
+            city.wip = new ProductType(UnitType.proposeMilitia());
+        }
+        if ((city.storedFood > prevFood) && (isMilitarist()) && (city.countUnits() > 0) && (unhappy < happy) && (city.size > 1)) {
+            city.wip = new ProductType(UnitType.proposeSettler());
+        }
+        if ((city.storedFood > prevFood) && (isMilitarist()) && (city.countUnits() > 0) && (unhappy == happy) && (city.size > 1)) {
+            city.wip = new ProductType(UnitType.proposeSettler());
+        }
+        if ((city.storedFood > prevFood) && (isMilitarist()) && (city.countUnits() > 0) && (unhappy == happy + 1) && (city.size > 1)) {
+            city.wip = new ProductType(UnitType.proposeSettler());
+        }
+        if ((city.storedFood > prevFood + 1) && (!isMilitarist()) && (city.countUnits() > 0) && (unhappy <= happy) && (city.size > 1)) {
+            city.wip = new ProductType(UnitType.proposeSettler());
+        }
     }
 
     protected void playTurn(WorldMap map, GameListener listener, ClaimReferee referee) {
@@ -1113,7 +1154,7 @@ public class Civilization {
                     Vector<Integer> toBeDeleted = new Vector<>();
                     for (int j = 0; j < city.units.size(); j++) {
                         Unit unit = city.units.get(j);
-                        boolean keepUnit = playTurn(map, unit, listener, referee);
+                        boolean keepUnit = playTurn(map, city, unit, listener, referee);
                         if (!keepUnit) {
                             toBeDeleted.add((Integer) j);
                         }
@@ -1137,14 +1178,115 @@ public class Civilization {
         }
     }
 
+    protected Vector<Integer> getLandNeighbors(WorldMap map, int cellId) {
+        Vector<Integer> result = new Vector<>(6);
+        Vector<Integer> neighbors = map.getNeighbors(cellId);
+        for (int neighbor : neighbors) {
+            if (map.isLand(neighbor)) {
+                result.add((Integer) neighbor);
+            }
+        }
+        return result;
+    }
+
     // returns false if the unit should be deleted.
-    protected boolean playTurn(WorldMap map, Unit unit, GameListener listener, ClaimReferee referee) {
+    protected boolean playTurn(WorldMap map, City city, Unit unit, GameListener listener, ClaimReferee referee) {
         boolean result = true;
         if (unit.unitType.name.equals("Settler")) {
             if (isGoodLocationForNewCity(map, unit.getLocation())) {
                 String cityName = foundCity(map, unit.getLocation(), referee);
                 listener.celebrateNewCity(unit, cityName);
                 result = false;
+            }
+            Vector<Integer> neighbors = getLandNeighbors(map, unit.cellId);
+            if (neighbors.size() > 0) {
+                Random random = new Random();
+                int numChoices = neighbors.size();
+                for (int i = 0; i < numChoices; i++) {
+                    if (random.nextFloat() * (numChoices - i) <= 1) {
+                        unit.cellId = neighbors.get(i);
+                        seeNeighborsOf(map, unit.cellId);
+                        break;
+                    }
+                }
+            }
+        }
+        if (unit.unitType.name.equals("Militia")) {
+            if (unit.getLocation() == city.location) {
+                Vector<Integer> region = map.getRegion(city.location, 2);
+                int numCellsInRegion = region.size();
+                int numSeenCellsInRegion = countSeenCells(region);
+                if (numSeenCellsInRegion < numCellsInRegion) {
+                    Vector<Integer> landNeighborsWithUnseenNeighbors = new Vector<>(6);
+                    Vector<Integer> neighbors = map.getNeighbors(city.location);
+                    for (int neighbor : neighbors) {
+                        if (map.isLand(neighbor)) {
+                            Vector<Integer> fringe = map.getNeighbors(neighbor);
+                            if (countSeenCells(fringe) < fringe.size()) {
+                                landNeighborsWithUnseenNeighbors.add((Integer) neighbor);
+                            }
+                        }
+                    }
+                    if (landNeighborsWithUnseenNeighbors.size() > 0) {
+                        Random random = new Random();
+                        int numChoices = landNeighborsWithUnseenNeighbors.size();
+                        for (int i = 0; i < numChoices; i++) {
+                            if (random.nextFloat() * (numChoices - i) <= 1) {
+                                unit.cellId = landNeighborsWithUnseenNeighbors.get(i);
+                                seeNeighborsOf(map, unit.cellId);
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            if (map.getDistanceInCells(unit.getLocation(), city.location) == 1) {
+                Vector<Integer> region = map.getRegion(city.location, 2);
+                int numCellsInRegion = region.size();
+                int numSeenCellsInRegion = countSeenCells(region);
+                if (numSeenCellsInRegion < numCellsInRegion) {
+                    Vector<Integer> landNeighborsWithUnseenNeighbors = new Vector<>(6);
+                    Vector<Integer> neighbors = map.getNeighbors(city.location);
+                    for (int neighbor : neighbors) {
+                        if (map.isLand(neighbor)) {
+                            Vector<Integer> fringe = map.getNeighbors(neighbor);
+                            if (countSeenCells(fringe) < fringe.size()) {
+                                landNeighborsWithUnseenNeighbors.add((Integer) neighbor);
+                            }
+                        }
+                    }
+                    if (landNeighborsWithUnseenNeighbors.size() > 0) {
+                        Random random = new Random();
+                        int numChoices = landNeighborsWithUnseenNeighbors.size();
+                        for (int i = 0; i < numChoices; i++) {
+                            if (random.nextFloat() * (numChoices - i) <= 1) {
+                                if (map.getDistanceInCells(unit.cellId, landNeighborsWithUnseenNeighbors.get(i)) == 1) {
+                                    unit.cellId = landNeighborsWithUnseenNeighbors.get(i);
+                                } else {
+                                    unit.cellId = city.location;
+                                }
+                                seeNeighborsOf(map, unit.cellId);
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return result;
+    }
+
+    protected void seeNeighborsOf(WorldMap map, int cellId) {
+        for (int neighbor : map.getNeighbors(cellId)) {
+            seenCells.set(neighbor);
+        }
+    }
+
+    protected int countSeenCells(Vector<Integer> region) {
+        int result = 0;
+        for (int cellId : region) {
+            if (seenCells.get(cellId)) {
+                result = result + 1;
             }
         }
         return result;
