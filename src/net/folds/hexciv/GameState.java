@@ -12,6 +12,7 @@ public class GameState implements ClaimReferee {
     Vector<Civilization> civs;
     Vector<UnitType> unitTypes;
     Vector<GovernmentType> governmentTypes;
+    TechTree techTree;
     WorldMap map;
     int turn;
     boolean isTurnInProgress;
@@ -22,8 +23,9 @@ public class GameState implements ClaimReferee {
         civs = new Vector<>(numCivilizations);
         unitTypes = UnitType.getChoices();
         governmentTypes = GovernmentType.getChoices();
+        techTree = TechTree.proposeTechs();
         for (int i = 0; i < numCivilizations; i++) {
-            Civilization civ = new Civilization(governmentTypes, unitTypes);
+            Civilization civ = new Civilization(governmentTypes, unitTypes, techTree);
             civ.setName(Civilization.proposeCivilizationName(i));
             civ.setRulerName(Civilization.proposeRulerName(i));
             civs.add(civ);
