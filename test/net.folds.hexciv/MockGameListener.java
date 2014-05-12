@@ -8,6 +8,7 @@ import java.util.BitSet;
  * Created by jasper on Apr 22, 2014.
  */
 public class MockGameListener implements GameListener {
+    public void celebrateDiscovery(Civilization civ, Technology tech) {}
     public void celebrateEnd() {}
     public void celebrateYear(int year) {}
     public void celebrateNewCity(Unit unit, String cityName) {}

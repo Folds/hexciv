@@ -26,6 +26,8 @@ public class Civilization {
     private int longestPeaceAD;
     private int currentPeaceAD;
     private BitSet seenCells;
+    private int techPriceFactor;
+    private TechChooser techChooser;
 
     protected Civilization(Vector<GovernmentType> governmentTypes,
                            Vector<UnitType> unitTypes,
@@ -35,13 +37,16 @@ public class Civilization {
         longestPeaceAD = 0;
         currentPeaceAD = 0;
         techKey = new TechKey(techTree);
+        techPriceFactor = 10;
     }
 
     protected void initialize(WorldMap map, Vector<Integer> foreignLocations) {
         governmentTypeId = GovernmentType.proposeId("Despotism");
         storedMoney = 0;
+        storedScience = 0;
         taxPercentage = 50;
         sciencePercentage = 50;
+        techChooser = new TechChooser();
         cities = new Vector<City>(1);
         City none = City.proposeNone(this);
         cities.add(none);
@@ -149,6 +154,11 @@ public class Civilization {
             }
         }
         return result;
+    }
+
+    protected void chooseNextTech() {
+        Vector<Integer> choices = techKey.getChoices();
+        techKey.nextTech = techChooser.chooseTech(choices, techKey);
     }
 
     protected int chooseStartLocation(WorldMap map, Vector<Integer> foreignLocations) {
@@ -869,6 +879,10 @@ public class Civilization {
         return result;
     }
 
+    protected String getName() {
+        return name;
+    }
+
     protected Vector<Integer> getRandomCells(WorldMap map, int numDesiredCells) {
         int numCells = numDesiredCells;
         if (numCells > map.countCells()) {
@@ -1111,6 +1125,19 @@ public class Civilization {
         city.storedFood = food;
         city.storedProduction = city.storedProduction + ore;
         storedMoney = storedMoney + tax;
+        storedScience = storedScience + science;
+        if ((storedScience > 0) && (techKey.isUndecided())) {
+            chooseNextTech();
+        }
+        if (techKey.isNextTechComplete(storedScience, techPriceFactor)) {
+            Technology tech = techKey.getNextTech();
+            techKey.advance();
+            listener.celebrateDiscovery(this, tech);
+            storedScience = storedScience - techKey.getPriceOfNextTech(techPriceFactor);
+        }
+        if ((storedScience > 0) && (techKey.isUndecided())) {
+            chooseNextTech();
+        }
         if ((city.wip == null) && (city.countUnits() == 0)) {
             city.wip = new ProductType(UnitType.proposeMilitia());
         }
@@ -1165,6 +1192,14 @@ public class Civilization {
                 }
             }
         }
+    }
+
+    protected void setTechPriceFactor(int techPriceFactor) {
+        this.techPriceFactor = techPriceFactor;
+    }
+
+    protected int getPriceOfNextTech() {
+        return techKey.getPriceOfNextTech(techPriceFactor);
     }
 
     protected void recordPeace() {

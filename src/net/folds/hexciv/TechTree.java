@@ -72,8 +72,41 @@ public class TechTree {
 
     protected BitSet getFreeTechs() {
         BitSet result = new BitSet(countNamedTechnologies());
-        result.set(0, 16);
+        int numFreeTechs = countFreeTechs();
+        result.set(0, numFreeTechs);
         return result;
+    }
+
+    protected int countFreeTechs() {
+        return 16;
+    }
+
+    // Future technology numbers are 1-based.
+    protected Technology getFutureTech(int arg) {
+        if (arg < 0) {
+            return null;
+        }
+        int numNamedTechs = countNamedTechnologies();
+        if (numNamedTechs < 0) {
+            return null;
+        }
+        if ((numNamedTechs == 0) && (arg == 1)) {
+            return new Technology(0, -1, -1, "Future Tech 1");
+        }
+        int nextTech = numNamedTechs + arg - 1;
+        return new Technology(nextTech, nextTech - 2, nextTech - 1, "Future Tech " + arg);
+    }
+
+    protected Technology getTech(int id) {
+        if (id < 0) {
+            return null;
+        }
+        int numNamedTechs = countNamedTechnologies();
+        if (id < numNamedTechs) {
+            return techs.get(id);
+        }
+        // Future technology numbers are 1-based.
+        return getFutureTech(id - numNamedTechs + 1);
     }
 
     protected void initialize() {

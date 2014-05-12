@@ -165,7 +165,9 @@ public class GameState implements ClaimReferee {
         if (turn % 50 == 0) {
             parent.celebrateYear(getYear());
         }
+        int techPriceFactor = getTechPriceFactor();
         for (Civilization civ : civs) {
+            civ.setTechPriceFactor(techPriceFactor);
             civ.playTurn(map, parent, this);
         }
         if (turn >= 200) {
@@ -191,6 +193,14 @@ public class GameState implements ClaimReferee {
             }
         }
         return false;
+    }
+
+    protected int getTechPriceFactor() {
+        if (turn <= 175) { return 10; }
+        if (turn <= 225) { return 10 + 10 * (turn - 175) / 50; }
+        if (turn <= 325) { return 20; }
+        if (turn <= 375) { return 20 + 20 * (turn - 325) / 50; }
+        return 40;
     }
 
 }

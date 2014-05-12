@@ -117,4 +117,22 @@ public class Util {
         return "False";
     }
 
+    static Vector<Integer> convertToIntegerVector(BitSet arg) {
+        int numElements = arg.cardinality();
+        Vector<Integer> result = new Vector<Integer>(numElements);
+        int pos = -1;
+        while (result.size() < numElements) {
+            pos = arg.nextSetBit(pos + 1);
+            result.add(pos);
+        }
+        return result;
+    }
+
+    static int getNthPosition(BitSet bits, int n) {
+        int result = -1;
+        for (int i = 0; i < n; i++) {
+            result = bits.nextSetBit(result + 1);
+        }
+        return result;
+    }
 }

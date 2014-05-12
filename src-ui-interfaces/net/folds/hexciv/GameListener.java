@@ -6,6 +6,7 @@ import java.util.BitSet;
  * Created by jasper on Apr 21, 2014.
  */
 public interface GameListener {
+    void celebrateDiscovery(Civilization civ, Technology tech);
     void celebrateEnd();
     void celebrateYear(int year);
     void celebrateNewCity(Unit unit, String cityName);

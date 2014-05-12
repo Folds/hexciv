@@ -91,6 +91,10 @@ public class GameScreen extends JFrame
         }
     }
 
+    public void celebrateDiscovery(Civilization civ, Technology tech) {
+        logPane.log(civ.getName() + " discovers " + tech.name + ".");
+    }
+
     public void celebrateEnd() {
         logPane.log("Game over.");
         for (Civilization civ : gameState.civs) {
