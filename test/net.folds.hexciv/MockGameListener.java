@@ -10,6 +10,7 @@ import java.util.BitSet;
 public class MockGameListener implements GameListener {
     public void celebrateDiscovery(Civilization civ, Technology tech) {}
     public void celebrateEnd() {}
+    public void celebrateTechnology (Civilization civ, TechKey key) {}
     public void celebrateYear(int year) {}
     public void celebrateNewCity(Unit unit, String cityName) {}
     public void bemoanDisorder(City city) {}

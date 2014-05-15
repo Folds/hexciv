@@ -12,6 +12,7 @@ public class GameState implements ClaimReferee {
     Vector<Civilization> civs;
     Vector<UnitType> unitTypes;
     Vector<GovernmentType> governmentTypes;
+    ImprovementVector improvementTypes;
     TechTree techTree;
     WorldMap map;
     int turn;
@@ -24,8 +25,9 @@ public class GameState implements ClaimReferee {
         unitTypes = UnitType.getChoices();
         governmentTypes = GovernmentType.getChoices();
         techTree = TechTree.proposeTechs();
+        improvementTypes = ImprovementVector.proposeImprovements();
         for (int i = 0; i < numCivilizations; i++) {
-            Civilization civ = new Civilization(governmentTypes, unitTypes, techTree);
+            Civilization civ = new Civilization(governmentTypes, unitTypes, techTree, improvementTypes);
             civ.setName(Civilization.proposeCivilizationName(i));
             civ.setRulerName(Civilization.proposeRulerName(i));
             civs.add(civ);
@@ -112,6 +114,14 @@ public class GameState implements ClaimReferee {
         return result;
     }
 
+    protected int getTechPriceFactor() {
+        if (turn <= 175) { return 10; }
+        if (turn <= 225) { return 10 + 10 * (turn - 175) / 50; }
+        if (turn <= 325) { return 20; }
+        if (turn <= 375) { return 20 + 20 * (turn - 325) / 50; }
+        return 40;
+    }
+
     protected int getYear() {
         if (turn <= 0)   { return -4004; }
         if (turn == 200) { return 1; }
@@ -168,6 +178,7 @@ public class GameState implements ClaimReferee {
         int techPriceFactor = getTechPriceFactor();
         for (Civilization civ : civs) {
             civ.setTechPriceFactor(techPriceFactor);
+            civ.tellStories(parent);
             civ.playTurn(map, parent, this);
         }
         if (turn >= 200) {
@@ -193,14 +204,6 @@ public class GameState implements ClaimReferee {
             }
         }
         return false;
-    }
-
-    protected int getTechPriceFactor() {
-        if (turn <= 175) { return 10; }
-        if (turn <= 225) { return 10 + 10 * (turn - 175) / 50; }
-        if (turn <= 325) { return 20; }
-        if (turn <= 375) { return 20 + 20 * (turn - 325) / 50; }
-        return 40;
     }
 
 }

@@ -9,6 +9,7 @@ public interface GameListener {
     void celebrateDiscovery(Civilization civ, Technology tech);
     void celebrateEnd();
     void celebrateYear(int year);
+    void celebrateTechnology(Civilization civ, TechKey key);
     void celebrateNewCity(Unit unit, String cityName);
     void bemoanDisorder(City city);
     void bemoanFamine(City city);

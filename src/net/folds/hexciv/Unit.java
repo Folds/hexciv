@@ -12,10 +12,20 @@ public class Unit {
     int remainingRange;
     boolean isFortified;
     boolean isSentried;
+    int wipTurns;
+    boolean isMining;
+    boolean isIrrigating;
+    boolean isBuildingRoad;
 
     protected Unit(UnitType unitType, int cellId) {
         this.unitType = unitType;
         this.cellId = cellId;
+        wipTurns = 0;
+        isFortified = false;
+        isSentried = false;
+        isMining = false;
+        isIrrigating = false;
+        isBuildingRoad = false;
     }
 
     protected int getLocation() {

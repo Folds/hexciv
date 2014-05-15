@@ -95,6 +95,10 @@ public class WorldMap {
         return BitSetPorter.bitsToString(irrigation);
     }
 
+    protected void buildRoad(int cellId) {
+        roads.set(cellId);
+    }
+
     int countPollution() {
         return pollution.cardinality(); // counts set bits.
     }

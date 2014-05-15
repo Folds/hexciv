@@ -18,7 +18,7 @@ public class City {
     int numScientists;
     int numEntertainers;
 
-    protected BitSet improvementFlags;
+    ImprovementKey improvements;
     Vector<Unit> units;
     Vector<Integer> farms;
     Vector<Integer> tradePartnerLocations;
@@ -45,31 +45,7 @@ public class City {
         for (int i = 0; i < 3; i++) {
             tradePartnerLocations.add(-1);
         }
-
-    }
-
-    protected int countWonders() {
-        int result = 0;
-        if (improvementFlags == null) {
-            return result;
-        }
-        for (int i = 0; i < improvementFlags.size(); i++) {
-            ImprovementType improvementType = ImprovementType.get(i);
-            if (improvementType.isWonder()) {
-                result = result + 1;
-            }
-        }
-        return result;
-    }
-
-    protected void produce() {
-        storedProduction = 0;
-        if (wip.isUnitType) {
-            Unit unit = new Unit(wip.unitType, location);
-            add(unit);
-        } else {
-
-        }
+        improvements = new ImprovementKey(civ.improvements);
     }
 
     protected void add(Unit unit) {
@@ -80,10 +56,6 @@ public class City {
             return;
         }
         units.add(unit);
-    }
-
-    protected boolean hasGranary() {
-        return false;
     }
 
     protected int countSettlers() {
@@ -106,12 +78,20 @@ public class City {
         return units.size();
     }
 
+    protected int countWonders() {
+        return improvements.countWonders();
+    }
+
     protected String describeUnit(int id) {
         String result = units.get(id).unitType.name;
         if (units.get(id).isVeteran) {
             result = result + " (V)";
         }
         return result;
+    }
+
+    protected int getLowestValueImprovement() {
+        return improvements.getLowestValueImprovement();
     }
 
     protected Unit getUnit(int id) {
@@ -130,13 +110,12 @@ public class City {
         return result;
     }
 
-    protected static City proposeNone(Civilization civ) {
-        City none = new City(civ, -1, "None");
-        none.size = 0;
-        none.precedence = 0;
-        none.storedFood = 0;
-        none.storedProduction = 0;
-        return none;
+    protected int getUpkeepCost() {
+        return improvements.getUpkeepCost();
+    }
+
+    protected boolean hasGranary() {
+        return false;
     }
 
     protected boolean isNone() {
@@ -146,19 +125,25 @@ public class City {
         return false;
     }
 
-    protected int getUpkeepCost() {
-        int result = 0;
-        if (improvementFlags == null) {
-            return result;
-        }
-        for (int i = 0; i < improvementFlags.size(); i++) {
-            if (improvementFlags.get(i)) {
-                ImprovementType improvementType = ImprovementType.get(i);
-                if (improvementType != null) {
-                    result = result + improvementType.upkeepCost;
-                }
+    protected void produce() {
+        storedProduction = 0;
+        if (wip.isUnitType) {
+            Unit unit = new Unit(wip.unitType, location);
+            add(unit);
+        } else {
+            if (wip.improvementType.id >= 0) {
+                improvements.set(wip.improvementType.id);
             }
         }
-        return result;
     }
+
+    protected static City proposeNone(Civilization civ) {
+        City none = new City(civ, -1, "None");
+        none.size = 0;
+        none.precedence = 0;
+        none.storedFood = 0;
+        none.storedProduction = 0;
+        return none;
+    }
+
 }

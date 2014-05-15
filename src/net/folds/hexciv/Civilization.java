@@ -19,6 +19,7 @@ public class Civilization {
     private Vector<Relationship> relationships;
     private Vector<GovernmentType> governmentTypes;
     private Vector<UnitType> unitTypes;
+    protected ImprovementVector improvements;
     private int storedMoney;
     private int storedScience;
     private int taxPercentage;
@@ -28,16 +29,20 @@ public class Civilization {
     private BitSet seenCells;
     private int techPriceFactor;
     private TechChooser techChooser;
+    private boolean hasToldStory;
 
     protected Civilization(Vector<GovernmentType> governmentTypes,
                            Vector<UnitType> unitTypes,
-                           TechTree techTree) {
+                           TechTree techTree,
+                           ImprovementVector improvements) {
         this.governmentTypes = governmentTypes;
         this.unitTypes = unitTypes;
+        this.improvements = improvements;
         longestPeaceAD = 0;
         currentPeaceAD = 0;
         techKey = new TechKey(techTree);
         techPriceFactor = 10;
+        hasToldStory = false;
     }
 
     protected void initialize(WorldMap map, Vector<Integer> foreignLocations) {
@@ -514,7 +519,7 @@ public class Civilization {
         TerrainTypes terrain = map.getTerrain(cellId);
         boolean hasBonus = map.hasBonus(cellId);
         int roadBonus = 0;
-        if ((map.hasRoad(cellId)) || (map.hasRailroad(cellId))) {
+        if ((map.hasRoad(cellId)) || (map.hasRailroad(cellId)) || (map.hasCity(cellId))) {
             roadBonus = 1;
         }
         int result = 0;
@@ -622,6 +627,16 @@ public class Civilization {
 
     protected int countSeenCells() {
         return seenCells.cardinality();
+    }
+
+    protected int countSeenCells(Vector<Integer> region) {
+        int result = 0;
+        for (int cellId : region) {
+            if (seenCells.get(cellId)) {
+                result = result + 1;
+            }
+        }
+        return result;
     }
 
     protected int countStoredFood() {
@@ -838,6 +853,17 @@ public class Civilization {
         return result;
     }
 
+    protected Vector<Integer> getLandNeighbors(WorldMap map, int cellId) {
+        Vector<Integer> result = new Vector<>(6);
+        Vector<Integer> neighbors = map.getNeighbors(cellId);
+        for (int neighbor : neighbors) {
+            if (map.isLand(neighbor)) {
+                result.add((Integer) neighbor);
+            }
+        }
+        return result;
+    }
+
     protected Vector<Integer> getLocations() {
         Vector<Integer> result = getCityLocations();
         result.addAll(getUnitLocations());
@@ -881,6 +907,10 @@ public class Civilization {
 
     protected String getName() {
         return name;
+    }
+
+    protected int getPriceOfNextTech() {
+        return techKey.getPriceOfNextTech(techPriceFactor);
     }
 
     protected Vector<Integer> getRandomCells(WorldMap map, int numDesiredCells) {
@@ -1008,6 +1038,25 @@ public class Civilization {
         return false;
     }
 
+    protected boolean isFarmOf(Civilization civ, int cellId) {
+        if (civ == null) {
+            return false;
+        }
+        if (civ.cities == null) {
+            return false;
+        }
+        for (City city : civ.cities) {
+            if (city.farms != null) {
+                for (int farmId : city.farms) {
+                    if (farmId == cellId) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
     protected boolean isGoodLocationForNewCity(WorldMap map, int cellId) {
         Vector<Integer> cityLocations = getCityLocations();
         return isAdequateStartLocation(map, cellId, cityLocations);
@@ -1026,22 +1075,23 @@ public class Civilization {
         return false;
     }
 
-    protected void pawnLowestValueImprovement(City city, GameListener listener) {
-        int improvementIndex = -1;
-        int value = 9999;
-        if (city.improvementFlags == null) {
-            return;
-        }
-        for (int i = 0; i < city.improvementFlags.size(); i++) {
-            if (city.improvementFlags.get(i)) {
-
+    protected Vector<Integer> landCells(WorldMap map, Vector<Integer> cells) {
+        Vector<Integer> result = new Vector<>(cells.size());
+        for (Integer cell : cells) {
+            if (map.isLand(cell)) {
+                result.add(cell);
             }
         }
+        return result;
+    }
+
+    protected void pawnLowestValueImprovement(City city, GameListener listener) {
+        int improvementIndex = city.getLowestValueImprovement();
         if (improvementIndex >= 0) {
-            ImprovementType improvementType = ImprovementType.get(improvementIndex);
+            ImprovementType improvementType = city.improvements.getImprovementType(improvementIndex);
             if (improvementType != null) {
                 listener.bemoanUnsupported(city, improvementType);
-                city.improvementFlags.clear(improvementIndex);
+                city.improvements.clear(improvementIndex);
                 storedMoney = storedMoney + improvementType.resaleValue;
             }
         }
@@ -1156,6 +1206,14 @@ public class Civilization {
         if ((city.storedFood > prevFood + 1) && (!isMilitarist()) && (city.countUnits() > 0) && (unhappy <= happy) && (city.size > 1)) {
             city.wip = new ProductType(UnitType.proposeSettler());
         }
+        if (city.countSettlers() > 0) {
+            requestImprovement(city, 12); // University
+            requestImprovement(city, 13); // Bank
+            requestImprovement(city,  7); // Market
+            requestImprovement(city,  6); // Library
+            requestImprovement(city,  2); // Temple
+            requestImprovement(city,  3); // Granary
+        }
     }
 
     protected void playTurn(WorldMap map, GameListener listener, ClaimReferee referee) {
@@ -1194,14 +1252,6 @@ public class Civilization {
         }
     }
 
-    protected void setTechPriceFactor(int techPriceFactor) {
-        this.techPriceFactor = techPriceFactor;
-    }
-
-    protected int getPriceOfNextTech() {
-        return techKey.getPriceOfNextTech(techPriceFactor);
-    }
-
     protected void recordPeace() {
         if (atPeace()) {
             currentPeaceAD = currentPeaceAD + 1;
@@ -1211,17 +1261,6 @@ public class Civilization {
         if (currentPeaceAD > longestPeaceAD) {
             longestPeaceAD = currentPeaceAD;
         }
-    }
-
-    protected Vector<Integer> getLandNeighbors(WorldMap map, int cellId) {
-        Vector<Integer> result = new Vector<>(6);
-        Vector<Integer> neighbors = map.getNeighbors(cellId);
-        for (int neighbor : neighbors) {
-            if (map.isLand(neighbor)) {
-                result.add((Integer) neighbor);
-            }
-        }
-        return result;
     }
 
     protected boolean playTurn(WorldMap map, City city, Unit unit,
@@ -1239,82 +1278,123 @@ public class Civilization {
                 listener.celebrateNewCity(unit, cityName);
                 result = false;
             }
-            Vector<Integer> neighbors = getLandNeighbors(map, unit.cellId);
-            if (neighbors.size() > 0) {
-                Random random = new Random();
-                int numChoices = neighbors.size();
-                for (int i = 0; i < numChoices; i++) {
-                    if (random.nextFloat() * (numChoices - i) <= 1) {
-                        unit.cellId = neighbors.get(i);
+            if (unit.wipTurns > 0) {
+                unit.wipTurns = unit.wipTurns + 1;
+                if (unit.isBuildingRoad) {
+                    if (unit.wipTurns >= 3) {
+                        map.buildRoad(unit.cellId);
+                        unit.wipTurns = 0;
+                    }
+                }
+            }
+            if ((!unit.isBuildingRoad) && (!unit.isMining) && (!unit.isIrrigating)) {
+                if (!map.hasRoad(unit.cellId)) {
+                    if (!map.hasCity(unit.cellId)) {
+                        if (isFarmOf(city.civ, unit.cellId)) {
+                            unit.isBuildingRoad = true;
+                            unit.wipTurns = 1;
+                        }
+                    }
+                }
+            }
+            if (unit.wipTurns == 0) {
+                int roadRemaining = 3;
+                while (roadRemaining > 0) {
+                    boolean onRoad = (map.hasRoad(unit.cellId) || map.hasCity(unit.cellId));
+                    Vector<Integer> neighbors = getLandNeighbors(map, unit.cellId);
+                    if (neighbors.size() > 0) {
+                        Random random = new Random();
+                        int numChoices = neighbors.size();
+                        unit.cellId = neighbors.get(random.nextInt(numChoices));
                         seeNeighborsOf(map, unit.cellId);
-                        break;
+                        unit.wipTurns = 0;
+                        unit.isMining = false;
+                        unit.isIrrigating = false;
+                        unit.isBuildingRoad = false;
+                    }
+                    if ((onRoad) && (map.hasRoad(unit.cellId))) {
+                        roadRemaining = roadRemaining - 1;
+                    } else {
+                        roadRemaining = roadRemaining - 3;
                     }
                 }
             }
         }
         if (unit.unitType.name.equals("Militia")) {
-            if (unit.getLocation() == city.location) {
-                Vector<Integer> region = map.getRegion(city.location, 2);
-                int numCellsInRegion = region.size();
-                int numSeenCellsInRegion = countSeenCells(region);
-                if (numSeenCellsInRegion < numCellsInRegion) {
-                    Vector<Integer> landNeighborsWithUnseenNeighbors = new Vector<>(6);
-                    Vector<Integer> neighbors = map.getNeighbors(city.location);
-                    for (int neighbor : neighbors) {
-                        if (map.isLand(neighbor)) {
-                            Vector<Integer> fringe = map.getNeighbors(neighbor);
-                            if (countSeenCells(fringe) < fringe.size()) {
-                                landNeighborsWithUnseenNeighbors.add((Integer) neighbor);
+            int roadRemaining = 3;
+            while (roadRemaining > 0) {
+                boolean onRoad = (map.hasRoad(unit.cellId) || map.hasCity(unit.cellId));
+                if (unit.getLocation() == city.location) {
+                    Vector<Integer> region = map.getRegion(city.location, 2);
+                    int numCellsInRegion = region.size();
+                    int numSeenCellsInRegion = countSeenCells(region);
+                    if (numSeenCellsInRegion < numCellsInRegion) {
+                        Vector<Integer> landNeighborsWithUnseenNeighbors = new Vector<>(6);
+                        Vector<Integer> neighbors = map.getNeighbors(city.location);
+                        for (int neighbor : neighbors) {
+                            if (map.isLand(neighbor)) {
+                                Vector<Integer> fringe = map.getNeighbors(neighbor);
+                                if (countSeenCells(fringe) < fringe.size()) {
+                                    landNeighborsWithUnseenNeighbors.add((Integer) neighbor);
+                                }
                             }
                         }
-                    }
-                    if (landNeighborsWithUnseenNeighbors.size() > 0) {
-                        Random random = new Random();
-                        int numChoices = landNeighborsWithUnseenNeighbors.size();
-                        for (int i = 0; i < numChoices; i++) {
-                            if (random.nextFloat() * (numChoices - i) <= 1) {
-                                unit.cellId = landNeighborsWithUnseenNeighbors.get(i);
-                                seeNeighborsOf(map, unit.cellId);
-                                break;
+                        if (landNeighborsWithUnseenNeighbors.size() > 0) {
+                            Random random = new Random();
+                            int numChoices = landNeighborsWithUnseenNeighbors.size();
+                            for (int i = 0; i < numChoices; i++) {
+                                if (random.nextFloat() * (numChoices - i) <= 1) {
+                                    unit.cellId = landNeighborsWithUnseenNeighbors.get(i);
+                                    seeNeighborsOf(map, unit.cellId);
+                                    break;
+                                }
                             }
                         }
-                    }
-                } else {
-                    if (countHappyCitizens(map, city) > countUnhappyCitizens(map, city)) {
-                        if (countMilitaryUnitsIn(city) > 1) {
-                            return keepTroops;
+                    } else {
+                        if (countHappyCitizens(map, city) > countUnhappyCitizens(map, city)) {
+                            if (countMilitaryUnitsIn(city) > 1) {
+                                return keepTroops;
+                            }
                         }
                     }
                 }
-            }
-            if (map.getDistanceInCells(unit.getLocation(), city.location) == 1) {
-                Vector<Integer> region = map.getRegion(city.location, 2);
-                int numCellsInRegion = region.size();
-                int numSeenCellsInRegion = countSeenCells(region);
-                if (numSeenCellsInRegion < numCellsInRegion) {
-                    Vector<Integer> landNeighborsWithUnseenNeighbors = new Vector<>(6);
-                    Vector<Integer> neighbors = map.getNeighbors(city.location);
-                    for (int neighbor : neighbors) {
-                        if (map.isLand(neighbor)) {
-                            Vector<Integer> fringe = map.getNeighbors(neighbor);
-                            if (countSeenCells(fringe) < fringe.size()) {
-                                landNeighborsWithUnseenNeighbors.add((Integer) neighbor);
+                if (map.getDistanceInCells(unit.getLocation(), city.location) == 1) {
+                    Vector<Integer> region = map.getRegion(city.location, 2);
+                    int numCellsInRegion = region.size();
+                    int numSeenCellsInRegion = countSeenCells(region);
+                    if (numSeenCellsInRegion < numCellsInRegion) {
+                        Vector<Integer> landNeighborsWithUnseenNeighbors = new Vector<>(6);
+                        Vector<Integer> neighbors = map.getNeighbors(city.location);
+                        for (int neighbor : neighbors) {
+                            if (map.isLand(neighbor)) {
+                                Vector<Integer> fringe = map.getNeighbors(neighbor);
+                                if (countSeenCells(fringe) < fringe.size()) {
+                                    landNeighborsWithUnseenNeighbors.add((Integer) neighbor);
+                                }
                             }
                         }
-                    }
-                    if (landNeighborsWithUnseenNeighbors.size() > 0) {
-                        Random random = new Random();
-                        int numChoices = landNeighborsWithUnseenNeighbors.size();
-                        for (int i = 0; i < numChoices; i++) {
-                            if (random.nextFloat() * (numChoices - i) <= 1) {
-                                if (map.getDistanceInCells(unit.cellId, landNeighborsWithUnseenNeighbors.get(i)) == 1) {
-                                    unit.cellId = landNeighborsWithUnseenNeighbors.get(i);
-                                } else {
-                                    unit.cellId = city.location;
+                        if (landNeighborsWithUnseenNeighbors.size() > 0) {
+                            Random random = new Random();
+                            int numChoices = landNeighborsWithUnseenNeighbors.size();
+                            for (int i = 0; i < numChoices; i++) {
+                                if (random.nextFloat() * (numChoices - i) <= 1) {
+                                    if (map.getDistanceInCells(unit.cellId, landNeighborsWithUnseenNeighbors.get(i)) == 1) {
+                                        unit.cellId = landNeighborsWithUnseenNeighbors.get(i);
+                                    } else {
+                                        unit.cellId = city.location;
+                                    }
+                                    seeNeighborsOf(map, unit.cellId);
+                                    break;
                                 }
-                                seeNeighborsOf(map, unit.cellId);
-                                break;
                             }
+                        } else {
+                            Vector<Integer> landNeighbors = landCells(map, map.getNeighbors(unit.cellId));
+                            int numChoices = landNeighbors.size();
+                            Random random = new Random();
+                            int i = random.nextInt(numChoices);
+                            int neighbor = landNeighbors.get(i);
+                            unit.cellId = neighbor;
+                            seeNeighborsOf(map, unit.cellId);
                         }
                     } else {
                         Vector<Integer> landNeighbors = landCells(map, map.getNeighbors(unit.cellId));
@@ -1325,41 +1405,12 @@ public class Civilization {
                         unit.cellId = neighbor;
                         seeNeighborsOf(map, unit.cellId);
                     }
-                } else {
-                    Vector<Integer> landNeighbors = landCells(map, map.getNeighbors(unit.cellId));
-                    int numChoices = landNeighbors.size();
-                    Random random = new Random();
-                    int i = random.nextInt(numChoices);
-                    int neighbor = landNeighbors.get(i);
-                    unit.cellId = neighbor;
-                    seeNeighborsOf(map, unit.cellId);
                 }
-            }
-        }
-        return result;
-    }
-
-    protected Vector<Integer> landCells(WorldMap map, Vector<Integer> cells) {
-        Vector<Integer> result = new Vector<>(cells.size());
-        for (Integer cell : cells) {
-            if (map.isLand(cell)) {
-                result.add(cell);
-            }
-        }
-        return result;
-    }
-
-    protected void seeNeighborsOf(WorldMap map, int cellId) {
-        for (int neighbor : map.getNeighbors(cellId)) {
-            seenCells.set(neighbor);
-        }
-    }
-
-    protected int countSeenCells(Vector<Integer> region) {
-        int result = 0;
-        for (int cellId : region) {
-            if (seenCells.get(cellId)) {
-                result = result + 1;
+                if ((onRoad) && (map.hasRoad(unit.cellId))) {
+                    roadRemaining = roadRemaining - 1;
+                } else {
+                    roadRemaining = roadRemaining - 3;
+                }
             }
         }
         return result;
@@ -1387,12 +1438,44 @@ public class Civilization {
         return "Raisa";
     }
 
+    protected void requestImprovement(City city, int improvementId) {
+        if (   (!city.improvements.get(improvementId))
+                && (techKey.hasTech(improvements.get(improvementId).technologyIndex))
+                ) {
+            city.wip = new ProductType(improvements.get(improvementId));
+        }
+
+    }
+
+    protected void seeNeighborsOf(WorldMap map, int cellId) {
+        for (int neighbor : map.getNeighbors(cellId)) {
+            seenCells.set(neighbor);
+        }
+    }
+
     protected void setName(String name) {
         this.name = name;
     }
 
     protected void setRulerName(String name) {
         ruler = name;
+    }
+
+    protected void setTechPriceFactor(int techPriceFactor) {
+        this.techPriceFactor = techPriceFactor;
+    }
+
+    protected String summarizeTechChoices() {
+        return techKey.summarizeAllChoices();
+    }
+
+    protected void tellStories(GameListener listener) {
+        if (techKey.nextTech >= 0) {
+            if (!hasToldStory) {
+                hasToldStory = true;
+                listener.celebrateTechnology(this, techKey);
+            }
+        }
     }
 
 }

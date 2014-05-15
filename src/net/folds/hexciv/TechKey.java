@@ -95,6 +95,48 @@ public class TechKey {
         return true;
     }
 
+    protected BitSet getAllChoices() {
+        if (hasDiscoveredAllNamedTechnologies()) {
+            int pos = getFirstUndiscoveredFutureTech();
+            BitSet result = new BitSet(pos + 1);
+            result.set(pos);
+            return result;
+        }
+        BitSet result = allNamedTech();
+        result.andNot(key);
+        int numNamedTechs = countNamedTechnologies();
+        for (int i = 0; i < numNamedTechs; i++) {
+            if (result.get(i)) {
+                Technology possibility = techs.getTech(i);
+                if (!hasPrerequisitesFor(possibility)) {
+                    result.clear(i);
+                }
+            }
+        }
+        return result;
+    }
+
+    protected Vector<Integer> getChoices() {
+        BitSet possibilities = getAllChoices();
+        int numPossibilities = possibilities.cardinality();
+        Random random = new Random();
+        int maxResults = 3 + random.nextInt(5);
+        if (numPossibilities <= maxResults) {
+            return Util.convertToIntegerVector(possibilities);
+        }
+        Vector<Integer> result = new Vector<>(maxResults);
+        for (int i = 0; i < maxResults; i++) {
+            int j = random.nextInt(numPossibilities - i);
+            int pos = Util.getNthPosition(possibilities, j);
+            if (pos < 0) {
+                break;
+            }
+            possibilities.clear(pos);
+            result.add(pos);
+        }
+        return result;
+    }
+
     protected int getFirstUndiscoveredFutureTech() {
         int numNamedTechs = countNamedTechnologies();
         if (numNamedTechs < 0) {
@@ -122,42 +164,17 @@ public class TechKey {
         return key.get(techId);
     }
 
-    protected BitSet copyKey() {
-        return (BitSet) key.clone();
-    }
-
-    protected Vector<Integer> getChoices() {
-        if (hasDiscoveredAllNamedTechnologies()) {
-            Vector<Integer> result = new Vector<>(1);
-            result.add(getFirstUndiscoveredFutureTech());
-            return result;
-        } else {
-            BitSet possibilities = allNamedTech();
-            possibilities.andNot(key);
-            int numNamedTechs = countNamedTechnologies();
-            for (int i = 0; i < numNamedTechs; i++) {
-                if (key.get(i)) {
-                    Technology possibility = techs.getTech(i);
-                    if (!hasPrerequisitesFor(possibility)) {
-                        possibilities.clear(i);
-                    }
-                }
+    protected String summarizeAllChoices() {
+        BitSet choices = getAllChoices();
+        Vector<Integer> ids = Util.convertToIntegerVector(choices);
+        String result = "";
+        for (int i = 0; i < ids.size(); i++) {
+            if (i > 0) {
+                result = result + ", ";
             }
-            int numPossibilities = possibilities.cardinality();
-            Random random = new Random();
-            int maxResults = 3 + random.nextInt(5);
-            if (numPossibilities <= maxResults) {
-                return Util.convertToIntegerVector(possibilities);
-            }
-            Vector<Integer> result = new Vector<>(maxResults);
-            for (int i = 0; i < maxResults; i++) {
-                int j = random.nextInt(numPossibilities - i);
-                int pos = Util.getNthPosition(possibilities, j);
-                possibilities.clear(pos);
-                result.add(pos);
-            }
-            return result;
+            result = result + techs.getTech(ids.get(i)).name;
         }
+        return result;
     }
 
 }

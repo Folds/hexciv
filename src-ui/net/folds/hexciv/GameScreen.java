@@ -80,6 +80,23 @@ public class GameScreen extends JFrame
         gs.setVisible(true);
     }
 
+    public void celebrateTechnology(Civilization civ, TechKey key) {
+        if (key == null) {
+            logPane.log(civ.getName() + " has no techKey.");
+        } else {
+            if (key.nextTech < 0) {
+                logPane.log(civ.getName() + " is researching prehistoric tech.");
+            } else {
+                if (key.getTech(key.nextTech) == null) {
+                    logPane.log(civ.getName() + " is not researching any tech.");
+                } else {
+                    logPane.log(civ.getName() + " is researching " + key.getTech(key.nextTech).name);
+                }
+            }
+            logPane.log("Other choices include:  " + civ.summarizeTechChoices() + ".");
+        }
+    }
+
     public void actionPerformed(ActionEvent event) {
         if (gameState.isGameOver()) {
             timer.stop();
