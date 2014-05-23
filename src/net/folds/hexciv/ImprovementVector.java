@@ -26,13 +26,13 @@ public class ImprovementVector {
         add("Cathedral",  160, 3, 40);
         add("University", 160, 3, 45); getLast().scienceBonus = 100;
         add("Bank",       120, 3, 51); getLast().tradeBonus = 100;
-        add("Factory",    200, 4, 62);
-        add("Hydro Plant",240, 4, 65);
-        add("Power Plant",160, 4, 72);
+        add("Factory",    200, 4, 62); getLast().productionBonus = 50;
+        add("Hydro Plant",240, 4, 65); getLast().isElectrified = true;
+        add("Power Plant",160, 4, 72); getLast().isElectrified = true;
         add("Subway",     160, 4, 81);
         add("Recycler",   200, 2, 83);
-        add("Manufactory",320, 6, 85);
-        add("Nuclear Plant",160,2,90);
+        add("Manufactory",320, 6, 85); getLast().productionBonus = 100;
+        add("Nuclear Plant",160,2,90); getLast().isElectrified = true;
         add("Missile Defense",200,4,91);
     }
 

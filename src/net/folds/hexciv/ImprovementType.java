@@ -14,6 +14,7 @@ public class ImprovementType {
     int productionBonus; // in percent
     int tradeBonus;      // in percent
     int tradeBonusPerTradeCell;
+    boolean isElectrified;
     boolean isGranary;
     boolean preventsPlague;
     boolean preventsFlood;
@@ -40,6 +41,7 @@ public class ImprovementType {
         preventsFire = false;
         preventsFlood = false;
         preventsPlague = false;
+        isElectrified = false;
         isBarracks = false;
     }
 

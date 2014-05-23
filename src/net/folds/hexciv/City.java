@@ -146,4 +146,19 @@ public class City {
         return none;
     }
 
+    protected int getLuxuryFactor() {
+        return improvements.getLuxuryFactor();
+    }
+
+    protected int getTaxFactor() {
+        return improvements.getTaxFactor();
+    }
+
+    protected int getScienceFactor() {
+        return improvements.getScienceFactor();
+    }
+
+    protected int getProductionFactor() {
+        return improvements.getProductionFactor();
+    }
 }

@@ -116,6 +116,26 @@ public enum  TerrainTypes {
         }
     }
 
+    public TerrainTypes resultOfIrrigation() {
+        switch (value) {
+            case  4: return getTerrainType(10); // Jungle -> Swamp
+            case 10: return getTerrainType(11); // Swamp  -> River
+            case 11: return getTerrainType(15); // River  -> Lake
+            case  5: return getTerrainType( 6); // Forest -> Plains
+            default: return this;
+        }
+    }
+
+    public TerrainTypes resultOfMining() {
+        switch (value) {
+            case 15: return getTerrainType(11); // Lake   -> River
+            case 11: return getTerrainType(10); // River  -> Swamp
+            case 10: return getTerrainType( 4); // Swamp  -> Jungle
+            case  4: case 6: case 7: return getTerrainType( 5); // Jungle, Plains, Grass -> Forest
+            default: return this;
+        }
+    }
+
     public Color getColor() {
         switch (value) {
             case  1:  return new Color(204, 204, 102); // Desert    w/ Oasis

@@ -27,9 +27,11 @@ public class Civilization {
     private int longestPeaceAD;
     private int currentPeaceAD;
     private BitSet seenCells;
+    private BitSet cellsExploredByLand;
     private int techPriceFactor;
     private TechChooser techChooser;
     private boolean hasToldStory;
+    private int turnCounter;
 
     protected Civilization(Vector<GovernmentType> governmentTypes,
                            Vector<UnitType> unitTypes,
@@ -43,6 +45,7 @@ public class Civilization {
         techKey = new TechKey(techTree);
         techPriceFactor = 10;
         hasToldStory = false;
+        turnCounter = 0;
     }
 
     protected void initialize(WorldMap map, Vector<Integer> foreignLocations) {
@@ -61,6 +64,7 @@ public class Civilization {
         none.add(settler);
         seenCells = new BitSet(map.countCells());
         seenCells.set(cellId);
+        cellsExploredByLand = new BitSet(map.countCells());
         seeNeighborsOf(map, cellId);
     }
 
@@ -90,10 +94,98 @@ public class Civilization {
     }
 
     protected boolean canAttack(Unit unit) {
-        if ((unit.unitType.attackStrength > 0) && (unit.unitType.isTerrestrial)) {
+        return canAttack(unit.unitType);
+    }
+
+    protected boolean canAttack(UnitType unitType) {
+        if ((unitType.attackStrength > 0) && (unitType.isTerrestrial)) {
             return true;
         }
         return false;
+    }
+
+    protected boolean canSustainExplorer(WorldMap map, City city) {
+        UnitType unitType = chooseExplorer(map, city);
+        if (unitType.isSettler) {
+            return canSustainSettler(map, city);
+        }
+        if (isAnarchist()) {
+            return true;
+        }
+        int foodSurplus = countFoodSurplus(map, city);
+        int productionSurplus = countProductionSurplus(map, city);
+        if (isDespotic()) {
+            int potentialLogistics = 0;
+            if (city.units != null) {
+                for (Unit unit : city.units) {
+                    potentialLogistics = potentialLogistics + unit.unitType.logisticsCost;
+                }
+            }
+            if (potentialLogistics >= city.size) {
+                if (unitType.logisticsCost > productionSurplus) {
+                    return false;
+                }
+            }
+            if (potentialLogistics + unitType.logisticsCost > city.size + productionSurplus) {
+                return false;
+            }
+        } else if (isMilitarist()) {
+            int logisticsCost = getLogisticsCost(city);
+            if (logisticsCost + unitType.logisticsCost > productionSurplus) {
+                return false;
+            }
+        } else {
+            int logisticsCost = getLogisticsCost(city);
+            int farmId = chooseWorstFarm(map, city);
+            int productionValue = (countOre(map, farmId) * getProductionFactor(city)) / 100;
+            if (logisticsCost + unitType.logisticsCost + productionValue > productionSurplus) {
+                return false;
+            }
+            if (countFood(map, farmId) + unitType.feedingCost > foodSurplus) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    protected boolean canSustainSettler(WorldMap map, City city) {
+        if (city.size < 2) {
+            return false;
+        }
+        int foodSurplus = countFoodSurplus(map, city);
+        int farmId = chooseWorstFarm(map, city);
+        if ((!isMilitarist()) && (foodSurplus < countFood(map, farmId))) {
+            return false;
+        }
+        if (foodSurplus + 1 < countFood(map, farmId)) {
+            return false;
+        }
+        int productionSurplus = countProductionSurplus(map, city);
+        if (productionSurplus * 100 < countOre(map, farmId) * getProductionFactor(city)) {
+            return false;
+        }
+        return true;
+    }
+
+    protected UnitType chooseExplorer(WorldMap map, City city) {
+        int upkeep = getHighestUpkeepCostOfExplorer(map, city);
+        int capitalCost = 0;
+        int mobility = -1;
+        UnitType result = null;
+        for (UnitType unitType : unitTypes) {
+            if ((unitType.mobility > 0) && (techKey.hasTech(unitType.technologyIndex))) {
+                int unitUpkeep = estimateUpkeepCostOfExplorer(map, city, unitType);
+                if (    (unitUpkeep <  upkeep)
+                        || ((unitUpkeep == upkeep) && (unitType.mobility > mobility))
+                        || ((unitUpkeep == upkeep) && (unitType.mobility == mobility) && (unitType.capitalCost <= capitalCost))
+                        ) {
+                    upkeep = 2 * unitType.feedingCost + unitType.logisticsCost;
+                    mobility = unitType.mobility;
+                    result = unitType;
+                }
+            }
+        }
+        return result;
     }
 
     protected int chooseFarm(WorldMap map, City city) {
@@ -151,7 +243,7 @@ public class Civilization {
             if (   (referee.isAvailable(possibility, this))
                 && ((seenCells == null) || (seenCells.get(possibility)) || (map.getDistanceInCells(cellId, possibility) == 1))
                ) {
-                int metric = countFood(map, possibility) + countOre(map, possibility);
+                int metric = 3 * countFood(map, possibility) + 2 * countOre(map, possibility) + countMoney(map, possibility);
                 if (metric > bestMetricSoFar) {
                     result = possibility;
                     bestMetricSoFar = metric;
@@ -196,6 +288,42 @@ public class Civilization {
             result = 0;
         }
         return result;
+    }
+
+    protected void chooseWip(WorldMap map, City city) {
+        int happy = countHappyCitizens(map, city);
+        int unhappy = countUnhappyCitizens(map, city);
+        if ((city.wip == null) && (city.countUnits() == 0)) {
+            city.wip = new ProductType(UnitType.proposeMilitia());
+        }
+        if (isMilitarist() && (city.storedProduction < 5)) {
+            city.wip = new ProductType(UnitType.proposeMilitia());
+        }
+        if (canSustainExplorer(map, city)) {
+            requestExplorer(map, city);
+        }
+        if (canSustainSettler(map, city)) {
+            if ((isMilitarist()) && (city.countUnits() > 0) && (unhappy < happy)) {
+                city.wip = new ProductType(UnitType.proposeSettler());
+            }
+            if ((isMilitarist()) && (city.countUnits() > 0) && (unhappy == happy)) {
+                city.wip = new ProductType(UnitType.proposeSettler());
+            }
+            if ((isMilitarist()) && (city.countUnits() > 0) && (unhappy == happy + 1)) {
+                city.wip = new ProductType(UnitType.proposeSettler());
+            }
+            if ((!isMilitarist()) && (city.countUnits() > 0) && (unhappy <= happy)) {
+                city.wip = new ProductType(UnitType.proposeSettler());
+            }
+        }
+        if (city.countSettlers() > 0) {
+            requestProfitableImprovement(map, city, 12); // University
+            requestProfitableImprovement(map, city, 13); // Bank
+            requestProfitableImprovement(map, city, 7); // Market
+            requestProfitableImprovement(map, city, 6); // Library
+            requestProfitableImprovement(map, city, 2); // Temple
+            requestProfitableImprovement(map, city, 3); // Granary
+        }
     }
 
     protected int chooseWorstFarm(WorldMap map, City city) {
@@ -394,6 +522,16 @@ public class Civilization {
         return result;
     }
 
+    protected int countFoodSurplus(WorldMap map, City city) {
+        int result = countFood(map, city);
+        result = result - 2 * city.size;
+        result = result - city.countSettlers();
+        if (!isMilitarist()) {
+            result = result - city.countSettlers();
+        }
+        return result;
+    }
+
     protected int countFutureTech() {
         return techKey.countFutureTech();
     }
@@ -574,6 +712,7 @@ public class Civilization {
         for (Integer farm : city.farms) {
             result = result + countOre(map, farm);
         }
+        result = result * getProductionFactor(city) / 100;
         return result;
     }
 
@@ -623,6 +762,17 @@ public class Civilization {
             result = result + result / 2;
         }
         return result;
+    }
+
+    protected int countProductionSurplus(WorldMap map, City city) {
+        if (!isMilitarist()) {
+            int happy = countHappyCitizens(map, city);
+            int unhappy = countUnhappyCitizens(map, city);
+            if (unhappy > happy) {
+                return -getLogisticsCost(city);
+            }
+        }
+        return countOre(map, city) - getLogisticsCost(city);
     }
 
     protected int countSeenCells() {
@@ -766,6 +916,27 @@ public class Civilization {
 //
     }
 
+    protected int estimateUpkeepCostOfExplorer(WorldMap map, City city, UnitType unitType) {
+        int result = estimateUpkeepCostOfOccupier(unitType);
+        if ((canAttack(unitType)) && (!isMilitarist())) {
+            int farmId = chooseWorstFarm(map, city);
+            int moneyFactor = (  getLuxuryPercentage() * getLuxuryFactor(city)
+                    + sciencePercentage * getScienceFactor(city)
+                    + taxPercentage * getTaxFactor(city)
+            ) / 100;
+            int farmValue = (  300 * countFood(map, farmId)
+                    + 2 * countOre(map, farmId) * getProductionFactor(city)
+                    + countMoney(map, farmId) * moneyFactor
+            ) / 100;
+            result = result + farmValue;
+        }
+        return result;
+    }
+
+    protected int estimateUpkeepCostOfOccupier(UnitType unitType) {
+        return 3 * unitType.feedingCost + 2 * unitType.logisticsCost;
+    }
+
     protected void fixSciencePercentage() {
         if ((taxPercentage < 0) || (taxPercentage > 100)) {
             fixTaxPercentage();
@@ -837,6 +1008,17 @@ public class Civilization {
         return governmentTypes.get(governmentTypeId);
     }
 
+    protected int getHighestUpkeepCostOfExplorer(WorldMap map, City city) {
+        int result = 0;
+        for (UnitType unitType : unitTypes) {
+            int upkeepCost = estimateUpkeepCostOfExplorer(map, city, unitType);
+            if ((unitType.isTerrestrial) && (upkeepCost > result)) {
+                result = upkeepCost;
+            }
+        }
+        return result;
+    }
+
     protected int getIndexOfFurthestSettler(WorldMap map, City city) {
         int furthestSoFar = -1;
         int result = -1;
@@ -878,6 +1060,9 @@ public class Civilization {
         if (city.units == null) {
             return result;
         }
+        for (Unit unit : city.units) {
+            result = result + unit.unitType.logisticsCost;
+        }
         if (isDespotic()) {
             if (result < city.size) {
                 result = 0;
@@ -889,7 +1074,11 @@ public class Civilization {
     }
 
     protected int getLuxuryFactor(City city) {
-        return 100;
+        return city.getLuxuryFactor();
+    }
+
+    protected int getProductionFactor(City city) {
+        return city.getProductionFactor();
     }
 
     protected int getLuxuryPercentage() {
@@ -907,6 +1096,36 @@ public class Civilization {
 
     protected String getName() {
         return name;
+    }
+
+    protected Vector<Integer> getNeighborsOfPotentialCities(WorldMap map, Vector<Integer> candidates) {
+        int numCandidates = candidates.size();
+        Vector<Integer> result = new Vector<Integer>(numCandidates);
+        Vector<Integer> rejectedNeighbors = new Vector<Integer>(6 * numCandidates);
+        for (int candidate : candidates) {
+            Vector<Integer> neighbors = map.getNeighbors(candidate);
+            for (int neighbor : neighbors) {
+                if ((seenCells.get(neighbor)) && (!rejectedNeighbors.contains((Integer) neighbor))) {
+                    if (isGoodLocationForNewCity(map, neighbor)) {
+                        result.add(candidate);
+                        break;
+                    } else {
+                        rejectedNeighbors.add(neighbor);
+                    }
+                }
+            }
+        }
+        return result;
+    }
+
+    protected Vector<Integer> getPotentialCities(WorldMap map, Vector<Integer> candidates) {
+        Vector<Integer> result = new Vector<Integer>(candidates.size());
+        for (int candidate : candidates) {
+            if (isGoodLocationForNewCity(map, candidate)) {
+                result.add(candidate);
+            }
+        }
+        return result;
     }
 
     protected int getPriceOfNextTech() {
@@ -938,7 +1157,7 @@ public class Civilization {
     }
 
     protected int getScienceFactor(City city) {
-        return 100;
+        return city.getScienceFactor();
     }
 
     protected int getScore(WorldMap map) {
@@ -967,7 +1186,7 @@ public class Civilization {
     }
 
     protected int getTaxFactor(City city) {
-        return 100;
+        return city.getTaxFactor();
     }
 
     protected int getUnhappinessOfEachRemoteMilitaryUnit() {
@@ -1062,6 +1281,22 @@ public class Civilization {
         return isAdequateStartLocation(map, cellId, cityLocations);
     }
 
+    protected boolean isImmediatelyProfitable(WorldMap map, City city, int improvementId) {
+        ImprovementType impType = improvements.get(improvementId);
+        if ((impType.isGranary) && (countFoodSurplus(map, city) > 0)) {
+            return true;
+        }
+        int scienceValue = (impType.scienceBonus * countScience(map, city) * 100) / getScienceFactor(city);
+        int productionValue = (impType.productionBonus * countOre(map, city) * 200) / getProductionFactor(city);
+        int luxuryValue = (impType.tradeBonus * countScience(map, city) * 100) /  getLuxuryFactor(city);
+        int taxValue = (impType.tradeBonus * countScience(map, city) * 100) /  getTaxFactor(city);
+        int incrementalValue = scienceValue + productionValue + luxuryValue + taxValue;
+        if (incrementalValue > 100 * impType.upkeepCost) {
+            return true;
+        }
+        return false;
+    }
+
     protected boolean isMilitarist() {
         if (   (governmentTypes.get(governmentTypeId).name.equals("Republic"))
                 || (governmentTypes.get(governmentTypeId).name.equals("Democracy"))
@@ -1097,18 +1332,29 @@ public class Civilization {
         }
     }
 
-    // http://www.freegameempire.com/games/Civilization/manual
+    boolean isCityRioting(WorldMap map, City city) {
+        if (city.location < 0) {
+            return false;
+        }
+        int happy = countHappyCitizens(map, city);
+        int unhappy = countUnhappyCitizens(map, city);
+        if (unhappy > happy) {
+            return true;
+        }
+        return false;
+    }
 
+    // http://www.freegameempire.com/games/Civilization/manual
     protected void playTurn(WorldMap map, City city, GameListener listener) {
         if (city.location < 0) {
             return;
         }
-        int prevFood = city.storedFood;
         if (city.storedFood < 0) {
             if (city.countSettlers() > 0) {
                 int unitIndex = getIndexOfFurthestSettler(map, city);
                 listener.bemoanUnsupported(city, city.units.get(unitIndex));
                 city.units.remove(unitIndex);
+                city.storedFood = 0;
             } else {
                 city.size = city.size - 1;
                 city.storedFood = 0;
@@ -1143,14 +1389,7 @@ public class Civilization {
         if ((city.wip != null) && (city.storedProduction >= city.wip.getCapitalCost())) {
             city.produce();
         }
-        int food = city.storedFood + countFood(map, city);
-        food = food - 2 * city.size;
-        food = food - city.countSettlers();
-        if (!isMilitarist()) {
-            food = food - city.countSettlers();
-        }
         int ore = countOre(map, city);
-        int luxuries = countLuxuries(map, city);
         int science = countScience(map, city);
         int tax = countTax(map, city);
         int happy = countHappyCitizens(map, city);
@@ -1172,9 +1411,9 @@ public class Civilization {
                 pawnLowestValueImprovement(city, listener);
             }
         }
-        city.storedFood = food;
+        city.storedFood = city.storedFood + countFoodSurplus(map, city);
         city.storedProduction = city.storedProduction + ore;
-        storedMoney = storedMoney + tax;
+        storedMoney = storedMoney + tax - city.getUpkeepCost();
         storedScience = storedScience + science;
         if ((storedScience > 0) && (techKey.isUndecided())) {
             chooseNextTech();
@@ -1188,32 +1427,7 @@ public class Civilization {
         if ((storedScience > 0) && (techKey.isUndecided())) {
             chooseNextTech();
         }
-        if ((city.wip == null) && (city.countUnits() == 0)) {
-            city.wip = new ProductType(UnitType.proposeMilitia());
-        }
-        if (isMilitarist() && (city.storedProduction < 5)) {
-            city.wip = new ProductType(UnitType.proposeMilitia());
-        }
-        if ((city.storedFood > prevFood) && (isMilitarist()) && (city.countUnits() > 0) && (unhappy < happy) && (city.size > 1)) {
-            city.wip = new ProductType(UnitType.proposeSettler());
-        }
-        if ((city.storedFood > prevFood) && (isMilitarist()) && (city.countUnits() > 0) && (unhappy == happy) && (city.size > 1)) {
-            city.wip = new ProductType(UnitType.proposeSettler());
-        }
-        if ((city.storedFood > prevFood) && (isMilitarist()) && (city.countUnits() > 0) && (unhappy == happy + 1) && (city.size > 1)) {
-            city.wip = new ProductType(UnitType.proposeSettler());
-        }
-        if ((city.storedFood > prevFood + 1) && (!isMilitarist()) && (city.countUnits() > 0) && (unhappy <= happy) && (city.size > 1)) {
-            city.wip = new ProductType(UnitType.proposeSettler());
-        }
-        if (city.countSettlers() > 0) {
-            requestImprovement(city, 12); // University
-            requestImprovement(city, 13); // Bank
-            requestImprovement(city,  7); // Market
-            requestImprovement(city,  6); // Library
-            requestImprovement(city,  2); // Temple
-            requestImprovement(city,  3); // Granary
-        }
+        chooseWip(map, city);
     }
 
     protected void playTurn(WorldMap map, GameListener listener, ClaimReferee referee) {
@@ -1250,170 +1464,57 @@ public class Civilization {
                 }
             }
         }
+        if (areAnyCitiesRioting(map)) {
+            if (sciencePercentage + taxPercentage > 50) {
+                if (sciencePercentage >= 10) {
+                    sciencePercentage = sciencePercentage - 10;
+
+                } else {
+                    taxPercentage = taxPercentage - 10;
+                }
+            }
+        } else {
+            if ((sciencePercentage <= 90) && (taxPercentage + sciencePercentage <= 90)) {
+                sciencePercentage = sciencePercentage + 10;
+            }
+        }
+         if (storedMoney > getTargetMoney()) {
+            if (taxPercentage >= 10) {
+                taxPercentage = taxPercentage - 10;
+            }
+        }
+        if (storedMoney < getTargetMoney()) {
+            if ((taxPercentage <= 90) && (taxPercentage + sciencePercentage <= 90)) {
+                taxPercentage = taxPercentage = 10;
+            }
+        }
+        turnCounter = turnCounter + 1;
     }
 
-    protected void recordPeace() {
-        if (atPeace()) {
-            currentPeaceAD = currentPeaceAD + 1;
-        } else {
-            currentPeaceAD = 0;
+    protected int getTargetMoney() {
+        if (turnCounter > 75) {
+            return 100;
         }
-        if (currentPeaceAD > longestPeaceAD) {
-            longestPeaceAD = currentPeaceAD;
+        if (turnCounter > 25) {
+            return (3 * turnCounter - 25) / 2;
         }
+        return turnCounter;
+    }
+
+    protected boolean areAnyCitiesRioting(WorldMap map) {
+        for (City city : cities) {
+            if (!city.isNone()) {
+                if (isCityRioting(map, city)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     protected boolean playTurn(WorldMap map, City city, Unit unit,
                                GameListener listener, ClaimReferee referee) {
         return playTurn(map, city, unit, listener, referee, true);
-    }
-
-    // returns false if the unit should be deleted.
-    protected boolean playTurn(WorldMap map, City city, Unit unit,
-                               GameListener listener, ClaimReferee referee, boolean keepTroops) {
-        boolean result = true;
-        if (unit.unitType.name.equals("Settler")) {
-            if (isGoodLocationForNewCity(map, unit.getLocation())) {
-                String cityName = foundCity(map, unit.getLocation(), referee);
-                listener.celebrateNewCity(unit, cityName);
-                result = false;
-            }
-            if (unit.wipTurns > 0) {
-                unit.wipTurns = unit.wipTurns + 1;
-                if (unit.isBuildingRoad) {
-                    if (unit.wipTurns >= 3) {
-                        map.buildRoad(unit.cellId);
-                        unit.wipTurns = 0;
-                    }
-                }
-            }
-            if ((!unit.isBuildingRoad) && (!unit.isMining) && (!unit.isIrrigating)) {
-                if (!map.hasRoad(unit.cellId)) {
-                    if (!map.hasCity(unit.cellId)) {
-                        if (isFarmOf(city.civ, unit.cellId)) {
-                            unit.isBuildingRoad = true;
-                            unit.wipTurns = 1;
-                        }
-                    }
-                }
-            }
-            if (unit.wipTurns == 0) {
-                int roadRemaining = 3;
-                while (roadRemaining > 0) {
-                    boolean onRoad = (map.hasRoad(unit.cellId) || map.hasCity(unit.cellId));
-                    Vector<Integer> neighbors = getLandNeighbors(map, unit.cellId);
-                    if (neighbors.size() > 0) {
-                        Random random = new Random();
-                        int numChoices = neighbors.size();
-                        unit.cellId = neighbors.get(random.nextInt(numChoices));
-                        seeNeighborsOf(map, unit.cellId);
-                        unit.wipTurns = 0;
-                        unit.isMining = false;
-                        unit.isIrrigating = false;
-                        unit.isBuildingRoad = false;
-                    }
-                    if ((onRoad) && (map.hasRoad(unit.cellId))) {
-                        roadRemaining = roadRemaining - 1;
-                    } else {
-                        roadRemaining = roadRemaining - 3;
-                    }
-                }
-            }
-        }
-        if (unit.unitType.name.equals("Militia")) {
-            int roadRemaining = 3;
-            while (roadRemaining > 0) {
-                boolean onRoad = (map.hasRoad(unit.cellId) || map.hasCity(unit.cellId));
-                if (unit.getLocation() == city.location) {
-                    Vector<Integer> region = map.getRegion(city.location, 2);
-                    int numCellsInRegion = region.size();
-                    int numSeenCellsInRegion = countSeenCells(region);
-                    if (numSeenCellsInRegion < numCellsInRegion) {
-                        Vector<Integer> landNeighborsWithUnseenNeighbors = new Vector<>(6);
-                        Vector<Integer> neighbors = map.getNeighbors(city.location);
-                        for (int neighbor : neighbors) {
-                            if (map.isLand(neighbor)) {
-                                Vector<Integer> fringe = map.getNeighbors(neighbor);
-                                if (countSeenCells(fringe) < fringe.size()) {
-                                    landNeighborsWithUnseenNeighbors.add((Integer) neighbor);
-                                }
-                            }
-                        }
-                        if (landNeighborsWithUnseenNeighbors.size() > 0) {
-                            Random random = new Random();
-                            int numChoices = landNeighborsWithUnseenNeighbors.size();
-                            for (int i = 0; i < numChoices; i++) {
-                                if (random.nextFloat() * (numChoices - i) <= 1) {
-                                    unit.cellId = landNeighborsWithUnseenNeighbors.get(i);
-                                    seeNeighborsOf(map, unit.cellId);
-                                    break;
-                                }
-                            }
-                        }
-                    } else {
-                        if (countHappyCitizens(map, city) > countUnhappyCitizens(map, city)) {
-                            if (countMilitaryUnitsIn(city) > 1) {
-                                return keepTroops;
-                            }
-                        }
-                    }
-                }
-                if (map.getDistanceInCells(unit.getLocation(), city.location) == 1) {
-                    Vector<Integer> region = map.getRegion(city.location, 2);
-                    int numCellsInRegion = region.size();
-                    int numSeenCellsInRegion = countSeenCells(region);
-                    if (numSeenCellsInRegion < numCellsInRegion) {
-                        Vector<Integer> landNeighborsWithUnseenNeighbors = new Vector<>(6);
-                        Vector<Integer> neighbors = map.getNeighbors(city.location);
-                        for (int neighbor : neighbors) {
-                            if (map.isLand(neighbor)) {
-                                Vector<Integer> fringe = map.getNeighbors(neighbor);
-                                if (countSeenCells(fringe) < fringe.size()) {
-                                    landNeighborsWithUnseenNeighbors.add((Integer) neighbor);
-                                }
-                            }
-                        }
-                        if (landNeighborsWithUnseenNeighbors.size() > 0) {
-                            Random random = new Random();
-                            int numChoices = landNeighborsWithUnseenNeighbors.size();
-                            for (int i = 0; i < numChoices; i++) {
-                                if (random.nextFloat() * (numChoices - i) <= 1) {
-                                    if (map.getDistanceInCells(unit.cellId, landNeighborsWithUnseenNeighbors.get(i)) == 1) {
-                                        unit.cellId = landNeighborsWithUnseenNeighbors.get(i);
-                                    } else {
-                                        unit.cellId = city.location;
-                                    }
-                                    seeNeighborsOf(map, unit.cellId);
-                                    break;
-                                }
-                            }
-                        } else {
-                            Vector<Integer> landNeighbors = landCells(map, map.getNeighbors(unit.cellId));
-                            int numChoices = landNeighbors.size();
-                            Random random = new Random();
-                            int i = random.nextInt(numChoices);
-                            int neighbor = landNeighbors.get(i);
-                            unit.cellId = neighbor;
-                            seeNeighborsOf(map, unit.cellId);
-                        }
-                    } else {
-                        Vector<Integer> landNeighbors = landCells(map, map.getNeighbors(unit.cellId));
-                        int numChoices = landNeighbors.size();
-                        Random random = new Random();
-                        int i = random.nextInt(numChoices);
-                        int neighbor = landNeighbors.get(i);
-                        unit.cellId = neighbor;
-                        seeNeighborsOf(map, unit.cellId);
-                    }
-                }
-                if ((onRoad) && (map.hasRoad(unit.cellId))) {
-                    roadRemaining = roadRemaining - 1;
-                } else {
-                    roadRemaining = roadRemaining - 3;
-                }
-            }
-        }
-        return result;
     }
 
     protected static String proposeCivilizationName(int arg) {
@@ -1438,6 +1539,24 @@ public class Civilization {
         return "Raisa";
     }
 
+    protected void recordPeace() {
+        if (atPeace()) {
+            currentPeaceAD = currentPeaceAD + 1;
+        } else {
+            currentPeaceAD = 0;
+        }
+        if (currentPeaceAD > longestPeaceAD) {
+            longestPeaceAD = currentPeaceAD;
+        }
+    }
+
+    protected void requestExplorer(WorldMap map, City city) {
+        UnitType unitType = chooseExplorer(map, city);
+        if (unitType != null) {
+            city.wip = new ProductType(unitType);
+        }
+    }
+
     protected void requestImprovement(City city, int improvementId) {
         if (   (!city.improvements.get(improvementId))
                 && (techKey.hasTech(improvements.get(improvementId).technologyIndex))
@@ -1445,6 +1564,12 @@ public class Civilization {
             city.wip = new ProductType(improvements.get(improvementId));
         }
 
+    }
+
+    protected void requestProfitableImprovement(WorldMap map, City city, int improvementId) {
+        if (isImmediatelyProfitable(map, city, improvementId)) {
+            requestImprovement(city, improvementId);
+        }
     }
 
     protected void seeNeighborsOf(WorldMap map, int cellId) {
@@ -1476,6 +1601,277 @@ public class Civilization {
                 listener.celebrateTechnology(this, techKey);
             }
         }
+    }
+
+    protected boolean wouldMinorIrrigationHelp(WorldMap map, int cellId) {
+        TerrainTypes terrain = map.getTerrain(cellId);
+        if (!terrain.isIrrigable()) {
+            return false;
+        }
+        if (map.hasMine(cellId)) {
+            return false;
+        }
+        if (terrain.resultOfIrrigation() != terrain) {
+            return false;
+        }
+        if (terrain == TerrainTypes.river) {
+            if ((isAnarchist()) || (isDespotic())) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    protected boolean playTurnAsSettler(WorldMap map, City city, Unit unit,
+                                     GameListener listener, ClaimReferee referee, boolean keepTroops) {
+        boolean result = true;
+        if (isGoodLocationForNewCity(map, unit.getLocation())) {
+            String cityName = foundCity(map, unit.getLocation(), referee);
+            listener.celebrateNewCity(unit, cityName);
+            return false;
+        }
+        if (unit.wipTurns > 0) {
+            unit.wipTurns = unit.wipTurns + 1;
+            if (unit.isBuildingRoad) {
+                if (unit.wipTurns >= 3) {
+                    map.buildRoad(unit.cellId);
+                    unit.wipTurns = 0;
+                }
+            }
+            if (unit.isMining) {
+                if (unit.wipTurns >= 5) {
+                    map.mine(unit.cellId);
+                    unit.wipTurns = 0;
+                }
+            }
+            if (unit.isIrrigating) {
+                if (unit.wipTurns >= 5) {
+                    map.irrigate(unit.cellId);
+                    unit.wipTurns = 0;
+                }
+            }
+        }
+        if ((!unit.isBuildingRoad) && (!unit.isMining) && (!unit.isIrrigating)) {
+            if (!map.hasRoad(unit.cellId)) {
+                if (!map.hasCity(unit.cellId)) {
+                    if (isFarmOf(city.civ, unit.cellId)) {
+                        unit.isBuildingRoad = true;
+                        unit.wipTurns = 1;
+                    }
+                }
+            }
+        }
+        if ((!unit.isBuildingRoad) && (!unit.isMining) && (!unit.isIrrigating)) {
+            if (!map.hasIrrigation(unit.cellId)) {
+                if (!map.hasCity(unit.cellId)) {
+                    if (wouldMinorIrrigationHelp(map, unit.cellId)) {
+                        if (isFarmOf(city.civ, unit.cellId)) {
+                            unit.isIrrigating = true;
+                            unit.wipTurns = 1;
+                        }
+                    }
+                }
+            }
+        }
+        if (unit.wipTurns == 0) {
+            int roadRemaining = 3 * unit.unitType.mobility;
+            while (roadRemaining > 0) {
+                boolean onRoad = (map.hasRoad(unit.cellId) || map.hasCity(unit.cellId));
+                Vector<Integer> neighbors = getLandNeighbors(map, unit.cellId);
+                Vector<Integer> potentialCities = getPotentialCities(map, neighbors);
+                Vector<Integer> choices;
+                if (potentialCities.size() > 0) {
+                    choices = potentialCities;
+                } else {
+                    Vector<Integer> neighborsOfPotentialCities = getNeighborsOfPotentialCities(map, neighbors);
+                    if (neighborsOfPotentialCities.size() > 0) {
+                        choices = neighborsOfPotentialCities;
+                    } else {
+                        choices = neighbors;
+                    }
+                }
+                if (choices.size() > 0) {
+                    Random random = new Random();
+                    int numChoices = choices.size();
+                    unit.cellId = choices.get(random.nextInt(numChoices));
+                    seeNeighborsOf(map, unit.cellId);
+                    unit.wipTurns = 0;
+                    unit.isMining = false;
+                    unit.isIrrigating = false;
+                    unit.isBuildingRoad = false;
+                }
+                if ((onRoad) && (map.hasRoad(unit.cellId))) {
+                    roadRemaining = roadRemaining - 1;
+                } else {
+                    roadRemaining = roadRemaining - 3;
+                }
+                if (potentialCities.size() > 0) {
+                    return result;
+                }
+            }
+        }
+        return result;
+    }
+
+    protected Vector<Integer> getLandNeighborsWithUnseenNeighbors(WorldMap map, int cellId) {
+        Vector<Integer> result = new Vector<>(6);
+        Vector<Integer> neighbors = map.getNeighbors(cellId);
+        for (int neighbor : neighbors) {
+            if (map.isLand(neighbor)) {
+                Vector<Integer> fringe = map.getNeighbors(neighbor);
+                if (countSeenCells(fringe) < fringe.size()) {
+                    result.add((Integer) neighbor);
+                }
+            }
+        }
+        return result;
+    }
+
+    protected int getMaximumMilitaryMobility(City city) {
+        int result = 0;
+        for (Unit unit : city.units) {
+            if ((canAttack(unit)) && (unit.unitType.mobility > result)) {
+                result = unit.unitType.mobility;
+            }
+        }
+        return result;
+    }
+
+    protected boolean playTurnAsExplorer(WorldMap map, City city, Unit unit,
+                                         GameListener listener, ClaimReferee referee, boolean keepTroops) {
+        boolean result = true;
+        int roadRemaining = 3 * unit.unitType.mobility;
+        while (roadRemaining > 0) {
+            boolean onRoad = (map.hasRoad(unit.cellId) || map.hasCity(unit.cellId));
+            if (unit.getLocation() == city.location) {
+                if (!cellsExploredByLand.get(unit.getLocation())) {
+                    Vector<Integer> region = map.getRegion(city.location, 2);
+                    int numCellsInRegion = region.size();
+                    int numSeenCellsInRegion = countSeenCells(region);
+                    if (numSeenCellsInRegion < numCellsInRegion) {
+                        Vector<Integer> landNeighborsWithUnseenNeighbors = getLandNeighborsWithUnseenNeighbors(map, city.location);
+                        if (landNeighborsWithUnseenNeighbors.size() > 0) {
+                            Random random = new Random();
+                            int numChoices = landNeighborsWithUnseenNeighbors.size();
+                            unit.cellId = landNeighborsWithUnseenNeighbors.get(random.nextInt(numChoices));
+                            seeNeighborsOf(map, unit.cellId);
+                        }
+                    } else {
+                        cellsExploredByLand.set(unit.getLocation());
+                        if ((!canAttack(unit)) || (countHappyCitizens(map, city) > countUnhappyCitizens(map, city))) {
+                            if (countMilitaryUnitsIn(city) > 1) {
+                                if (unit.unitType.mobility == getMaximumMilitaryMobility(city)) {
+                                    Random random = new Random();
+                                    Vector<Integer> neighbors = getLandNeighbors(map, unit.getLocation());
+                                    int numChoices = neighbors.size();
+                                    unit.cellId = neighbors.get(random.nextInt(numChoices));
+                                    seeNeighborsOf(map, unit.cellId);
+                                }
+                            }
+                        } else {
+                            return keepTroops;
+                        }
+                    }
+                } else {
+                    if ((!canAttack(unit)) || (countHappyCitizens(map, city) > countUnhappyCitizens(map, city))) {
+                        if (countMilitaryUnitsIn(city) > 1) {
+                            if (unit.unitType.mobility == getMaximumMilitaryMobility(city)) {
+                                Random random = new Random();
+                                Vector<Integer> neighbors = getLandNeighbors(map, unit.getLocation());
+                                int numChoices = neighbors.size();
+                                unit.cellId = neighbors.get(random.nextInt(numChoices));
+                                seeNeighborsOf(map, unit.cellId);
+                            }
+                        }
+                    } else {
+                        return keepTroops;
+                    }
+                }
+            } else  {
+                if (!cellsExploredByLand.get(unit.getLocation())) {
+                    Vector<Integer> region = map.getRegion(unit.getLocation(), 2);
+                    int numCellsInRegion = region.size();
+                    int numSeenCellsInRegion = countSeenCells(region);
+                    if (numSeenCellsInRegion < numCellsInRegion) {
+                        int mostUnseen = 0;
+                        Vector<Integer> landNeighborsWithUnseenNeighbors = new Vector<>(6);
+                        Vector<Integer> neighbors = map.getNeighbors(unit.getLocation());
+                        Vector<Integer> candidates = new Vector<>(6);
+                        for (int neighbor : neighbors) {
+                            if (map.isLand(neighbor)) {
+                                Vector<Integer> fringe = map.getNeighbors(neighbor);
+                                int seenCells = countSeenCells(fringe);
+                                if (seenCells < fringe.size()) {
+                                    if (fringe.size() - seenCells > mostUnseen) {
+                                        mostUnseen = fringe.size() - seenCells;
+                                        candidates.removeAllElements();
+                                        candidates.add((Integer) neighbor);
+                                    } else if (fringe.size() - seenCells == mostUnseen) {
+                                        candidates.add((Integer) neighbor);
+                                    }
+                                    landNeighborsWithUnseenNeighbors.add((Integer) neighbor);
+                                }
+                            }
+                        }
+                        if (candidates.size() > 0) {
+                            Random random = new Random();
+                            int numChoices = candidates.size();
+                            unit.cellId = candidates.get(random.nextInt(numChoices));
+                            seeNeighborsOf(map, unit.cellId);
+                        } else if (landNeighborsWithUnseenNeighbors.size() > 0) {
+                            Random random = new Random();
+                            int numChoices = landNeighborsWithUnseenNeighbors.size();
+                            unit.cellId = landNeighborsWithUnseenNeighbors.get(random.nextInt(numChoices));
+                            seeNeighborsOf(map, unit.cellId);
+                        } else {
+                            cellsExploredByLand.set(unit.getLocation());
+                            Vector<Integer> landNeighbors = landCells(map, map.getNeighbors(unit.cellId));
+                            int numChoices = landNeighbors.size();
+                            Random random = new Random();
+                            int i = random.nextInt(numChoices);
+                            int neighbor = landNeighbors.get(i);
+                            unit.cellId = neighbor;
+                            seeNeighborsOf(map, unit.cellId);
+                        }
+                    } else {
+                        cellsExploredByLand.set(unit.getLocation());
+                        Vector<Integer> landNeighbors = landCells(map, map.getNeighbors(unit.cellId));
+                        int numChoices = landNeighbors.size();
+                        Random random = new Random();
+                        int i = random.nextInt(numChoices);
+                        int neighbor = landNeighbors.get(i);
+                        unit.cellId = neighbor;
+                        seeNeighborsOf(map, unit.cellId);
+                    }
+                } else {
+                    Vector<Integer> landNeighbors = landCells(map, map.getNeighbors(unit.cellId));
+                    int numChoices = landNeighbors.size();
+                    Random random = new Random();
+                    int i = random.nextInt(numChoices);
+                    int neighbor = landNeighbors.get(i);
+                    unit.cellId = neighbor;
+                    seeNeighborsOf(map, unit.cellId);
+                }
+            }
+            if ((onRoad) && (map.hasRoad(unit.cellId))) {
+                roadRemaining = roadRemaining - 1;
+            } else {
+                roadRemaining = roadRemaining - 3;
+            }
+        }
+        return result;
+    }
+
+    // returns false if the unit should be deleted.
+    protected boolean playTurn(WorldMap map, City city, Unit unit,
+                               GameListener listener, ClaimReferee referee, boolean keepTroops) {
+        boolean result = true;
+        if (unit.unitType.isSettler) {
+            result = playTurnAsSettler(map, city, unit, listener, referee, keepTroops);
+        } else if (unit.unitType.isTerrestrial) {
+            result = playTurnAsExplorer(map, city, unit, listener, referee, keepTroops);
+        }
+        return result;
     }
 
 }

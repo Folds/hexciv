@@ -99,6 +99,14 @@ public class WorldMap {
         roads.set(cellId);
     }
 
+    protected void mine(int cellId) {
+        mines.set(cellId);
+    }
+
+    protected void irrigate(int cellId) {
+        irrigation.set(cellId);
+    }
+
     int countPollution() {
         return pollution.cardinality(); // counts set bits.
     }

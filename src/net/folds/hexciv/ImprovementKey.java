@@ -83,4 +83,63 @@ public class ImprovementKey {
         key.set(id);
     }
 
+    protected int getTradeFactor() {
+        int result = 100;
+        int id = -1;
+        int numImprovements = key.cardinality();
+        for (int i = 0; i < numImprovements; i++) {
+            id = key.nextSetBit(id + 1);
+            if (id < 0) {
+                break;
+            }
+            result = result + types.get(id).tradeBonus;
+        }
+        return result;
+    }
+
+    protected int getScienceFactor() {
+        int result = 100;
+        int id = -1;
+        int numImprovements = key.cardinality();
+        for (int i = 0; i < numImprovements; i++) {
+            id = key.nextSetBit(id + 1);
+            if (id < 0) {
+                break;
+            }
+            result = result + types.get(id).scienceBonus;
+        }
+        return result;
+    }
+
+    protected int getLuxuryFactor() {
+        return getTradeFactor();
+    }
+
+    protected int getTaxFactor() {
+        return getTradeFactor();
+    }
+
+    protected int getProductionFactor() {
+        int result = 100;
+        int id = -1;
+        int numImprovements = key.cardinality();
+        boolean isElectrified = false;
+        for (int i = 0; i < numImprovements; i++) {
+            id = key.nextSetBit(id + 1);
+            if (id < 0) {
+                break;
+            }
+            if (100 + types.get(id).productionBonus > result) {
+                result = 100 + types.get(id).productionBonus;
+            }
+            if (types.get(id).isElectrified) {
+                isElectrified = true;
+            }
+        }
+        if (isElectrified) {
+            result = result * 3 / 2 - 50;
+        }
+        return result;
+    }
+
 }
