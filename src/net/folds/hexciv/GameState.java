@@ -12,8 +12,8 @@ public class GameState implements ClaimReferee {
     Vector<Civilization> civs;
     Vector<UnitType> unitTypes;
     Vector<GovernmentType> governmentTypes;
-    ImprovementVector improvementTypes;
-    TechTree techTree;
+    ImprovementKey wonders;
+    TechKey discoveries;
     WorldMap map;
     int turn;
     boolean isTurnInProgress;
@@ -24,8 +24,10 @@ public class GameState implements ClaimReferee {
         civs = new Vector<>(numCivilizations);
         unitTypes = UnitType.getChoices();
         governmentTypes = GovernmentType.getChoices();
-        techTree = TechTree.proposeTechs();
-        improvementTypes = ImprovementVector.proposeImprovements();
+        TechTree techTree = TechTree.proposeTechs();
+        discoveries = new TechKey(techTree);
+        ImprovementVector improvementTypes = ImprovementVector.proposeImprovements();
+        wonders = new ImprovementKey(improvementTypes);
         for (int i = 0; i < numCivilizations; i++) {
             Civilization civ = new Civilization(governmentTypes, unitTypes, techTree, improvementTypes);
             civ.setName(Civilization.proposeCivilizationName(i));
@@ -51,6 +53,16 @@ public class GameState implements ClaimReferee {
             foreignLocations.addAll(civ.getLocations());
             Collections.sort(foreignLocations);
             Util.deduplicate(foreignLocations);
+        }
+    }
+
+    public void claimTech(int techId) {
+        discoveries.claimTech(techId);
+    }
+
+    public void claimWonder(int wonderId) {
+        if ((wonderId >= 0) && (wonders.types.get(wonderId).isWonder())) {
+            wonders.set(wonderId);
         }
     }
 
@@ -85,6 +97,83 @@ public class GameState implements ClaimReferee {
             result = result + civ.countUnits();
         }
         return result;
+    }
+
+    public int countBenefitFromWondersThatAffectAllCivilizations(WorldMap map, City city, int benefitId) {
+        int result = 0;
+        int wonderId = -1;
+        int numWonders = wonders.countWonders();
+        for (int i = 0; i < numWonders; i++) {
+            wonderId = wonders.key.nextSetBit(wonderId + 1);
+            if (wonderId < 0) {
+                break;
+            }
+            if (   (wonders.types.get(wonderId).affectsAllCivilizations)
+                    && (doesWonderAffectCity(wonderId, map, city))
+                    ) {
+                result = result + wonders.types.get(wonderId).getValue(benefitId);
+            }
+        }
+        return result;
+    }
+
+    public boolean doesWonderAffectCity(int wonderId, WorldMap map, City city) {
+        if (!wonders.key.get(wonderId)) {
+            return false;
+        }
+        if (isObsolete(wonderId)) {
+            return false;
+        }
+        if (city.improvements.key.get(wonderId)) {
+            return true;
+        }
+        if (!wonders.types.get(wonderId).affectsContinent) {
+            return false;
+        }
+        if (city.civ.hasWonder(wonderId)) {
+            if (wonders.types.get(wonderId).affectsAllContinents) {
+                return true;
+            }
+            int location = city.civ.getWonderLocation(wonderId);
+            if (location >= 0) {
+                if (city.civ.getContinentNumber(map, city.location) == city.civ.getContinentNumber(map, location)) {
+                    return true;
+                } else {
+                    return false;
+                }
+            }
+        }
+        if (!wonders.types.get(wonderId).affectsAllCivilizations) {
+            return false;
+        }
+        if (wonders.types.get(wonderId).affectsAllContinents) {
+            return true;
+        }
+
+        int location = getLocationOfWonder(wonderId);
+        if (location < 0) {
+            return false;
+        }
+        if (city.civ.getContinentNumber(map, city.location) == city.civ.getContinentNumber(map, location)) {
+            return true;
+        }
+        return false;
+    }
+
+    protected int getLocationOfWonder(int wonderId) {
+        if (!wonders.key.get(wonderId)) {
+            return -1;
+        }
+        if (!wonders.types.get(wonderId).isWonder()) {
+            return -1;
+        }
+        for (Civilization civ : civs) {
+            int location = civ.getWonderLocation(wonderId);
+            if (location >= 0) {
+                return location;
+            }
+        }
+        return -1;
     }
 
     protected Civilization getCiv(int id) {
@@ -132,6 +221,36 @@ public class GameState implements ClaimReferee {
         return turn + 1450;
     }
 
+    public boolean hasNonobsoleteElectrifiedWonder() {
+        int numWonders = wonders.key.cardinality();
+        int id = -1;
+        for (int i = 0; i < numWonders; i++) {
+            id = wonders.key.nextSetBit(id + 1);
+            if (id < 0) {
+                break;
+            }
+            ImprovementType improvement = wonders.types.get(id);
+            if ((improvement.isWonder()) && (improvement.isElectrified)) {
+                if (!isObsolete(improvement)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    public boolean isAvailable(int wonderId) {
+        for (Civilization civ : civs) {
+            if (civ.hasWonder(wonderId)) {
+                return true;
+            }
+            if (civ.hadWonder(wonderId)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public boolean isAvailable(int cellId, Civilization civ) {
         Vector<Integer> cityLocations = civ.getCityLocations();
         if (cityLocations != null) {
@@ -161,6 +280,29 @@ public class GameState implements ClaimReferee {
             return true;
         }
         return false;
+    }
+
+    public boolean isObsolete(ImprovementType improvementType) {
+        int obsoleterTechId = improvementType.obsolescerTechnologyIndex;
+        if (obsoleterTechId < 0) {
+            return false;
+        }
+        if (discoveries.hasTech(obsoleterTechId)) {
+            return true;
+        }
+        return false;
+    }
+
+    public boolean isObsolete(int wonderId) {
+        if (wonderId < 0) {
+            return true;
+        }
+        ImprovementType improvementType = wonders.types.get(wonderId);
+        int obsoleterTechId = improvementType.obsolescerTechnologyIndex;
+        if (obsoleterTechId < 0) {
+            return false;
+        }
+        return discoveries.hasTech(obsoleterTechId);
     }
 
     protected void playTurn() {

@@ -8,9 +8,10 @@ import java.util.BitSet;
 public interface GameListener {
     void celebrateDiscovery(Civilization civ, Technology tech);
     void celebrateEnd();
-    void celebrateYear(int year);
-    void celebrateTechnology(Civilization civ, TechKey key);
     void celebrateNewCity(Unit unit, String cityName);
+    void celebrateTechnology(Civilization civ, TechKey key);
+    void celebrateWonder(City city, int wonderId);
+    void celebrateYear(int year);
     void bemoanDisorder(City city);
     void bemoanFamine(City city);
     void bemoanUnsupported(City city, Unit unit);

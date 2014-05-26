@@ -18,6 +18,12 @@ public class TechKey {
         nextTech = -1;
     }
 
+    protected void claimTech(int techId) {
+        if (techId >= 0) {
+            key.set(techId);
+        }
+    }
+
     protected Technology getTech(int techId) {
         return techs.getTech(techId);
     }
@@ -176,5 +182,6 @@ public class TechKey {
         }
         return result;
     }
+
 
 }

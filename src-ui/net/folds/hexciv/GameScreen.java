@@ -115,7 +115,7 @@ public class GameScreen extends JFrame
     public void celebrateEnd() {
         logPane.log("Game over.");
         for (Civilization civ : gameState.civs) {
-            logPane.log(civ.getBrag(gameState.map));
+            logPane.log(civ.getBrag(gameState.map, gameState));
         }
         logPane.log("Play again?");
     }
@@ -123,6 +123,16 @@ public class GameScreen extends JFrame
     public void celebrateNewCity(Unit unit, String cityName) {
         int year = gameState.getYear();
         logPane.log(cityName + " est. " + formatYear(year));
+    }
+
+    public void celebrateWonder(City city, int wonderId) {
+        if ((city == null) || (wonderId < 0)) {
+            return;
+        }
+        String civName = city.civ.getName();
+        String cityName = city.name;
+        String wonderName = gameState.wonders.types.get(wonderId).name;
+        logPane.log(civName + " builds " + wonderName + " in " + cityName);
     }
 
     public void celebrateYear(int year) {

@@ -6,30 +6,102 @@ package net.folds.hexciv;
 public class ImprovementType {
     int id;
     String name;
+    int technologyIndex;
+    int obsolescerTechnologyIndex;
     int capitalCost;     // in shields
     int resaleValue;     // in gold
     int upkeepCost;      // in gold
     int defenseBonus;    // in percent
-    int scienceBonus;    // in percent
+    int happyBonusPerCity;
     int productionBonus; // in percent
+    int sailBonus;       // in movement points per turn, at sea.
+    int scienceBonus;    // in percent
+    int techBonus;       // immediately obtain this many technologies
+    int templeBonus;     // in percent
     int tradeBonus;      // in percent
     int tradeBonusPerTradeCell;
+    int unhappyReductionPerCity;
+    int unhappyReductionPerMissedExplorer;
+    boolean allowsAnyGovernmentType;
+    boolean allowsNukes;
+    boolean allowsSpaceship;
+    boolean canImposePeace;
+    boolean copiesTech;
+    boolean isBarracks;
     boolean isElectrified;
     boolean isGranary;
-    boolean preventsPlague;
-    boolean preventsFlood;
     boolean preventsFire;
-    boolean isBarracks;
-    int technologyIndex;
+    boolean preventsFlood;
+    boolean preventsPlague;
+    boolean seesAllCities;
+    boolean shortensRevolutions;
+    boolean affectsContinent;
+    boolean affectsAllContinents;
+    boolean affectsAllCivilizations;
+
+    protected int getValue(int id) {
+        switch (id) {
+            case  0: return capitalCost;
+            case  1: return resaleValue;
+            case  2: return upkeepCost;
+            case  3: return defenseBonus;
+            case  4: return happyBonusPerCity;
+            case  5: return productionBonus;
+            case  6: return sailBonus;
+            case  7: return scienceBonus;
+            case  8: return techBonus;
+            case  9: return templeBonus;
+            case 10: return tradeBonus;
+            case 11: return tradeBonusPerTradeCell;
+            case 12: return unhappyReductionPerCity;
+            case 13: return unhappyReductionPerMissedExplorer;
+            default: return 0;
+        }
+    }
+
+    protected boolean getBoolean(int id) {
+        switch (id) {
+            case  0: return allowsAnyGovernmentType;
+            case  1: return allowsNukes;
+            case  2: return allowsSpaceship;
+            case  3: return canImposePeace;
+            case  4: return copiesTech;
+            case  5: return isBarracks;
+            case  6: return isElectrified;
+            case  7: return isGranary;
+            case  8: return preventsFire;
+            case  9: return preventsFlood;
+            case 10: return preventsPlague;
+            case 11: return seesAllCities;
+            case 12: return shortensRevolutions;
+            default: return false;
+        }
+    }
 
     public ImprovementType(int id, String name, int capitalCost, int upkeepCost, int technologyIndex) {
+        int obsolescerTechnologyIndex = -1;
+        initialize(id, name, capitalCost, upkeepCost, technologyIndex, obsolescerTechnologyIndex);
+    }
+
+    public ImprovementType(int id, String name, int capitalCost, int upkeepCost,
+                           int technologyIndex, int obsolescerTechnologyIndex) {
+        initialize(id, name, capitalCost, upkeepCost, technologyIndex, obsolescerTechnologyIndex);
+    }
+
+    protected void initialize(int id, String name, int capitalCost, int upkeepCost,
+                              int technologyIndex, int obsolescerTechnologyIndex) {
         this.id = id;
         this.name = name;
         this.capitalCost = capitalCost;
+        affectsAllCivilizations = false;
         if (upkeepCost == 0) {
             this.resaleValue = 0;
+            affectsContinent = true;
+            affectsAllContinents = true;
         } else {
             this.resaleValue = capitalCost;
+            affectsContinent = false;
+            affectsAllContinents = false;
         }
         this.upkeepCost = upkeepCost;
         this.technologyIndex = technologyIndex;
@@ -43,6 +115,20 @@ public class ImprovementType {
         preventsPlague = false;
         isElectrified = false;
         isBarracks = false;
+        this.obsolescerTechnologyIndex = obsolescerTechnologyIndex;
+        happyBonusPerCity = 0;
+        unhappyReductionPerCity = 0;
+        canImposePeace = false;
+        shortensRevolutions = false;
+        allowsAnyGovernmentType = false;
+        templeBonus = 0;
+        copiesTech = false;
+        sailBonus = 0;
+        techBonus = 0;
+        unhappyReductionPerMissedExplorer = 0;
+        seesAllCities = false;
+        allowsSpaceship = false;
+        allowsNukes = false;
     }
 
     public static ImprovementType get(int index) {

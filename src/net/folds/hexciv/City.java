@@ -17,6 +17,7 @@ public class City {
     int numTaxMen;
     int numScientists;
     int numEntertainers;
+    boolean isDestroyed;
 
     ImprovementKey improvements;
     Vector<Unit> units;
@@ -29,6 +30,7 @@ public class City {
         // To-do:  initialize improvementIndexes to all false,
         //         for each possible city improvement.
         this.name = name;
+        isDestroyed = false;
         storedFood = 0;
         storedProduction = 0;
         location = cellId;
@@ -125,7 +127,7 @@ public class City {
         return false;
     }
 
-    protected void produce() {
+    protected void produce(GameListener listener, ClaimReferee referee) {
         storedProduction = 0;
         if (wip.isUnitType) {
             Unit unit = new Unit(wip.unitType, location);
@@ -133,8 +135,28 @@ public class City {
         } else {
             if (wip.improvementType.id >= 0) {
                 improvements.set(wip.improvementType.id);
+                if (wip.improvementType.isWonder()) {
+                    referee.claimWonder(wip.improvementType.id);
+                    listener.celebrateWonder(this, wip.improvementType.id);
+                }
             }
         }
+    }
+
+    protected boolean hasElectrifiedImprovement() {
+            int numImprovements = improvements.key.cardinality();
+            int improvementId = -1;
+            for (int i = 0; i < numImprovements; i++) {
+                improvementId = improvements.key.nextSetBit(improvementId + 1);
+                if (improvementId < 0) {
+                    break;
+                }
+                ImprovementType improvement = improvements.types.get(improvementId);
+                if (improvement.isElectrified) {
+                        return true;
+                }
+        }
+        return false;
     }
 
     protected static City proposeNone(Civilization civ) {
@@ -146,19 +168,4 @@ public class City {
         return none;
     }
 
-    protected int getLuxuryFactor() {
-        return improvements.getLuxuryFactor();
-    }
-
-    protected int getTaxFactor() {
-        return improvements.getTaxFactor();
-    }
-
-    protected int getScienceFactor() {
-        return improvements.getScienceFactor();
-    }
-
-    protected int getProductionFactor() {
-        return improvements.getProductionFactor();
-    }
 }

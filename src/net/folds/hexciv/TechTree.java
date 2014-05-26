@@ -196,7 +196,7 @@ public class TechTree {
         add(37, 81, "Lean Production");
         add(63, 81, "Recycling");
         add(64, 81, "Labor Union");
-        add(67, 81, "Robotics");       // 85
+        add(67, 79, "Robotics");       // 85
         add(68, 80, "Laser");
         add(68, 81, "Nuclear Fission");
         add(73, 82, "Carbon Fiber");
