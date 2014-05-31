@@ -86,6 +86,25 @@ public class GameState implements ClaimReferee {
         return civs.size();
     }
 
+    public int countRawTrade(int cityLocationId) {
+        if (!map.hasCity(cityLocationId)) {
+            return 0;
+        }
+        if (civs == null) {
+            return 0;
+        }
+        if (civs.size() == 0) {
+            return 0;
+        }
+        for (Civilization civ : civs) {
+            if (civ.hasCityAt(cityLocationId)) {
+                City city = civ.getCityAt(cityLocationId);
+                return civ.countRawTrade(map, city);
+            }
+        }
+        return 0;
+    }
+
     protected int countSeenCells() {
         BitSet seenCells = getSeenCells();
         return seenCells.cardinality();

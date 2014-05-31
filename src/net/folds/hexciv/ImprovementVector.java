@@ -89,6 +89,31 @@ public class ImprovementVector {
         add(id, name, capitalCost, upkeepCost, technologyIndex, obsoleterIndex);
     }
 
+    protected boolean canBuildWonder(TechKey techKey, ClaimReferee referee) {
+        for (ImprovementType improvement : improvements) {
+            if (   (improvement.isWonder())
+                && ((improvement.technologyIndex < 0) || (techKey.hasTech(improvement.technologyIndex)))
+                && (referee.isAvailable(improvement.id))
+               ) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    protected ImprovementType availableWonderThatCostsAtLeast(int capitalCost, TechKey techKey, ClaimReferee referee) {
+        for (ImprovementType improvement : improvements) {
+            if (   (improvement.isWonder())
+                && (improvement.capitalCost >= capitalCost)
+                && ((improvement.technologyIndex < 0) || (techKey.hasTech(improvement.technologyIndex)))
+                && (referee.isAvailable(improvement.id))
+                    ) {
+                return improvement;
+            }
+        }
+        return null;
+    }
+
     protected int countTypes() {
         return improvements.size();
     }

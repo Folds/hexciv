@@ -75,32 +75,32 @@ public class UnitType {
 
     protected static Vector<UnitType> getChoices() {
         Vector<UnitType> result = new Vector<>(2);
-        result.add(proposeMilitia());
+        result.add(proposeMilitia());  //  0
         result.add(proposeSettler());
         result.add(proposeCavalry());
         result.add(proposeDiplomat());
         result.add(proposePhalanx());
-        result.add(proposeTrireme());
+        result.add(proposeTrireme());  //  5
         result.add(proposeChariot());
         result.add(proposeLegion());
         result.add(proposeCatapult());
         result.add(proposeCaravan());
-        result.add(proposeKnights());
+        result.add(proposeKnights());  // 10
         result.add(proposeSail());
         result.add(proposeMusketeers());
         result.add(proposeCannon());
         result.add(proposeFrigate());
-        result.add(proposeIronclad());
+        result.add(proposeIronclad()); // 15
         result.add(proposeRiflemen());
         result.add(proposeTransport());
         result.add(proposeBattleship());
         result.add(proposeCruiser());
-        result.add(proposeArmor());
+        result.add(proposeArmor());   // 20
         result.add(proposeFighter());
         result.add(proposeCarrier());
         result.add(proposeBomber());
         result.add(proposeSubmarine());
-        result.add(proposeNuke());
+        result.add(proposeNuke());    // 25
         result.add(proposeMechInf());
         result.add(proposeArtillery());
         return result;
@@ -137,6 +137,7 @@ public class UnitType {
         UnitType result = new UnitType(30, 0, 0, 2, "Diplomat", 21); // Writing
         result.isSlippery = true;
         result.isDiplomat = true;
+        result.logisticsCost = 0;
         return result;
     }
 
@@ -167,6 +168,7 @@ public class UnitType {
         UnitType result = new UnitType(50, 0, 1, 1, "Caravan", 34); // Trade
         result.isCaravan = true;
         result.isSlippery = true;
+        result.logisticsCost = 0;
         return result;
     }
 

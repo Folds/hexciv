@@ -47,6 +47,10 @@ public class Referee implements ClaimReferee {
         return result;
     }
 
+    public int countRawTrade(int cityLocationId) {
+        return 0;
+    }
+
     public boolean doesWonderAffectCity(int wonderId, WorldMap map, City city) {
         if (!wonders.key.get(wonderId)) {
             return false;
