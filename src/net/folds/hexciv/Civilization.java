@@ -34,6 +34,7 @@ public class Civilization {
     private boolean hasToldStory;
     private int turnCounter;
     Vector<BitSet> continents;
+    private Planner planner;
 
     protected Civilization(Vector<GovernmentType> governmentTypes,
                            Vector<UnitType> unitTypes,
@@ -72,6 +73,7 @@ public class Civilization {
         seenCells.set(cellId);
         cellsExploredByLand = new BitSet(map.countCells());
         seeNeighborsOf(map, cellId);
+        planner = new Planner(this, map);
     }
 
     protected void abandonFurthestUnitThatNeedsMaintenance(WorldMap map, City city, GameListener listener) {
@@ -379,9 +381,24 @@ public class Civilization {
             requestProfitableImprovement(map, city,  6, referee); // Library
             requestProfitableImprovement(map, city,  7, referee); // Market
             requestProfitableImprovement(map, city, 19, referee); // Manufactory
+            if (isWonderCity(map, city, referee)) {
+                requestProfitableWonder(city, 31, referee); // Circumnavigation
+                requestProfitableWonder(city, 23, referee); // Pyramids
+                requestProfitableWonder(city, 35, referee); // Timocracy
+                requestProfitableWonder(city, 40, referee); // Cancer Cure
+                requestProfitableWonder(city, 39, referee); // Hypertext
+                requestProfitableWonder(city, 37, referee); // Great Dam
+            }
             requestProfitableImprovement(map, city,  2, referee); // Temple
             requestProfitableImprovement(map, city,  3, referee); // Granary
         }
+    }
+
+    protected boolean isWonderCity(WorldMap map, City city, ClaimReferee referee) {
+        if (countProductionSurplus(map, city, referee) >= 5) {
+            return true;
+        }
+        return false;
     }
 
     protected int countExplorers(WorldMap map) {
@@ -1240,6 +1257,7 @@ public class Civilization {
 
     protected String foundCity(WorldMap map, int cellId, ClaimReferee referee) {
         map.foundCity(cellId);
+        planner.buffer(cellId, 4);
         City city = new City(this, cellId, name + "_" + countCities());
         cities.add(city);
         int farmLocation = chooseFarm(map, cellId, referee);
@@ -1861,6 +1879,12 @@ public class Civilization {
     }
 
     protected boolean isGoodLocationForNewCity(WorldMap map, int cellId) {
+        if (planner.hasAccepted(cellId)) {
+            return true;
+        }
+        if (planner.hasRejected(cellId)) {
+            return false;
+        }
         Vector<Integer> cityLocations = getCityLocations();
         return isAdequateStartLocation(map, cellId, cityLocations);
     }
@@ -2160,7 +2184,11 @@ public class Civilization {
                 }
                 if (hasCityAt(neighbor)) {
                     City neighborCity = getCityAt(neighbor);
-                    if ((!neighborCity.wip.isUnitType) && (neighborCity.wip.improvementType.isWonder())) {
+                    if (   (!(neighborCity == null))
+                        && (!(neighborCity.wip == null))
+                        && (!neighborCity.wip.isUnitType)
+                        && (neighborCity.wip.improvementType.isWonder())
+                       ) {
                         return true;
                     }
                 }
@@ -2258,6 +2286,7 @@ public class Civilization {
                             seeNeighborsOf(map, unit.cellId);
                         } else {
                             cellsExploredByLand.set(unit.getLocation());
+                            planner.cacheSite(unit.cellId);
                             Vector<Integer> landNeighbors = landCells(map, map.getNeighbors(unit.cellId));
                             int numChoices = landNeighbors.size();
                             Random random = new Random();
@@ -2268,6 +2297,7 @@ public class Civilization {
                         }
                     } else {
                         cellsExploredByLand.set(unit.getLocation());
+                        planner.cacheSite(unit.cellId);
                         Vector<Integer> landNeighbors = landCells(map, map.getNeighbors(unit.cellId));
                         int numChoices = landNeighbors.size();
                         Random random = new Random();
@@ -2277,6 +2307,7 @@ public class Civilization {
                         seeNeighborsOf(map, unit.cellId);
                     }
                 } else {
+                    planner.cacheSite(unit.cellId);
                     Vector<Integer> landNeighbors = landCells(map, map.getNeighbors(unit.cellId));
                     int numChoices = landNeighbors.size();
                     Random random = new Random();
@@ -2461,16 +2492,22 @@ public class Civilization {
         }
     }
 
-    protected void requestNonObsoleteWonder(City city, int wonderId, ClaimReferee referee) {
-        if (!referee.isObsolete(wonderId)) {
+    protected boolean isNonObsoleteWonder(int wonderId, ClaimReferee referee) {
+        if (   (improvements.get(wonderId).isWonder())
+            && (!referee.isObsolete(wonderId))
+            && (referee.isAvailable(wonderId))
+            && (techKey.hasTech(improvements.get(wonderId).technologyIndex))
+           ) {
+            return true;
+        }
+        return false;
+    }
+
+    protected void requestProfitableWonder(City city, int wonderId, ClaimReferee referee) {
+        if (!isNonObsoleteWonder(wonderId, referee)) {
             return;
         }
-        if (!referee.isAvailable(wonderId)) {
-            return;
-        }
-        if (techKey.hasTech(improvements.get(wonderId).technologyIndex)) {
-            city.wip = new ProductType(improvements.get(wonderId));
-        }
+        requestWonder(city, wonderId, referee);
     }
 
     protected void seeNeighborsOf(WorldMap map, int cellId) {

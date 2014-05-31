@@ -474,7 +474,7 @@ public class IcosahedralMesh {
         if (radius < 0) {
             return null;
         }
-        int numCells = radius * (radius + 1) / 2;
+        int numCells = 1 + 3 * radius * (radius + 1);
         if (numCells >= countCells()) {
             numCells = countCells();
         }
