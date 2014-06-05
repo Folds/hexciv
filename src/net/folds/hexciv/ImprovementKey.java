@@ -44,6 +44,26 @@ public class ImprovementKey {
         return types.get(id);
     }
 
+    protected int getLowestValueBarracks() {
+        int result = -1;
+        int lowestValue = types.getHighestResaleValue();
+        int numImprovements = key.cardinality();
+        for (int i = 0; i < numImprovements; i++) {
+            int id = key.nextSetBit(result + 1);
+            if (id < 0) {
+                break;
+            }
+            if (types.get(id).isBarracks) {
+                int value = types.get(id).resaleValue;
+                if ((value > 0) && (value <= lowestValue)) {
+                    result = id;
+                    lowestValue = value;
+                }
+            }
+        }
+        return result;
+    }
+
     protected int getLowestValueImprovement() {
         int result = -1;
         int lowestValue = types.getHighestResaleValue();

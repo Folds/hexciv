@@ -12,6 +12,7 @@ public class MockGameListener implements GameListener {
     public void celebrateEnd() {}
     public void celebrateNewCity(Unit unit, String cityName) {}
     public void celebrateTechnology (Civilization civ, TechKey key) {}
+    public void celebrateUnsupported(City city, ImprovementType improvementType) {}
     public void celebrateWonder(City city, int wonderId) {}
     public void celebrateYear(int year) {}
     public void bemoanDisorder(City city) {}

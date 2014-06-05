@@ -92,6 +92,10 @@ public class City {
         return result;
     }
 
+    protected int getLowestValueBarracks() {
+        return improvements.getLowestValueBarracks();
+    }
+
     protected int getLowestValueImprovement() {
         return improvements.getLowestValueImprovement();
     }
@@ -143,18 +147,34 @@ public class City {
         }
     }
 
+    protected boolean hasBarracks() {
+        int numImprovements = improvements.key.cardinality();
+        int improvementId = -1;
+        for (int i = 0; i < numImprovements; i++) {
+            improvementId = improvements.key.nextSetBit(improvementId + 1);
+            if (improvementId < 0) {
+                break;
+            }
+            ImprovementType improvement = improvements.types.get(improvementId);
+            if (improvement.isBarracks) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     protected boolean hasElectrifiedImprovement() {
-            int numImprovements = improvements.key.cardinality();
-            int improvementId = -1;
-            for (int i = 0; i < numImprovements; i++) {
-                improvementId = improvements.key.nextSetBit(improvementId + 1);
-                if (improvementId < 0) {
-                    break;
-                }
-                ImprovementType improvement = improvements.types.get(improvementId);
-                if (improvement.isElectrified) {
-                        return true;
-                }
+        int numImprovements = improvements.key.cardinality();
+        int improvementId = -1;
+        for (int i = 0; i < numImprovements; i++) {
+            improvementId = improvements.key.nextSetBit(improvementId + 1);
+            if (improvementId < 0) {
+                break;
+            }
+            ImprovementType improvement = improvements.types.get(improvementId);
+            if (improvement.isElectrified) {
+                    return true;
+            }
         }
         return false;
     }

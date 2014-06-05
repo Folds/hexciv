@@ -10,6 +10,7 @@ public class Planner {
     private Civilization civ;
     private BitSet proposedCitySites;
     private BitSet proposedNonCitySites;
+    private BitSet potentialFarms;
     private WorldMap map;
     private int numCells;
 
@@ -19,11 +20,18 @@ public class Planner {
         numCells = map.countCells();
         proposedCitySites = new BitSet(numCells);
         proposedNonCitySites = new BitSet(numCells);
+        potentialFarms = new BitSet(numCells);
     }
 
     protected void accept(int cellId) {
         proposedCitySites.set(cellId);
         proposedNonCitySites.set(cellId, false);
+        Vector<Integer> region = map.getRegion(cellId, 2);
+        for (int potentialFarm : region) {
+            if (potentialFarm != cellId) {
+                potentialFarms.set(potentialFarm);
+            }
+        }
     }
 
     protected void buffer(int cellId, int radius) {
@@ -54,11 +62,42 @@ public class Planner {
         return proposedCitySites.get(cellId);
     }
 
+    protected boolean hasPriorityUnseenCell(Vector<Integer> cellIds, BitSet seenCells) {
+        BitSet desiredCells = (BitSet) potentialFarms.clone();
+        desiredCells.andNot(seenCells);
+        for (int cellId : cellIds) {
+            if (desiredCells.get(cellId)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     protected boolean hasRejected(int cellId) {
         if ((cellId < 0) || (cellId >= numCells)) {
             return true;
         }
         return proposedNonCitySites.get(cellId);
+    }
+
+    protected boolean isPotentialFarm(int cellId) {
+        return potentialFarms.get(cellId);
+    }
+
+    protected boolean isPotentialFarmOfUnbuiltCity(int cellId) {
+        if (!potentialFarms.get(cellId)) {
+            return false;
+        }
+        if (map.hasCity(cellId)) {
+            return false;
+        }
+        Vector<Integer> region = map.getRegion(cellId, 2);
+        for (int neighborId : region) {
+            if ((neighborId != cellId) && (proposedCitySites.get(neighborId)) && (!map.hasCity(neighborId))) {
+                return true;
+            }
+        }
+        return false;
     }
 
     protected void reject(int cellId) {
