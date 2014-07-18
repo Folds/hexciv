@@ -294,6 +294,14 @@ public class WorldMap {
         return planet.areaInSquareKilometers() / (mesh.countCells() - 2);
     }
 
+    double getLatitudeInDegrees(int cellId) {
+        return mesh.getLatitudeInDegrees(cellId);
+    }
+
+    double getLongitudeInDegrees(int cellId) {
+        return mesh.getLongitudeInDegrees(cellId);
+    }
+
     double getMeanDiameterInKilometers(int cellId) {
         double cellArea = getAreaInSquareKilometers(cellId);
         return planet.getMeanDiameterInKilometers(cellArea);

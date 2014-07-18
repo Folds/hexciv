@@ -75,6 +75,9 @@ public class TestGameStart {
         Assert.assertTrue(location < 19); // Only the southernmost 19 cells of Polara are land.
         Assert.assertEquals(civ.countSeenCells(), 7); // So none of those 19 cells is a pentagon.
         Assert.assertEquals(gameState.countSeenCells(), 7);
+        Assert.assertTrue(civ.countSeenLandCells(map) > 0);
+        Assert.assertTrue(  ((location < 7) && (civ.countSeenNonLandCells(map) == 0))
+                          || (civ.countSeenLandCells(map) > 0));
 
         playTurns(gameState, 1);
         Assert.assertEquals(gameState.turn, 1);

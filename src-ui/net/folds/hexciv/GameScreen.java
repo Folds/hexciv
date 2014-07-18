@@ -120,9 +120,14 @@ public class GameScreen extends JFrame
         logPane.log("Play again?");
     }
 
-    public void celebrateNewCity(Unit unit, String cityName) {
+    public void celebrateNewCity(Unit unit, City city) {
         int year = gameState.getYear();
-        logPane.log(cityName + " est. " + formatYear(year));
+        logPane.log(city.name + " est. " + formatYear(year) + " at " + gameState.describeLocation(city));
+    }
+
+    public void celebrateRevolution(Civilization civ, GovernmentType governmentType) {
+        int year = gameState.getYear();
+        logPane.log(civ.getName() + " adopts " + governmentType.name + " in " + formatYear(year));
     }
 
     public void celebrateUnsupported(City city, ImprovementType improvementType) {
@@ -139,8 +144,12 @@ public class GameScreen extends JFrame
         logPane.log(civName + " builds " + wonderName + " in " + cityName);
     }
 
-    public void celebrateYear(int year) {
+    public void celebrateYear(int year, WorldMap map, ClaimReferee referee) {
         logPane.log("Reached year " + formatYear(year));
+        for (Civilization civ : gameState.civs) {
+            Vector<String> summary = civ.getBrag(map, referee);
+            logPane.log(summary);
+        }
     }
 
     public void bemoanDisorder(City city) {
@@ -153,6 +162,11 @@ public class GameScreen extends JFrame
         } else {
             logPane.log("Famine in " + city.name);
         }
+    }
+
+    public void bemoanRevolution(Civilization civ) {
+        int year = gameState.getYear();
+        logPane.log(civ.getName() + " revolts in " + formatYear(year));
     }
 
     public void bemoanUnsupported(City city, Unit unit) {

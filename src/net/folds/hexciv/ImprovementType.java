@@ -6,6 +6,7 @@ package net.folds.hexciv;
 public class ImprovementType {
     int id;
     String name;
+    String plural;
     int technologyIndex;
     int obsolescerTechnologyIndex;
     int capitalCost;     // in shields
@@ -92,6 +93,18 @@ public class ImprovementType {
                               int technologyIndex, int obsolescerTechnologyIndex) {
         this.id = id;
         this.name = name;
+        if ((this.name != null) && (this.name.length() > 0)) {
+            String lastLetter = this.name.substring(this.name.length() - 1);
+            if (lastLetter.equals("y")) {
+                this.plural = this.name.substring(0, this.name.length() - 1) + "ies";
+            } else if (lastLetter.equals("s")) {
+                this.plural = this.name;
+            } else {
+                this.plural = name + "s";
+            }
+        } else {
+            this.plural = name + "s";
+        }
         this.capitalCost = capitalCost;
         affectsAllCivilizations = false;
         if (upkeepCost == 0) {

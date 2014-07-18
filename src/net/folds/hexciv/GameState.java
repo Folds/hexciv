@@ -136,6 +136,54 @@ public class GameState implements ClaimReferee {
         return result;
     }
 
+    public String describeLocation(City city) {
+        int cellId = city.location;
+        double longitude = map.getLongitudeInDegrees(cellId);
+        double latitude = map.getLatitudeInDegrees(cellId);
+        return formatLongitude(longitude) + " " + formatLatitude(latitude);
+    }
+
+    protected String formatLongitude(double longitudeInDegrees) {
+        double longitude = ((longitudeInDegrees + 180.0) % 360.0) - 180.0;
+        if (Math.abs(longitude) < 1.0 / 120.0) {
+            return "0°";
+        }
+        String direction;
+        if (longitude > 0) {
+            direction = "E";
+        } else {
+            direction = "W";
+        }
+        double absLongitude = Math.abs(longitude);
+        return formatDegrees(absLongitude)+direction;
+    }
+
+    protected String formatLatitude(double latitudeInDegrees) {
+        double latitude = ((latitudeInDegrees + 180.0) % 360.0) - 180.0;
+        if (Math.abs(latitude) < 1.0 / 120.0) {
+            return "0°";
+        }
+        if (latitude > 90.0) {
+            latitude = 180.0 - latitude;
+        }
+        if (latitude < -90.0) {
+            latitude = -180.0 - latitude;
+        }
+        String direction;
+        if (latitude > 0) {
+            direction = "N";
+        } else {
+            direction = "S";
+        }
+        double absLatitude = Math.abs(latitude);
+        return formatDegrees(absLatitude)+direction;
+    }
+
+    protected String formatDegrees(double absoluteAngle) {
+        int degrees = (int) Math.round(absoluteAngle);
+        return degrees+"°";
+    }
+
     public boolean doesWonderAffectCity(int wonderId, WorldMap map, City city) {
         if (!wonders.key.get(wonderId)) {
             return false;
@@ -334,7 +382,7 @@ public class GameState implements ClaimReferee {
         parent.updateSeenCells(seenCells);
 
         if (turn % 50 == 0) {
-            parent.celebrateYear(getYear());
+            parent.celebrateYear(getYear(), map, this);
         }
         int techPriceFactor = getTechPriceFactor();
         for (Civilization civ : civs) {

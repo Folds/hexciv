@@ -103,4 +103,46 @@ public class ImprovementKey {
         key.set(id);
     }
 
+    protected boolean shortensRevolutions(ClaimReferee referee) {
+        int id = -1;
+        int numImprovements = key.cardinality();
+        for (int i = 0; i < numImprovements; i++) {
+            id = key.nextSetBit(id + 1);
+            if (id < 0) {
+                break;
+            }
+            ImprovementType improvement = types.get(id);
+            if (improvement.shortensRevolutions) {
+                if (!improvement.isWonder()) {
+                    return true;
+                }
+                if (!referee.isObsolete(improvement)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    protected boolean allowsAnyGovernmentType(ClaimReferee referee) {
+        int id = -1;
+        int numImprovements = key.cardinality();
+        for (int i = 0; i < numImprovements; i++) {
+            id = key.nextSetBit(id + 1);
+            if (id < 0) {
+                break;
+            }
+            ImprovementType improvement = types.get(id);
+            if (improvement.allowsAnyGovernmentType) {
+                if (!improvement.isWonder()) {
+                    return true;
+                }
+                if (!referee.isObsolete(improvement)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
 }

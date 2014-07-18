@@ -60,6 +60,32 @@ public class City {
         units.add(unit);
     }
 
+    protected int countAerialUnits() {
+        int result = 0;
+        if (units == null) {
+            return result;
+        }
+        for (Unit unit : units) {
+            if (unit.unitType.isAerial) {
+                result = result + 1;
+            }
+        }
+        return result;
+    }
+
+    protected int countNavalUnits() {
+        int result = 0;
+        if (units == null) {
+            return result;
+        }
+        for (Unit unit : units) {
+            if (unit.unitType.isNaval) {
+                result = result + 1;
+            }
+        }
+        return result;
+    }
+
     protected int countSettlers() {
         int result = 0;
         if (units == null) {
@@ -67,6 +93,19 @@ public class City {
         }
         for (Unit unit : units) {
             if (unit.unitType.isSettler) {
+                result = result + 1;
+            }
+        }
+        return result;
+    }
+
+    protected int countTerrestrialUnits() {
+        int result = 0;
+        if (units == null) {
+            return result;
+        }
+        for (Unit unit : units) {
+            if (unit.unitType.isTerrestrial) {
                 result = result + 1;
             }
         }
@@ -186,6 +225,14 @@ public class City {
         none.storedFood = 0;
         none.storedProduction = 0;
         return none;
+    }
+
+    protected boolean shortensRevolutions(ClaimReferee referee) {
+        return improvements.shortensRevolutions(referee);
+    }
+
+    protected boolean allowsAnyGovernmentType(ClaimReferee referee) {
+        return improvements.allowsAnyGovernmentType(referee);
     }
 
 }

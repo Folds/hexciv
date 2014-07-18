@@ -18,14 +18,27 @@ public class TechKey {
         nextTech = -1;
     }
 
+    protected void advance() {
+        if (nextTech >= 0) {
+            key.set(nextTech);
+        }
+        nextTech = -1;
+    }
+
+    protected BitSet allNamedTech() {
+        BitSet result = new BitSet(countNamedTechnologies());
+        result.set(0, countNamedTechnologies());
+        return result;
+    }
+
     protected void claimTech(int techId) {
         if (techId >= 0) {
             key.set(techId);
         }
     }
 
-    protected Technology getTech(int techId) {
-        return techs.getTech(techId);
+    protected int countDiscoveredNamedTechnologies() {
+        return countTechs() - countFutureTech();
     }
 
     protected int countFutureTech() {
@@ -35,70 +48,12 @@ public class TechKey {
         return futureTech.cardinality();
     }
 
-    protected BitSet allNamedTech() {
-        BitSet result = new BitSet(countNamedTechnologies());
-        result.set(0, countNamedTechnologies());
-        return result;
-    }
-
-    protected int getPriceOfNextTech(int techPriceFactor) {
-        int numFreeTechs = techs.countFreeTechs();
-        int numTechs = countTechs();
-        return (numTechs + 1 - numFreeTechs) * techPriceFactor;
-    }
-
-    protected int countTechs() {
-        return key.cardinality();
-    }
-
-    protected boolean isUndecided() {
-        if (nextTech < 0) {
-            return true;
-        }
-        return false;
-    }
-
-    protected boolean isNextTechComplete(int techSpending, int techPriceFactor) {
-        if (isUndecided()) {
-            return false;
-        }
-        int priceOfNextTech = getPriceOfNextTech(techPriceFactor);
-        if (techSpending >= priceOfNextTech) {
-            return true;
-        }
-        return false;
-    }
-
     protected int countNamedTechnologies() {
         return techs.countNamedTechnologies();
     }
 
-    protected Technology getNextTech() {
-        if (nextTech < 0) {
-            return null;
-        }
-        if (nextTech > techs.countNamedTechnologies() - 1) {
-            return techs.getFutureTech(nextTech - countNamedTechnologies() + 1);
-        }
-        return techs.getTech(nextTech);
-    }
-
-    protected void advance() {
-        if (nextTech >= 0) {
-            key.set(nextTech);
-        }
-        nextTech = -1;
-    }
-
-    protected int countDiscoveredNamedTechnologies() {
-        return countTechs() - countFutureTech();
-    }
-
-    protected boolean hasDiscoveredAllNamedTechnologies() {
-        if (countDiscoveredNamedTechnologies() < countNamedTechnologies()) {
-            return false;
-        }
-        return true;
+    protected int countTechs() {
+        return key.cardinality();
     }
 
     protected BitSet getAllChoices() {
@@ -151,6 +106,59 @@ public class TechKey {
         return key.nextClearBit(numNamedTechs);
     }
 
+    protected String getNameOfHighestDiscoveredTech() {
+        int futureTech = countFutureTech();
+        if (futureTech > 0) {
+            return "Future Tech " + futureTech;
+        }
+        int id = getIdOfHighestDiscoveredTech();
+        if (id < 0) {
+            return "No Tech";
+        }
+        return techs.getTech(id).name;
+    }
+
+    protected int getIdOfHighestDiscoveredTech() {
+        int id = -1;
+        int numTechs = countTechs();
+        int result = id;
+        for (int i = 0; i < numTechs; i++) {
+            id = key.nextSetBit(id + 1);
+            if (id < 0) {
+                break;
+            }
+            result = id;
+        }
+        return result;
+    }
+
+    protected Technology getNextTech() {
+        if (nextTech < 0) {
+            return null;
+        }
+        if (nextTech > techs.countNamedTechnologies() - 1) {
+            return techs.getFutureTech(nextTech - countNamedTechnologies() + 1);
+        }
+        return techs.getTech(nextTech);
+    }
+
+    protected int getPriceOfNextTech(int techPriceFactor) {
+        int numFreeTechs = techs.countFreeTechs();
+        int numTechs = countTechs();
+        return (numTechs + 1 - numFreeTechs) * techPriceFactor;
+    }
+
+    protected Technology getTech(int techId) {
+        return techs.getTech(techId);
+    }
+
+    protected boolean hasDiscoveredAllNamedTechnologies() {
+        if (countDiscoveredNamedTechnologies() < countNamedTechnologies()) {
+            return false;
+        }
+        return true;
+    }
+
     protected boolean hasPrerequisitesFor(Technology tech) {
         int parent1 = tech.parent1;
         int parent2 = tech.parent2;
@@ -168,6 +176,24 @@ public class TechKey {
             return true;
         }
         return key.get(techId);
+    }
+
+    protected boolean isNextTechComplete(int techSpending, int techPriceFactor) {
+        if (isUndecided()) {
+            return false;
+        }
+        int priceOfNextTech = getPriceOfNextTech(techPriceFactor);
+        if (techSpending >= priceOfNextTech) {
+            return true;
+        }
+        return false;
+    }
+
+    protected boolean isUndecided() {
+        if (nextTech < 0) {
+            return true;
+        }
+        return false;
     }
 
     protected String summarizeAllChoices() {

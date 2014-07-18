@@ -40,7 +40,13 @@ public class LogPanel extends JPanel {
     protected void log(String arg) {
         entries.addElement(arg);
         repaint();
-    };
+    }
+
+    protected void log(Vector<String> arg) {
+        for (String string : arg) {
+            log(string);
+        }
+    }
 
     public void paintComponent(Graphics comp) {
         super.paintComponent(comp);
