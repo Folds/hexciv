@@ -9,6 +9,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.io.File;
 import java.util.BitSet;
 import java.util.Vector;
@@ -20,6 +21,7 @@ public class GameScreen extends JFrame
         implements PaintableScreen, MovableMap, CellDescriber, Playable, GameListener, ActionListener {
     EditorState editorState;
     JXMultiSplitPane multiSplitPane;
+    JXMultiSplitPane wherePane;
     MapPanel mapPane;
     MasterPanel masterPane;
     LogPanel logPane;
@@ -28,6 +30,7 @@ public class GameScreen extends JFrame
     JFileChooser fileChooser;
     EditListener listener;
     GameState gameState;
+    TabbedPanel tabPane;
     Timer timer;
 
     public GameScreen() {
@@ -46,6 +49,8 @@ public class GameScreen extends JFrame
         logPane        = new LogPanel();
         localePane     = new LocalePanel(this);
         mousePane      = new MousePanel(this);
+        tabPane        = new TabbedPanel();
+        tabPane.addTab("Log", logPane, "Log", KeyEvent.VK_1);
         timer = new Timer(50, this);
 
         // The SwingX JXMultiSplitNode allows laying out multiple
@@ -54,24 +59,40 @@ public class GameScreen extends JFrame
         // http://stackoverflow.com/questions/11346120/jxmultisplitpane-hiding-node-causes-painting-issues
         // https://today.java.net/pub/a/today/2006/03/23/multi-split-pane.html
         // http://stackoverflow.com/questions/8660687/how-to-use-multisplitlayout-in-swingx?rq=1
-        String layoutDef = "(COLUMN " +
-                "(LEAF name=world.getMap weight=0.0) " +
-                "(ROW weight=1.0 " +
-                "(LEAF name=master weight=0.0) " +
-                "(LEAF name=log    weight=1.0) " +
-                "(LEAF name=locale weight=0.0) " +
-                "(LEAF name=mouse  weight=0.0) " +
-                ")" +
+        String layoutDefWhere =
+                  "(ROW weight=1.0 " +
+                    "(LEAF name=locale weight=0.0) " +
+                    "(LEAF name=mouse  weight=0.0) " +
+                  ")";
+        MultiSplitLayout.Node modelWhere = MultiSplitLayout.parseModel(layoutDefWhere);
+        wherePane = new JXMultiSplitPane();
+        wherePane.setDividerSize(3);
+        wherePane.getMultiSplitLayout().setModel(modelWhere);
+        wherePane.add(localePane,     "locale");
+        wherePane.add(mousePane,      "mouse");
+        tabPane.addTab("Cell info", wherePane, "Info about cell mouse is hovering over", KeyEvent.VK_2);
+
+        String layoutDef =
+                "(COLUMN " +
+                  "(LEAF name=world.getMap weight=0.0) " +
+                  "(ROW weight=1.0 " +
+                    "(LEAF name=master weight=0.0) " +
+                    "(LEAF name=tabs weight=1.0) " +
+                  ")" +
                 ")";
-        MultiSplitLayout.Node modelRoot = MultiSplitLayout.parseModel(layoutDef);
+        MultiSplitLayout.Node modelRoot    = MultiSplitLayout.parseModel(layoutDef);
+
         multiSplitPane = new JXMultiSplitPane();
         multiSplitPane.setDividerSize(3);
         multiSplitPane.getMultiSplitLayout().setModel(modelRoot);
         multiSplitPane.add(masterPane, "master");
-        multiSplitPane.add(logPane,        "log");
+        multiSplitPane.add(tabPane, "tabs");
         multiSplitPane.add(mapPane,        "world.getMap");
+/*
+        multiSplitPane.add(logPane,        "log");
         multiSplitPane.add(localePane,     "locale");
         multiSplitPane.add(mousePane,      "mouse");
+*/
         getContentPane().add(multiSplitPane);
     }
 
@@ -336,5 +357,9 @@ public class GameScreen extends JFrame
 
     public void updateSeenCells(BitSet seenCells) {
         mapPane.seeCells(seenCells);
+    }
+
+    public void updateStats() {
+
     }
 }

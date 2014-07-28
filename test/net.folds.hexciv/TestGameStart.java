@@ -50,7 +50,8 @@ public class TestGameStart {
         Civilization civ = gameState.getCiv(0);
         int cellId = civ.getCity(0).getUnit(0).getLocation();
         Assert.assertTrue(cellId >= 0);
-        int neighborId = civ.chooseFarm(map, civ.getCity(0));
+        CivPlayer ruler = new CivPlayer(map, civ, listener, gameState);
+        int neighborId = ruler.chooseFarm(map, civ.getCity(0));
         Assert.assertTrue(neighborId >= 0);
 //        int numFood = civ.countFood(map, cellId) + civ.countFood(map, neighborId);
 //        Assert.assertTrue(numFood >= 3);

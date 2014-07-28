@@ -12,6 +12,7 @@
       <sourceFolder url="file://$MODULE_DIR$/src-undo" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src-ui-interfaces" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src-ui-editor" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src-ai" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
     </content>
     <orderEntry type="inheritedJdk" />

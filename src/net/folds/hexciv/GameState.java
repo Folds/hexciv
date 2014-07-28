@@ -49,7 +49,7 @@ public class GameState implements ClaimReferee {
         int numCivilizations = civs.size();
         Vector<Integer> foreignLocations = new Vector<>(numCivilizations);
         for (Civilization civ : civs) {
-            civ.initialize(map, foreignLocations);
+            civ.initialize(map, foreignLocations, parent, this);
             foreignLocations.addAll(civ.getLocations());
             Collections.sort(foreignLocations);
             Util.deduplicate(foreignLocations);
@@ -388,8 +388,13 @@ public class GameState implements ClaimReferee {
         for (Civilization civ : civs) {
             civ.setTechPriceFactor(techPriceFactor);
             civ.tellStories(parent);
-            civ.playTurn(map, parent, this);
+            CivPlayer ruler = new CivPlayer(map, civ, parent, this);
+            ruler.playTurn(map, parent, this);
         }
+        for (Civilization civ : civs) {
+            civ.recordStats();
+        }
+        parent.updateStats();
         if (turn >= 200) {
             for (Civilization civ : civs) {
                 civ.recordPeace();

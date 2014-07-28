@@ -21,4 +21,5 @@ public interface GameListener {
     void bemoanUnsupported(City city, ImprovementType improvementType);
     void repaintMaps(int cellId);
     void updateSeenCells(BitSet seenCells);
+    void updateStats();
 }

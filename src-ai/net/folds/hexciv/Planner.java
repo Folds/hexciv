@@ -43,13 +43,13 @@ public class Planner {
         }
     }
 
-    protected void cacheSite(int cellId) {
+    protected void cacheSite(int cellId, CivPlayer ruler) {
         if (   (cellId < 0) || (cellId >= numCells)
                 || (proposedCitySites.get(cellId)) || (proposedNonCitySites.get(cellId))
                 ) {
             return;
         }
-        if (civ.isGoodLocationForNewCity(map, cellId)) {
+        if (ruler.isGoodLocationForNewCity(map, cellId)) {
             accept(cellId);
         }
         reject(cellId);

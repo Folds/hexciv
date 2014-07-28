@@ -23,4 +23,5 @@ public class MockGameListener implements GameListener {
     public void bemoanUnsupported(City city, ImprovementType improvementType) {}
     public void repaintMaps(int cellId) {}
     public void updateSeenCells(BitSet seenCells) {}
+    public void updateStats() {}
 }

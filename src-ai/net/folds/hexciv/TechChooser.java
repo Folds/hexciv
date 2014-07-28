@@ -167,10 +167,10 @@ public class TechChooser {
         add(22); // Mysticism
         add(84); // Labor Union
         addTemporary(37, 75); // Chivalry until Automobile
-        addTemporary(26,37); // Wheel until Chivalry (or Automobile)
-        addTemporary(23,37); // Bronze until Chivalry (or Automobile)
-        addTemporary(43,62); // Navigation until Industrialization
-        addTemporary(27,43); // Map until Navigation (or Industrialization)
-        addTemporary(19,47); // Masonry until Democracy
+        addTemporary(26, 37); // Wheel until Chivalry (or Automobile)
+        addTemporary(23, 37); // Bronze until Chivalry (or Automobile)
+        addTemporary(43, 62); // Navigation until Industrialization
+        addTemporary(27, 43); // Map until Navigation (or Industrialization)
+        addTemporary(19, 47); // Masonry until Democracy
     }
 }

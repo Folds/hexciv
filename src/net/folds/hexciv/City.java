@@ -60,6 +60,10 @@ public class City {
         units.add(unit);
     }
 
+    protected boolean allowsAnyGovernmentType(ClaimReferee referee) {
+        return improvements.allowsAnyGovernmentType(referee);
+    }
+
     protected int countAerialUnits() {
         int result = 0;
         if (units == null) {
@@ -229,10 +233,6 @@ public class City {
 
     protected boolean shortensRevolutions(ClaimReferee referee) {
         return improvements.shortensRevolutions(referee);
-    }
-
-    protected boolean allowsAnyGovernmentType(ClaimReferee referee) {
-        return improvements.allowsAnyGovernmentType(referee);
     }
 
 }
