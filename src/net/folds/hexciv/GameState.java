@@ -420,4 +420,9 @@ public class GameState implements ClaimReferee {
         return false;
     }
 
+    protected void clearStatSheets() {
+        for (Civilization civ : civs) {
+            civ.statSheet.clear();
+        }
+    }
 }

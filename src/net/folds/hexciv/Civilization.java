@@ -35,6 +35,7 @@ public class Civilization {
     private int anarchyTurnCounter;
     Vector<BitSet> continents;
     protected Planner planner;   // should be private?
+    protected StatSheet statSheet;
 
     protected Civilization(Vector<GovernmentType> governmentTypes,
                            Vector<UnitType> unitTypes,
@@ -50,6 +51,9 @@ public class Civilization {
         hasToldStory = false;
         turnCounter = 0;
         anarchyTurnCounter = 0;
+        int startTurn = 0;
+        int maxPossibleTurn = 550;
+        statSheet = new StatSheet(startTurn, maxPossibleTurn);
     }
 
     protected void initialize(WorldMap map, Vector<Integer> foreignLocations, GameListener listener, ClaimReferee referee) {
@@ -238,6 +242,14 @@ public class Civilization {
             return -1;
         }
         return cities.size() - 1;
+    }
+
+    protected int countCitizens() {
+        int result = 0;
+        for (City city : cities) {
+            result = result + city.size;
+        }
+        return result;
     }
 
     protected int countContentCitizens(WorldMap map, ClaimReferee referee) {
@@ -1007,6 +1019,10 @@ public class Civilization {
         return result;
     }
 
+    protected int countTroops() {
+        return countTerrestrialUnits() - countSettlers();
+    }
+
     protected int countWonders() {
         int result = 0;
         for (City city : cities) {
@@ -1101,7 +1117,7 @@ public class Civilization {
         unitSummary = accumulateSummary(unitSummary, countSettlers(), " settler", " settlers");
         unitSummary = accumulateSummary(unitSummary, countNavalUnits(), " ship", " ships");
         unitSummary = accumulateSummary(unitSummary, countAerialUnits(), " plane", " planes");
-        unitSummary = accumulateSummary(unitSummary, countTerrestrialUnits() - countSettlers(), " troop", " troops");
+        unitSummary = accumulateSummary(unitSummary, countTroops(), " troop", " troops");
         if (countCities() > 0) {
             result.add(name + " has " + formatPopulation() + " in " + countCities() + " cities, with");
             result.add(  countHappyCitizens(map, referee) + " happy, "
@@ -1255,6 +1271,10 @@ public class Civilization {
             }
         }
         return result;
+    }
+
+    protected int getIdOfHighestDiscoveredTech() {
+        return techKey.getIdOfHighestDiscoveredTech();
     }
 
     protected int getIndexOfFurthestSettler(WorldMap map, City city) {
@@ -1775,7 +1795,15 @@ public class Civilization {
     }
 
     protected void recordStats() {
-
+        if (turnCounter > 0) {
+            statSheet.incrementTurn();
+        }
+        statSheet.recordPercentages(getLuxuryPercentage(), sciencePercentage, taxPercentage);
+        statSheet.recordTechs(countTechs(), getIdOfHighestDiscoveredTech());
+        statSheet.recordCities(countCities(), countCitizens(), countMyriads());
+        statSheet.recordUnits(countAerialUnits(), countSettlers(), countNavalUnits(), countTroops());
+        statSheet.recordWip(storedMoney, countStoredProduction(), storedScience);
+        statSheet.recordCells(countSeenCells());
     }
 
     protected void requestUnit(City city, int unitTypeId) {

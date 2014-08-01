@@ -32,6 +32,8 @@ public class GameScreen extends JFrame
     GameState gameState;
     TabbedPanel tabPane;
     Timer timer;
+    ProgressGraphPanel progressPane;
+    PeopleGraphPanel peoplePane;
 
     public GameScreen() {
         super("HexCiv");
@@ -72,6 +74,13 @@ public class GameScreen extends JFrame
         wherePane.add(mousePane,      "mouse");
         tabPane.addTab("Cell info", wherePane, "Info about cell mouse is hovering over", KeyEvent.VK_2);
 
+        peoplePane = new PeopleGraphPanel(gameState.civs.get(0).statSheet);
+        peoplePane.statSheet.numSeenCells.setMaxRange(getMap().countCells());
+        tabPane.addTab("People", peoplePane, "Graph of citizens and units", KeyEvent.VK_3);
+
+        progressPane = new ProgressGraphPanel(gameState.civs.get(0).statSheet);
+        tabPane.addTab("Progress", progressPane, "Graph of cash, production, and tech progress", KeyEvent.VK_4);
+
         String layoutDef =
                 "(COLUMN " +
                   "(LEAF name=world.getMap weight=0.0) " +
@@ -86,13 +95,8 @@ public class GameScreen extends JFrame
         multiSplitPane.setDividerSize(3);
         multiSplitPane.getMultiSplitLayout().setModel(modelRoot);
         multiSplitPane.add(masterPane, "master");
-        multiSplitPane.add(tabPane, "tabs");
-        multiSplitPane.add(mapPane,        "world.getMap");
-/*
-        multiSplitPane.add(logPane,        "log");
-        multiSplitPane.add(localePane,     "locale");
-        multiSplitPane.add(mousePane,      "mouse");
-*/
+        multiSplitPane.add(tabPane,    "tabs");
+        multiSplitPane.add(mapPane,    "world.getMap");
         getContentPane().add(multiSplitPane);
     }
 
@@ -238,6 +242,10 @@ public class GameScreen extends JFrame
             File file = fileChooser.getSelectedFile();
             setFile(file);
             editorState.map = Porter.importMap(editorState.file);
+            gameState.clearStatSheets();
+            progressPane.updateStats();
+            peoplePane.updateStats();
+            peoplePane.statSheet.numSeenCells.setMaxRange(getMap().countCells());
             mapPane.setMap(editorState.map);
             mapPane.repaint();
             logPane.log("Opened '" + editorState.file.getName() + "'");
@@ -360,6 +368,7 @@ public class GameScreen extends JFrame
     }
 
     public void updateStats() {
-
+        peoplePane.updateStats();
+        progressPane.updateStats();
     }
 }
