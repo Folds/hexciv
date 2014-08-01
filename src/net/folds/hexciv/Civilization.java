@@ -35,6 +35,7 @@ public class Civilization {
     private int anarchyTurnCounter;
     Vector<BitSet> continents;
     protected Planner planner;   // should be private?
+    protected long recentTurnLengthInMilliseconds;
     protected StatSheet statSheet;
 
     protected Civilization(Vector<GovernmentType> governmentTypes,
@@ -1804,6 +1805,7 @@ public class Civilization {
         statSheet.recordUnits(countAerialUnits(), countSettlers(), countNavalUnits(), countTroops());
         statSheet.recordWip(storedMoney, countStoredProduction(), storedScience);
         statSheet.recordCells(countSeenCells());
+        statSheet.recordThinkingTime((int) recentTurnLengthInMilliseconds);
     }
 
     protected void requestUnit(City city, int unitTypeId) {

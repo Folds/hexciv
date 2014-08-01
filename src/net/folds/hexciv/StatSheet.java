@@ -27,6 +27,7 @@ public class StatSheet {
     StatColumn storedScience;
 
     StatColumn numSeenCells;
+    StatColumn thinkingTimeInMilliseconds;
 
     int startTurn;
     int currentTurn;
@@ -72,6 +73,8 @@ public class StatSheet {
         storedScience = new StatColumn(startTurn); // (0 - ~ 15,000)
 
         numSeenCells = new StatColumn(startTurn);  // (0 -    4,332)
+
+        thinkingTimeInMilliseconds = new StatColumn(startTurn);
     }
 
     protected void clear() {
@@ -92,6 +95,7 @@ public class StatSheet {
         storedProduction.clear();
         storedScience.clear();
         numSeenCells.clear();
+        thinkingTimeInMilliseconds.clear();
 
         numCities.setMaxRange(10);
         numCitizens.setMaxRange(10);
@@ -158,5 +162,9 @@ public class StatSheet {
 
     public void recordCells(int numSeenCells) {
         this.numSeenCells.record(currentTurn, numSeenCells);
+    }
+
+    public void recordThinkingTime(int thinkingTimeInMilliseconds) {
+        this.thinkingTimeInMilliseconds.record(currentTurn, thinkingTimeInMilliseconds);
     }
 }

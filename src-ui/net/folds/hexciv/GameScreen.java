@@ -34,6 +34,7 @@ public class GameScreen extends JFrame
     Timer timer;
     ProgressGraphPanel progressPane;
     PeopleGraphPanel peoplePane;
+    PerformanceGraphPanel performancePane;
 
     public GameScreen() {
         super("HexCiv");
@@ -80,6 +81,9 @@ public class GameScreen extends JFrame
 
         progressPane = new ProgressGraphPanel(gameState.civs.get(0).statSheet);
         tabPane.addTab("Progress", progressPane, "Graph of cash, production, and tech progress", KeyEvent.VK_4);
+
+        performancePane = new PerformanceGraphPanel(gameState.civs.get(0).statSheet);
+        tabPane.addTab("Performance", performancePane, "Graph of AI thinking time", KeyEvent.VK_5);
 
         String layoutDef =
                 "(COLUMN " +

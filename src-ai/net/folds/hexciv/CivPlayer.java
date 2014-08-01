@@ -1,5 +1,6 @@
 package net.folds.hexciv;
 
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Vector;
 
@@ -355,6 +356,7 @@ public class CivPlayer {
 
     // http://www.freegameempire.com/games/Civilization/manual
     protected void playTurn(WorldMap map, GameListener listener, ClaimReferee referee) {
+        long timePlayerTurnStarted = getTimeInMilliseconds();
         for (City city : civ.cities) {
             if (!city.isNone()) {
                 CityPlayer governor = getGovernor(city);
@@ -430,7 +432,13 @@ public class CivPlayer {
             civ.sciencePercentage = 0;
         }
         civ.tryToChangeGovernmentType(listener, referee);
+        long timePlayerTurnEnded = getTimeInMilliseconds();
+        civ.recentTurnLengthInMilliseconds = timePlayerTurnEnded - timePlayerTurnStarted;
         civ.turnCounter = civ.turnCounter + 1;
+    }
+
+    protected long getTimeInMilliseconds() {
+        return Calendar.getInstance().getTimeInMillis();
     }
 
     protected boolean wantMoreExplorers(WorldMap map) {
