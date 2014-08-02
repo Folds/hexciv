@@ -22,10 +22,13 @@ public class GameScreen extends JFrame
     EditorState editorState;
     JXMultiSplitPane multiSplitPane;
     JXMultiSplitPane wherePane;
+    JXMultiSplitPane miniPane;
+    TabbedPanel mapTabPane;
     MapPanel mapPane;
     MasterPanel masterPane;
     LogPanel logPane;
     LocalePanel localePane;
+    LocalePanel localePane2;
     MousePanel mousePane;
     JFileChooser fileChooser;
     EditListener listener;
@@ -35,6 +38,7 @@ public class GameScreen extends JFrame
     ProgressGraphPanel progressPane;
     PeopleGraphPanel peoplePane;
     PerformanceGraphPanel performancePane;
+    MapPanel miniMapPane;
 
     public GameScreen() {
         super("HexCiv");
@@ -44,16 +48,20 @@ public class GameScreen extends JFrame
         editorState.addListener(listener);
         gameState = new GameState(this, map, 1);
 
-        setSize(750, 600);
+        setSize(750, 629);
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         mapPane        = new MapPanel(this);
         mapPane.setPreferredSize(new Dimension(665, 376));
+        mapTabPane     = new TabbedPanel();
+        mapTabPane.placeTabsOnLeft();
+        mapTabPane.addTab("World", mapPane, "Large world map", KeyEvent.VK_W);
         masterPane     = new MasterPanel(this);
         logPane        = new LogPanel();
         localePane     = new LocalePanel(this);
+        localePane2    = new LocalePanel(this);
         mousePane      = new MousePanel(this);
         tabPane        = new TabbedPanel();
-        tabPane.addTab("Log", logPane, "Log", KeyEvent.VK_1);
+        tabPane.addTab("Log", logPane, "Log", KeyEvent.VK_L);
         timer = new Timer(50, this);
 
         // The SwingX JXMultiSplitNode allows laying out multiple
@@ -73,17 +81,33 @@ public class GameScreen extends JFrame
         wherePane.getMultiSplitLayout().setModel(modelWhere);
         wherePane.add(localePane,     "locale");
         wherePane.add(mousePane,      "mouse");
-        tabPane.addTab("Cell info", wherePane, "Info about cell mouse is hovering over", KeyEvent.VK_2);
+        tabPane.addTab("Cell info", wherePane, "Info about cell mouse is hovering over", KeyEvent.VK_C);
 
         peoplePane = new PeopleGraphPanel(gameState.civs.get(0).statSheet);
         peoplePane.statSheet.numSeenCells.setMaxRange(getMap().countCells());
-        tabPane.addTab("People", peoplePane, "Graph of citizens and units", KeyEvent.VK_3);
+        tabPane.addTab("People", peoplePane, "Graph of citizens and units", KeyEvent.VK_P);
 
         progressPane = new ProgressGraphPanel(gameState.civs.get(0).statSheet);
-        tabPane.addTab("Progress", progressPane, "Graph of cash, production, and tech progress", KeyEvent.VK_4);
+        tabPane.addTab("Progress", progressPane, "Graph of cash, production, and tech progress", KeyEvent.VK_R);
 
         performancePane = new PerformanceGraphPanel(gameState.civs.get(0).statSheet);
-        tabPane.addTab("Performance", performancePane, "Graph of AI thinking time", KeyEvent.VK_5);
+        tabPane.addTab("Performance", performancePane, "Graph of AI thinking time", KeyEvent.VK_F);
+
+        miniMapPane = new MapPanel(this);
+        miniMapPane.setPreferredSize(new Dimension(333, 188));
+
+        String layoutDefMini =
+                  "(ROW weight=1.0 " +
+                    "(LEAF name=locale weight=0.0) " +
+                    "(LEAF name=map  weight=0.0) " +
+                  ")";
+        MultiSplitLayout.Node modelMini = MultiSplitLayout.parseModel(layoutDefMini);
+        miniPane = new JXMultiSplitPane();
+        miniPane.setDividerSize(3);
+        miniPane.getMultiSplitLayout().setModel(modelMini);
+        miniPane.add(localePane2, "locale");
+        miniPane.add(miniMapPane, "map");
+        tabPane.addTab("Map", miniPane, "World map", KeyEvent.VK_M);
 
         String layoutDef =
                 "(COLUMN " +
@@ -100,7 +124,7 @@ public class GameScreen extends JFrame
         multiSplitPane.getMultiSplitLayout().setModel(modelRoot);
         multiSplitPane.add(masterPane, "master");
         multiSplitPane.add(tabPane,    "tabs");
-        multiSplitPane.add(mapPane,    "world.getMap");
+        multiSplitPane.add(mapTabPane, "world.getMap");
         getContentPane().add(multiSplitPane);
     }
 
@@ -251,7 +275,8 @@ public class GameScreen extends JFrame
             peoplePane.updateStats();
             peoplePane.statSheet.numSeenCells.setMaxRange(getMap().countCells());
             mapPane.setMap(editorState.map);
-            mapPane.repaint();
+            miniMapPane.setMap(editorState.map);
+            repaintMaps();
             logPane.log("Opened '" + editorState.file.getName() + "'");
         }
     }
@@ -260,6 +285,7 @@ public class GameScreen extends JFrame
 
     public void repaintMaps() {
         mapPane.repaint();
+        miniMapPane.repaint();
     }
 
     public void repaintMaps(Vector<Integer> cellIds) {
@@ -274,6 +300,7 @@ public class GameScreen extends JFrame
 
     public void repaintMaps(int cellId) {
         mapPane.repaint(cellId);
+        miniMapPane.repaint(cellId);
     }
 
     public void repaintOopses() {}
@@ -297,9 +324,10 @@ public class GameScreen extends JFrame
 
     public void startGame() {
         mapPane.hideAll();
+        miniMapPane.hideAll();
         gameState.initialize();
-        mapPane.seeCells(gameState.getSeenCells());
-        mapPane.repaint();
+        updateSeenCells(gameState.getSeenCells());
+        repaintMaps();
         timer.start();
     }
 
@@ -342,6 +370,7 @@ public class GameScreen extends JFrame
 
     public void updateLocale(int cellId, int x, int y) {
         localePane.setCellId(cellId);
+        localePane2.setCellId(cellId);
         mousePane.setCellId(cellId);
         mousePane.setX(x);
         mousePane.setY(y);
@@ -349,6 +378,7 @@ public class GameScreen extends JFrame
 
     public void updateLocale(CellSnapshot cellSnapshot, int x, int y) {
         localePane.setCell(cellSnapshot);
+        localePane2.setCell(cellSnapshot);
         mousePane.setCellId(cellSnapshot.id);
         mousePane.setX(x);
         mousePane.setY(y);
@@ -369,6 +399,7 @@ public class GameScreen extends JFrame
 
     public void updateSeenCells(BitSet seenCells) {
         mapPane.seeCells(seenCells);
+        miniMapPane.seeCells(seenCells);
     }
 
     public void updateStats() {

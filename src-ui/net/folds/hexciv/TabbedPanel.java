@@ -28,4 +28,9 @@ public class TabbedPanel extends JPanel {
         int numTabs = tabbedPane.getComponentCount();
         tabbedPane.setMnemonicAt(numTabs - 1, mnemonic);
     }
+
+    public void placeTabsOnLeft() {
+        JTabbedPane tabbedPane = (JTabbedPane) getComponent(0);
+        tabbedPane.setTabPlacement(SwingConstants.LEFT);
+    }
 }
