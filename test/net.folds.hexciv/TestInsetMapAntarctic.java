@@ -3,6 +3,7 @@ package net.folds.hexciv;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import java.util.BitSet;
 import java.util.Vector;
 
 /**

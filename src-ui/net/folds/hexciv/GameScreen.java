@@ -26,6 +26,7 @@ public class GameScreen extends JFrame
     TabbedPanel mapTabPane;
     MapPanel mapPane;
     MasterPanel masterPane;
+    CanvasPanel canvasPane;
     LogPanel logPane;
     LocalePanel localePane;
     LocalePanel localePane2;
@@ -52,9 +53,11 @@ public class GameScreen extends JFrame
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         mapPane        = new MapPanel(this);
         mapPane.setPreferredSize(new Dimension(665, 376));
+        canvasPane     = new CanvasPanel(this, this, map, 16);
         mapTabPane     = new TabbedPanel();
         mapTabPane.placeTabsOnLeft();
-        mapTabPane.addTab("World", mapPane, "Large world map", KeyEvent.VK_W);
+        mapTabPane.addTab("World", mapPane, "Large world map (zoomed out)", KeyEvent.VK_W);
+        mapTabPane.addTab("Detail", canvasPane, "Detail map (zoomed in)", KeyEvent.VK_D);
         masterPane     = new MasterPanel(this);
         logPane        = new LogPanel();
         localePane     = new LocalePanel(this);
@@ -281,9 +284,13 @@ public class GameScreen extends JFrame
         }
     }
 
-    public void recenterCanvas(int cellId) {}
+    public void recenterCanvas(int cellId) {
+        canvasPane.setCenterCell(cellId);
+    }
+
 
     public void repaintMaps() {
+        canvasPane.repaint();
         mapPane.repaint();
         miniMapPane.repaint();
     }
@@ -299,6 +306,7 @@ public class GameScreen extends JFrame
     }
 
     public void repaintMaps(int cellId) {
+        canvasPane.repaint(cellId);
         mapPane.repaint(cellId);
         miniMapPane.repaint(cellId);
     }
@@ -323,6 +331,7 @@ public class GameScreen extends JFrame
     }
 
     public void startGame() {
+        canvasPane.hideAll();
         mapPane.hideAll();
         miniMapPane.hideAll();
         gameState.initialize();
@@ -398,6 +407,7 @@ public class GameScreen extends JFrame
     }
 
     public void updateSeenCells(BitSet seenCells) {
+        canvasPane.seeCells(seenCells);
         mapPane.seeCells(seenCells);
         miniMapPane.seeCells(seenCells);
     }

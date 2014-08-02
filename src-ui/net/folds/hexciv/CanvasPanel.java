@@ -4,6 +4,7 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.util.BitSet;
 
 /**
  * Created by jasper on Feb 10, 2014.
@@ -16,12 +17,14 @@ public class CanvasPanel extends Panel {
     private int hexSideInPixels;
     private CanvasLoupe loupe;
     private CanvasDrafter drafter;
+    private BitSet seenCells;
 
     public CanvasPanel(MovableMap movableMap, CellDescriber cellDescriber, WorldMap map, int hexSideInPixels) {
         super(cellDescriber);
         this.movableMap = movableMap;
         setPreferredSize(new Dimension(500, 400));
         this.map = map;
+        seenCells = new BitSet(map.countCells());
         this.hexSideInPixels = hexSideInPixels;
         this.hexWidthInPixels = (int) Drafter.roundToNearestEvenNumber(Math.sqrt(3.0) * hexSideInPixels);
         int leftMarginInPixels = 0;
@@ -117,13 +120,21 @@ public class CanvasPanel extends Panel {
             drafter = new CanvasDrafter(map, comp2D, hexSideInPixels, textDisplayer, margins);
             loupe.setMargins(margins);
         }
-        drafter.drawMap(w, h, centerCellId);
+        drafter.drawMap(w, h, centerCellId, seenCells);
 
         // beginUsingTextArea(comp2D, 5, 18);
         // typeLine("Canvas");
         // typeLine("w/2= "+(w/2)+" pixels; hexWidth = "+ hexWidthInPixels + " pixels; " + drafter.insetMap.numColumns + " columns");
         // typeLine("h/2= "+(h/2)+" pixels; hexSide  = "+ hexSideInPixels  + " pixels; " + drafter.insetMap.numRows    + " rows");
         // finishUsingTextArea();
+    }
+
+    protected void repaint(BitSet updatedCells) {
+        for (int i = 0; i < map.countCells(); i++) {
+            if (updatedCells.get(i)) {
+                repaint(i);
+            }
+        }
     }
 
     protected void repaint(int cellId) {
@@ -166,4 +177,22 @@ public class CanvasPanel extends Panel {
         result.positionInRow = loupe.insetMap.getColumn(index);
         return result;
     }
+
+    void hideAll() {
+        seenCells.clear();
+        repaint();
+    }
+
+    protected void seeCells(BitSet seenCells) {
+        BitSet newCells = (BitSet) seenCells.clone();
+        newCells.andNot(this.seenCells);
+        this.seenCells.or(newCells);
+        repaint(newCells);
+    }
+
+    protected void seeAll() {
+        seenCells.clear();
+        seenCells.set(0, map.countCells());
+    }
+
 }

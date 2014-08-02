@@ -3,6 +3,7 @@ package net.folds.hexciv;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import java.util.BitSet;
 import java.util.Vector;
 
 /**
@@ -16,6 +17,7 @@ public class TestInsetMapAtSouthPole {
 
     public TestInsetMapAtSouthPole() {
         WorldMap map = new WorldMap();
+        BitSet seenCells = new BitSet(map.countCells());
         insetMap = new InsetMap(map.mesh, centerCellId, numRows, numColumns);
     }
 

@@ -1,6 +1,7 @@
 package net.folds.hexciv;
 
 import java.awt.*;
+import java.util.BitSet;
 
 /**
  * Created by jasper on Feb 14, 2014.

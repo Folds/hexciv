@@ -10,6 +10,7 @@ import java.util.Vector;
 public class CanvasDrafter extends Drafter {
     WorldMap map;
     InsetMap insetMap;
+    BitSet seenCells;
 
     CanvasDrafter(WorldMap argMap, Graphics2D graphics2D, int hexSideInPixels,
                   TextDisplayer textDisplayer, Rectangle margins) {
@@ -22,10 +23,12 @@ public class CanvasDrafter extends Drafter {
         this.map = map;
     }
 
-    public void drawMap(int widthBetweenMarginsInPixels, int heightBetweenMarginsInPixels, int centerCellId) {
+    public void drawMap(int widthBetweenMarginsInPixels, int heightBetweenMarginsInPixels,
+                        int centerCellId, BitSet seenCells) {
         margins.width = widthBetweenMarginsInPixels;
         margins.height = heightBetweenMarginsInPixels;
         updateInsetMap(centerCellId);
+        this.seenCells = seenCells;
         drawCells();
         drawLatitudes();
         drawLongitudes();
@@ -77,7 +80,7 @@ public class CanvasDrafter extends Drafter {
         int firstColInCurrentBatch = insetMap.numColumns;
         for (int col=0; col < maxCol + 1; col++) {
             int cellId = insetMap.getCellId(row, col);
-            if (cellId < 0) {
+            if ((cellId < 0) || (!seenCells.get(cellId))) {
                 if ((firstColInCurrentBatch % insetMap.numColumns) != col) {
                     drawCells(insetMap, row, firstColInCurrentBatch % insetMap.numColumns, col - 1);
                 }
@@ -99,6 +102,9 @@ public class CanvasDrafter extends Drafter {
     }
 
     public void drawCells(InsetMap insetMap, int row, int fromColumn, int toColumn) {
+        if ((insetMap.getCellId(row, fromColumn) < 0) || (!seenCells.get(insetMap.getCellId(row, fromColumn)))) {
+            return;
+        }
         int halfColWidth = hexWidthInPixels / 2;
         int halfCol = insetMap.getHalfCol(row, fromColumn);
         int xAtLeftEdgeOfHex = halfColWidth * halfCol + getLeftMargin() - halfColWidth;
@@ -122,7 +128,7 @@ public class CanvasDrafter extends Drafter {
         for (int row=0; row < insetMap.numRows; row++) {
             for (int col=0; col < insetMap.numColumns; col++) {
                 int cellId = insetMap.getCellId(row, col);
-                if ((cellId >= 0) && (cellId < map.countCells())) {
+                if ((cellId >= 0) && (cellId < map.countCells()) && (seenCells.get(cellId))) {
                     Point cellCenter = getCellCenter(row, col);
                     TerrainTypes terrain = map.getTerrain(cellId);
                     BitSet features = map.getFeatures(cellId);
@@ -242,7 +248,7 @@ public class CanvasDrafter extends Drafter {
                         roadInProgress = true;
                         roadJustEnded = false;
                         int prevIndex = getIndex(item - 1);
-                        if ((item == 0) || (isVoid(prevIndex))) {
+                        if ((item == 0) || (isVoid(prevIndex)) || (!seenCells.get(insetMap.getCellId(prevIndex)))) {
                             if (doesIndexPointToFeature(index, backwards, Features.railroad)) {
                                 startAtCellCenter = false;
                                 startItem = item - 1;
@@ -255,7 +261,7 @@ public class CanvasDrafter extends Drafter {
                             startItem = item;
                         }
                     }
-                } else if (isVoid) {
+                } else if ((isVoid) || (!seenCells.get(cellId))) {
                     if (roadInProgress) {
                         roadInProgress = false;
                         roadJustEnded = true;
@@ -330,7 +336,7 @@ public class CanvasDrafter extends Drafter {
                         roadInProgress = true;
                         roadJustEnded = false;
                         int prevIndex = getIndex(item - 1);
-                        if ((item == minItem) || (isVoid(prevIndex))) {
+                        if ((item == minItem) || (isVoid(prevIndex)) || (!seenCells.get(insetMap.getCellId(prevIndex)))) {
                             if (   (doesIndexPointToFeature(index, backwards, Features.road))
                                 || (doesIndexPointToFeature(index, backwards, Features.railroad))
                                ) {
@@ -373,7 +379,7 @@ public class CanvasDrafter extends Drafter {
                             startItem = item;
                         }
                     }
-                } else if (isVoid) {
+                } else if ((isVoid) || (!seenCells.get(cellId))) {
                     if (roadInProgress) {
                         roadInProgress = false;
                         roadJustEnded = true;

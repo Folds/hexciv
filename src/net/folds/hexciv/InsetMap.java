@@ -1,5 +1,6 @@
 package net.folds.hexciv;
 
+import java.util.BitSet;
 import java.util.Vector;
 
 /**
@@ -516,6 +517,9 @@ public class InsetMap {
 
     int getCellId(int row, int column) {
         int index = getIndex(row, column);
+        if (index < 0) {
+            return index;
+        }
         return cellIds.get(index);
     }
 
