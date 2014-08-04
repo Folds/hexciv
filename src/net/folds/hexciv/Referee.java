@@ -150,4 +150,12 @@ public class Referee implements ClaimReferee {
         return Color.WHITE;
     }
 
+    public String getCityName(int cellId) {
+        return "";
+    }
+
+    public int getCitySize(int cellId) {
+        return 0;
+    }
+
 }

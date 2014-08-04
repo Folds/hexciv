@@ -461,4 +461,30 @@ public class GameState implements ClaimReferee {
         return Color.WHITE;
     }
 
+
+    public String getCityName(int cellId) {
+        if (map.hasCity(cellId)) {
+            for (Civilization civ : civs) {
+                for (City city : civ.cities) {
+                    if (city.location == cellId) {
+                        return city.name;
+                    }
+                }
+            }
+        }
+        return "";
+    }
+
+    public int getCitySize(int cellId) {
+        if (map.hasCity(cellId)) {
+            for (Civilization civ : civs) {
+                for (City city : civ.cities) {
+                    if (city.location == cellId) {
+                        return city.size;
+                    }
+                }
+            }
+        }
+        return 0;
+    }
 }

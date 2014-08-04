@@ -137,10 +137,47 @@ public class CanvasDrafter extends Drafter {
                     Point cellCenter = getCellCenter(row, col);
                     TerrainTypes terrain = map.getTerrain(cellId);
                     BitSet features = map.getFeatures(cellId);
-                    labelFeatures(cellCenter, terrain, features);
+                    if (claimReferee == null) {
+                        labelFeatures(cellCenter, terrain, features);
+                    } else {
+                        labelFeatures(cellCenter, terrain, features, cellId);
+                    }
                 }
             }
         }
+    }
+
+    protected void labelFeatures(Point cellCenter, TerrainTypes terrain, BitSet features, int cellId) {
+        if (features.isEmpty()) {
+            return;
+        }
+        if (   (claimReferee == null)
+            || (cellId < 0)
+            || (!Features.city.isChosen(features))
+            || (claimReferee.getCityCellId(cellId) != cellId)
+           ) {
+            labelFeatures(cellCenter, terrain, features);
+            return;
+        }
+        int citySize = claimReferee.getCitySize(cellId);
+        BitSet tempFeatures = features;
+        tempFeatures.set(Features.city.getValue(), false);
+        String label = citySize + Features.toString(terrain, tempFeatures);
+        int featuresWidth = getWidthInPixels(label);
+        int x = cellCenter.x - featuresWidth / 2;
+        int y = cellCenter.y + hexSideInPixels / 2 - getHeightInPixels(label) / 3;
+        textDisplayer.beginUsing(comp2D, x, y, 12);
+        textDisplayer.typeLine(label);
+        textDisplayer.finishUsing();
+
+        String cityName = claimReferee.getCityName(cellId);
+        int nameWidth = getWidthInPixels(cityName);
+        int xName = cellCenter.x - nameWidth / 2;
+        int yName = cellCenter.y + hexSideInPixels / 2 + (getHeightInPixels(cityName) * 2) / 3;
+        textDisplayer.beginUsing(comp2D, xName, yName, 12);
+        textDisplayer.typeLine(cityName);
+        textDisplayer.finishUsing();
+
     }
 
     private void drawCities() {

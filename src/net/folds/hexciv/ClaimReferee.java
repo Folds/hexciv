@@ -17,4 +17,6 @@ public interface ClaimReferee {
     boolean isObsolete(int wonderId);
     int getCityCellId(int farmCellId);
     Color getCityColor(int cellId);
+    int getCitySize(int cellId);
+    String getCityName(int cellId);
 }

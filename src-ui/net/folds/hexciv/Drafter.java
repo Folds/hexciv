@@ -217,6 +217,9 @@ public class Drafter {
     }
 
     protected void labelFeatures(Point cellCenter, TerrainTypes terrain, BitSet features) {
+        if (features.isEmpty()) {
+            return;
+        }
         String label = Features.toString(terrain, features);
         int featuresWidth = getWidthInPixels(label);
         int x = cellCenter.x - featuresWidth / 2;
@@ -225,4 +228,5 @@ public class Drafter {
         textDisplayer.typeLine(label);
         textDisplayer.finishUsing();
     }
+
 }
