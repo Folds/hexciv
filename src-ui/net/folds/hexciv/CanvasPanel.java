@@ -18,6 +18,7 @@ public class CanvasPanel extends Panel {
     private CanvasLoupe loupe;
     private CanvasDrafter drafter;
     private BitSet seenCells;
+    private ClaimReferee claimReferee;
 
     public CanvasPanel(MovableMap movableMap, CellDescriber cellDescriber, WorldMap map, int hexSideInPixels) {
         super(cellDescriber);
@@ -32,6 +33,7 @@ public class CanvasPanel extends Panel {
         Rectangle margins = new Rectangle(leftMarginInPixels, topMarginInPixels,
                                           getWidth() - leftMarginInPixels,
                                           getHeight() - topMarginInPixels);
+        claimReferee = null;
         loupe = new CanvasLoupe(map, hexWidthInPixels, hexSideInPixels, margins);
         MapMouseListener m = new MapMouseListener();
         addMouseListener(m);
@@ -51,6 +53,10 @@ public class CanvasPanel extends Panel {
         if (drafter != null) {
             drafter.setMap(map);
         }
+    }
+
+    protected void setClaimReferee(ClaimReferee claimReferee) {
+        this.claimReferee = claimReferee;
     }
 
     // http://www.leepoint.net/notes-java/GUI-lowlevel/mouse/20mousebuttons.html
@@ -117,7 +123,7 @@ public class CanvasPanel extends Panel {
             int leftMarginInPixels = 0;
             int topMarginInPixels = 0;
             Rectangle margins = new Rectangle(leftMarginInPixels, topMarginInPixels, w, h);
-            drafter = new CanvasDrafter(map, comp2D, hexSideInPixels, textDisplayer, margins);
+            drafter = new CanvasDrafter(map, comp2D, hexSideInPixels, textDisplayer, margins, claimReferee);
             loupe.setMargins(margins);
         }
         drafter.drawMap(w, h, centerCellId, seenCells);
@@ -140,6 +146,7 @@ public class CanvasPanel extends Panel {
     protected void repaint(int cellId) {
         if (!hasValidDrafter(map, hexSideInPixels)) {
             repaint();
+            return;
         }
         Rectangle rect = loupe.getAffectedArea(cellId);
         repaint(rect.x, rect.y, rect.width, rect.height);

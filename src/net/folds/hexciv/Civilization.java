@@ -1,5 +1,6 @@
 package net.folds.hexciv;
 
+import java.awt.*;
 import java.text.DecimalFormat;
 import java.util.BitSet;
 import java.util.Collections;
@@ -15,6 +16,7 @@ public class Civilization {
     private int governmentTypeId;
     private String name;
     private String ruler;
+    private Color color;
     protected TechKey techKey;   // should be private?
     private Vector<Relationship> relationships;
     private Vector<GovernmentType> governmentTypes;
@@ -55,6 +57,7 @@ public class Civilization {
         int startTurn = 0;
         int maxPossibleTurn = 550;
         statSheet = new StatSheet(startTurn, maxPossibleTurn);
+        color = Color.WHITE;
     }
 
     protected void initialize(WorldMap map, Vector<Integer> foreignLocations, GameListener listener, ClaimReferee referee) {
@@ -1897,6 +1900,14 @@ public class Civilization {
 
     protected void setRulerName(String name) {
         ruler = name;
+    }
+
+    protected void setColor(Color color) {
+        this.color = color;
+    }
+
+    protected Color getColor() {
+        return color;
     }
 
     protected void setTechPriceFactor(int techPriceFactor) {

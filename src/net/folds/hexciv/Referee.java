@@ -1,5 +1,6 @@
 package net.folds.hexciv;
 
+import java.awt.*;
 import java.util.Vector;
 
 /**
@@ -139,6 +140,14 @@ public class Referee implements ClaimReferee {
             return false;
         }
         return techKey.hasTech(obsoleterTechId);
+    }
+
+    public int getCityCellId(int farmCellId) {
+        return -1;
+    }
+
+    public Color getCityColor(int cellId) {
+        return Color.WHITE;
     }
 
 }

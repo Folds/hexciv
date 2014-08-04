@@ -1,6 +1,7 @@
 package net.folds.hexciv;
 
 import java.awt.*;
+import java.awt.geom.Line2D;
 import java.util.BitSet;
 import java.util.Vector;
 
@@ -11,12 +12,14 @@ public class CanvasDrafter extends Drafter {
     WorldMap map;
     InsetMap insetMap;
     BitSet seenCells;
+    ClaimReferee claimReferee;
 
     CanvasDrafter(WorldMap argMap, Graphics2D graphics2D, int hexSideInPixels,
-                  TextDisplayer textDisplayer, Rectangle margins) {
+                  TextDisplayer textDisplayer, Rectangle margins, ClaimReferee claimReferee) {
         super(graphics2D, hexSideInPixels, textDisplayer, margins);
         map = argMap;
         comp2D = graphics2D;
+        this.claimReferee = claimReferee;
     }
 
     protected void setMap(WorldMap map) {
@@ -30,6 +33,8 @@ public class CanvasDrafter extends Drafter {
         updateInsetMap(centerCellId);
         this.seenCells = seenCells;
         drawCells();
+        drawCities();
+        drawFarms();
         drawLatitudes();
         drawLongitudes();
         drawRoads();
@@ -138,6 +143,78 @@ public class CanvasDrafter extends Drafter {
         }
     }
 
+    private void drawCities() {
+        for (int row=0; row < insetMap.numRows; row++) {
+            for (int col=0; col < insetMap.numColumns; col++) {
+                int cellId = insetMap.getCellId(row, col);
+                if ((cellId >= 0) && (cellId < map.countCells()) && (map.hasCity(cellId)) && (seenCells.get(cellId))) {
+                    Point cellCenter = getCellCenter(row, col);
+                    Color oldColor = comp2D.getColor();
+                    Color civColor = getCivColor(cellId);
+                    comp2D.setColor(civColor);
+                    int radius = Math.min(hexWidthInPixels, 2 * hexSideInPixels) / 3;
+                    comp2D.fillOval(cellCenter.x - radius, cellCenter.y - radius, 2 * radius, 2 * radius);
+                    comp2D.setColor(oldColor);
+                }
+            }
+        }
+    }
+
+    Color getCivColor(int cellId) {
+        if (claimReferee == null) {
+            return Color.WHITE;
+        }
+        if (map.hasCity(cellId)) {
+            return claimReferee.getCityColor(cellId);
+        }
+        int cityCellId = claimReferee.getCityCellId(cellId);
+        if (map.hasCity(cityCellId)) {
+            return claimReferee.getCityColor(cityCellId);
+        }
+        return Color.WHITE;
+    }
+
+    private void drawFarms() {
+        if (claimReferee == null) {
+            return;
+        }
+        for (int row=0; row < insetMap.numRows; row++) {
+            for (int col=0; col < insetMap.numColumns; col++) {
+                int cellId = insetMap.getCellId(row, col);
+                if ((cellId >= 0) && (cellId < map.countCells()) && (seenCells.get(cellId))) {
+                    int cityCellId = claimReferee.getCityCellId(cellId);
+                    if ((cellId != cityCellId) && (map.hasCity(cityCellId))) {
+                        Point cellCenter = getCellCenter(row, col);
+                        Color civColor = getCivColor(cellId);
+                        if (insetMap.alreadyIncludes(cityCellId)) {
+                            int cityRow = insetMap.getRowGivenCellId(cityCellId);
+                            int cityCol = insetMap.getColumnGivenCellId(cityCellId);
+                            Point cityCenter = getCellCenter(cityRow, cityCol);
+                            int width = Math.max(3, Math.min(hexWidthInPixels, 2 * hexSideInPixels) / 3);
+                            BasicStroke stroke = new BasicStroke(width, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
+                            drawLine(cityCenter, cellCenter, civColor, stroke);
+                        } else {
+                            // City is not on inset map, so just fill a small circle on the farm.
+                            int radius = Math.max(2, Math.min(hexWidthInPixels, 2 * hexSideInPixels) / 6);
+                            fillCircle(cellCenter, radius, civColor);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private void drawLine(Point start, Point end, Color color, Stroke stroke) {
+        Color oldColor = comp2D.getColor();
+        Stroke oldStroke = comp2D.getStroke();
+        comp2D.setColor(color);
+        comp2D.setStroke(stroke);
+        Line2D.Float line = new Line2D.Float(start.x, start.y, end.x, end.y);
+        comp2D.draw(line);
+        comp2D.setStroke(oldStroke);
+        comp2D.setColor(oldColor);
+    }
+
     private void drawRoads() {
         drawSlashRoads();
         drawWhackRoads();
@@ -198,6 +275,13 @@ public class CanvasDrafter extends Drafter {
             Row band = new Row(row);
             band.drawRailroads();
         }
+    }
+
+    private void fillCircle(Point center, int radius, Color color) {
+        Color oldColor = comp2D.getColor();
+        comp2D.setColor(color);
+        comp2D.fillOval(center.x - radius, center.y - radius, 2 * radius, 2 * radius);
+        comp2D.setColor(oldColor);
     }
 
     private boolean isVoid(int index) {

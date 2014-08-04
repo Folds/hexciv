@@ -72,6 +72,22 @@ public class InsetMap {
         return false;
     }
 
+    int getRowGivenCellId(int cellId) {
+        int index = cellIds.indexOf(cellId);
+        if (index >= 0) {
+            return getRow(index);
+        }
+        return -1;
+    }
+
+    int getColumnGivenCellId(int cellId) {
+        int index = cellIds.indexOf(cellId);
+        if (index >= 0) {
+            return getColumn(index);
+        }
+        return -1;
+    }
+
     int chooseCellId(int index, int neighboringIndex, Vector<Integer> winnowed) {
         if (winnowed.size() <= 1) {
             for (int possibility : winnowed) {

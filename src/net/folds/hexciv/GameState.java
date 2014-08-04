@@ -1,5 +1,6 @@
 package net.folds.hexciv;
 
+import java.awt.*;
 import java.util.BitSet;
 import java.util.Collections;
 import java.util.Vector;
@@ -425,4 +426,39 @@ public class GameState implements ClaimReferee {
             civ.statSheet.clear();
         }
     }
+
+    public int getCityCellId(int farmCellId) {
+        if (map.hasCity(farmCellId)) {
+            return farmCellId;
+        }
+        for (Civilization civ : civs) {
+            for (City city : civ.cities) {
+                if ((city.farms != null) && (city.farms.contains(farmCellId))) {
+                    return city.location;
+                }
+            }
+        }
+        return -1;
+    }
+
+    public Color getCityColor(int cellId) {
+        if (map.hasCity(cellId)) {
+            for (Civilization civ : civs) {
+                for (City city : civ.cities) {
+                    if (city.location == cellId) {
+                        return civ.getColor();
+                    }
+                }
+            }
+        }
+        for (Civilization civ : civs) {
+            for (City city : civ.cities) {
+                if (city.farms.contains(cellId)) {
+                    return civ.getColor();
+                }
+            }
+        }
+        return Color.WHITE;
+    }
+
 }

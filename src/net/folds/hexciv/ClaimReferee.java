@@ -1,5 +1,7 @@
 package net.folds.hexciv;
 
+import java.awt.*;
+
 /**
  * Created by jasper on May 02, 2014.
  */
@@ -13,4 +15,6 @@ public interface ClaimReferee {
     boolean isAvailable(int wonderId);
     boolean isObsolete(ImprovementType improvementType);
     boolean isObsolete(int wonderId);
+    int getCityCellId(int farmCellId);
+    Color getCityColor(int cellId);
 }

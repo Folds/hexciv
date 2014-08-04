@@ -54,37 +54,16 @@ public class GameScreen extends JFrame
         mapPane        = new MapPanel(this);
         mapPane.setPreferredSize(new Dimension(665, 376));
         canvasPane     = new CanvasPanel(this, this, map, 16);
+        canvasPane.setClaimReferee(gameState);
         mapTabPane     = new TabbedPanel();
         mapTabPane.placeTabsOnLeft();
-        mapTabPane.addTab("World", mapPane, "Large world map (zoomed out)", KeyEvent.VK_W);
         mapTabPane.addTab("Detail", canvasPane, "Detail map (zoomed in)", KeyEvent.VK_D);
+        mapTabPane.addTab("World", mapPane, "Large world map (zoomed out)", KeyEvent.VK_W);
         masterPane     = new MasterPanel(this);
-        logPane        = new LogPanel();
-        localePane     = new LocalePanel(this);
-        localePane2    = new LocalePanel(this);
-        mousePane      = new MousePanel(this);
-        tabPane        = new TabbedPanel();
-        tabPane.addTab("Log", logPane, "Log", KeyEvent.VK_L);
-        timer = new Timer(50, this);
 
-        // The SwingX JXMultiSplitNode allows laying out multiple
-        // components in a panel, without creating nested components.
-        // http://javadoc.geotoolkit.org/external/swingx/org/jdesktop/swingx/MultiSplitLayout.html
-        // http://stackoverflow.com/questions/11346120/jxmultisplitpane-hiding-node-causes-painting-issues
-        // https://today.java.net/pub/a/today/2006/03/23/multi-split-pane.html
-        // http://stackoverflow.com/questions/8660687/how-to-use-multisplitlayout-in-swingx?rq=1
-        String layoutDefWhere =
-                  "(ROW weight=1.0 " +
-                    "(LEAF name=locale weight=0.0) " +
-                    "(LEAF name=mouse  weight=0.0) " +
-                  ")";
-        MultiSplitLayout.Node modelWhere = MultiSplitLayout.parseModel(layoutDefWhere);
-        wherePane = new JXMultiSplitPane();
-        wherePane.setDividerSize(3);
-        wherePane.getMultiSplitLayout().setModel(modelWhere);
-        wherePane.add(localePane,     "locale");
-        wherePane.add(mousePane,      "mouse");
-        tabPane.addTab("Cell info", wherePane, "Info about cell mouse is hovering over", KeyEvent.VK_C);
+        initializeMiniPane();
+        tabPane        = new TabbedPanel();
+        tabPane.addTab("Map", miniPane, "World map", KeyEvent.VK_M);
 
         peoplePane = new PeopleGraphPanel(gameState.civs.get(0).statSheet);
         peoplePane.statSheet.numSeenCells.setMaxRange(getMap().countCells());
@@ -93,24 +72,20 @@ public class GameScreen extends JFrame
         progressPane = new ProgressGraphPanel(gameState.civs.get(0).statSheet);
         tabPane.addTab("Progress", progressPane, "Graph of cash, production, and tech progress", KeyEvent.VK_R);
 
+        logPane        = new LogPanel();
+        tabPane.addTab("Log", logPane, "Log", KeyEvent.VK_L);
+
+        // The SwingX JXMultiSplitNode allows laying out multiple
+        // components in a panel, without creating nested components.
+        // http://javadoc.geotoolkit.org/external/swingx/org/jdesktop/swingx/MultiSplitLayout.html
+        // http://stackoverflow.com/questions/11346120/jxmultisplitpane-hiding-node-causes-painting-issues
+        // https://today.java.net/pub/a/today/2006/03/23/multi-split-pane.html
+        // http://stackoverflow.com/questions/8660687/how-to-use-multisplitlayout-in-swingx?rq=1
+        initializeWherePane();
+        tabPane.addTab("Cell info", wherePane, "Info about cell mouse is hovering over", KeyEvent.VK_C);
+
         performancePane = new PerformanceGraphPanel(gameState.civs.get(0).statSheet);
         tabPane.addTab("Performance", performancePane, "Graph of AI thinking time", KeyEvent.VK_F);
-
-        miniMapPane = new MapPanel(this);
-        miniMapPane.setPreferredSize(new Dimension(333, 188));
-
-        String layoutDefMini =
-                  "(ROW weight=1.0 " +
-                    "(LEAF name=locale weight=0.0) " +
-                    "(LEAF name=map  weight=0.0) " +
-                  ")";
-        MultiSplitLayout.Node modelMini = MultiSplitLayout.parseModel(layoutDefMini);
-        miniPane = new JXMultiSplitPane();
-        miniPane.setDividerSize(3);
-        miniPane.getMultiSplitLayout().setModel(modelMini);
-        miniPane.add(localePane2, "locale");
-        miniPane.add(miniMapPane, "map");
-        tabPane.addTab("Map", miniPane, "World map", KeyEvent.VK_M);
 
         String layoutDef =
                 "(COLUMN " +
@@ -129,6 +104,42 @@ public class GameScreen extends JFrame
         multiSplitPane.add(tabPane,    "tabs");
         multiSplitPane.add(mapTabPane, "world.getMap");
         getContentPane().add(multiSplitPane);
+
+        timer = new Timer(50, this);
+    }
+
+    protected void initializeWherePane() {
+        localePane     = new LocalePanel(this);
+        mousePane      = new MousePanel(this);
+        String layoutDefWhere =
+                "(ROW weight=1.0 " +
+                        "(LEAF name=locale weight=0.0) " +
+                        "(LEAF name=mouse  weight=0.0) " +
+                        ")";
+        MultiSplitLayout.Node modelWhere = MultiSplitLayout.parseModel(layoutDefWhere);
+        wherePane = new JXMultiSplitPane();
+        wherePane.setDividerSize(3);
+        wherePane.getMultiSplitLayout().setModel(modelWhere);
+        wherePane.add(localePane,     "locale");
+        wherePane.add(mousePane,      "mouse");
+    }
+
+    protected void initializeMiniPane() {
+        miniMapPane = new MapPanel(this);
+        miniMapPane.setPreferredSize(new Dimension(333, 188));
+
+        String layoutDefMini =
+                "(ROW weight=1.0 " +
+                        "(LEAF name=locale weight=0.0) " +
+                        "(LEAF name=map  weight=0.0) " +
+                        ")";
+        MultiSplitLayout.Node modelMini = MultiSplitLayout.parseModel(layoutDefMini);
+        miniPane = new JXMultiSplitPane();
+        miniPane.setDividerSize(3);
+        miniPane.getMultiSplitLayout().setModel(modelMini);
+        localePane2  = new LocalePanel(this);
+        miniPane.add(localePane2, "locale");
+        miniPane.add(miniMapPane, "map");
     }
 
     public static void main(String[] arguments) {

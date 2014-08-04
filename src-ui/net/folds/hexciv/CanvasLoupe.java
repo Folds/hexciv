@@ -14,13 +14,17 @@ public class CanvasLoupe extends Loupe {
     }
 
     protected Rectangle getAffectedArea(int cellId) {
+        int centerYinPixels = margins.y + margins.height / 2;
+        if (insetMap == null) {
+            int centerXinPixels = margins.x + margins.width / 2;
+            updateInsetMap(centerXinPixels, centerYinPixels, cellId);
+        }
         int index = insetMap.cellIds.indexOf(cellId);
         int row = insetMap.getRow(index);
         int col = insetMap.getColumn(index);
         int halfColWidth = hexWidthInPixels / 2;
         int halfCol = insetMap.getHalfCol(row, col);
         int xAtLeftEdgeOfHex = halfColWidth * halfCol + getLeftMargin() - halfColWidth;
-        int centerYinPixels = margins.y + margins.height / 2;
         int yAtCenterOfHex = centerYinPixels + (insetMap.getCenterRow() - row) * hexSideInPixels * 3 / 2;
         int yAtTopPointOfHex = yAtCenterOfHex - hexSideInPixels ;
         return new Rectangle(xAtLeftEdgeOfHex - halfColWidth, yAtTopPointOfHex - hexSideInPixels,
