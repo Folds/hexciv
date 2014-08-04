@@ -453,7 +453,7 @@ public class GameState implements ClaimReferee {
         }
         for (Civilization civ : civs) {
             for (City city : civ.cities) {
-                if (city.farms.contains(cellId)) {
+                if ((city.farms != null) && (city.farms.contains(cellId))) {
                     return civ.getColor();
                 }
             }

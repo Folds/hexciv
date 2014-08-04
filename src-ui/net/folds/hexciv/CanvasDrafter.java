@@ -235,21 +235,8 @@ public class CanvasDrafter extends Drafter {
         int yStartOffset = ySign * yStartAbsOffset;
         int xEndOffset   = xSign * xEndAbsOffset;
         int yEndOffset   = ySign * yEndAbsOffset;
-        comp2D.setColor(color);
-        comp2D.drawLine(start.x + xStartOffset, start.y + yStartOffset, end.x + xEndOffset, end.y + yEndOffset);
-        comp2D.drawLine(start.x - xStartOffset, start.y - yStartOffset, end.x - xEndOffset, end.y - yEndOffset);
-        comp2D.setColor(oldColor);
-    }
-
-    private void drawLine(Point start, Point end, Color color, Stroke stroke) {
-        Color oldColor = comp2D.getColor();
-        Stroke oldStroke = comp2D.getStroke();
-        comp2D.setColor(color);
-        comp2D.setStroke(stroke);
-        Line2D.Float line = new Line2D.Float(start.x, start.y, end.x, end.y);
-        comp2D.draw(line);
-        comp2D.setStroke(oldStroke);
-        comp2D.setColor(oldColor);
+        drawLine(start.x + xStartOffset, start.y + yStartOffset, end.x + xEndOffset, end.y + yEndOffset, color);
+        drawLine(start.x - xStartOffset, start.y - yStartOffset, end.x - xEndOffset, end.y - yEndOffset, color);
     }
 
     private void drawRoads() {
@@ -360,7 +347,7 @@ public class CanvasDrafter extends Drafter {
                 int cellId = insetMap.getCellId(index);
                 boolean isVoid = isVoid(index);
                 BitSet cellFeatures = map.getFeatures(cellId);
-                boolean railroad = Features.railroad.isChosen(cellFeatures);
+                boolean railroad = Features.railroad.isChosen(cellFeatures) || Features.city.isChosen(cellFeatures);
                 if (railroad) {
                     if (roadInProgress) {
                         roadInProgress = true;
@@ -370,7 +357,9 @@ public class CanvasDrafter extends Drafter {
                         roadJustEnded = false;
                         int prevIndex = getIndex(item - 1);
                         if ((item == 0) || (isVoid(prevIndex)) || (!seenCells.get(insetMap.getCellId(prevIndex)))) {
-                            if (doesIndexPointToFeature(index, backwards, Features.railroad)) {
+                            if (   (doesIndexPointToFeature(index, backwards, Features.railroad))
+                                || (doesIndexPointToFeature(index, backwards, Features.railroad))
+                               ) {
                                 startAtCellCenter = false;
                                 startItem = item - 1;
                             } else {
@@ -387,7 +376,9 @@ public class CanvasDrafter extends Drafter {
                         roadInProgress = false;
                         roadJustEnded = true;
                         int prevIndex = getIndex(item - 1);
-                        if (doesIndexPointToFeature(prevIndex, forwards, Features.railroad)) {
+                        if (   (doesIndexPointToFeature(index, backwards, Features.railroad))
+                            || (doesIndexPointToFeature(index, backwards, Features.city))
+                           ) {
                             endAtCellCenter = false;
                             endItem = item;
                         } else {
@@ -413,7 +404,9 @@ public class CanvasDrafter extends Drafter {
                 }
                 if (item == maxItem) {
                     if (roadInProgress) {
-                        if (doesIndexPointToFeature(index, forwards, Features.railroad)) {
+                        if (   (doesIndexPointToFeature(index, backwards, Features.railroad))
+                            || (doesIndexPointToFeature(index, backwards, Features.city))
+                           ) {
                             roadInProgress = false;
                             roadJustEnded = true;
                             endAtCellCenter = false;
@@ -432,7 +425,65 @@ public class CanvasDrafter extends Drafter {
                 }
             }
         }
+/*
+        protected boolean isRoadIntoCity(int item) {
+            if (insetMap.cellIds == null) {
+                return false;
+            }
+            int prevIndex = getIndex(item - 1);
+            if (prevIndex < 0) {
+                return false;
+            }
+            int prevCellId = insetMap.getCellId(prevIndex);
+            if (prevCellId < 0) {
+                return false;
+            }
+            int index = getIndex(item);
+            if (index < 0) {
+                return false;
+            }
+            int cellId = insetMap.getCellId(index);
+            if (cellId < 0) {
+                return false;
+            }
+            if (!map.hasRoad(prevCellId)) {
+                return false;
+            }
+            if (!map.hasCity(cellId)) {
+                return false;
+            }
+            return true;
+        }
 
+        protected boolean isRoadOutOfCity(int item) {
+            if (insetMap.cellIds == null) {
+                return false;
+            }
+            int prevIndex = getIndex(item - 1);
+            if (prevIndex < 0) {
+                return false;
+            }
+            int prevCellId = insetMap.getCellId(prevIndex);
+            if (prevCellId < 0) {
+                return false;
+            }
+            int index = getIndex(item);
+            if (index < 0) {
+                return false;
+            }
+            int cellId = insetMap.getCellId(index);
+            if (cellId < 0) {
+                return false;
+            }
+            if (!map.hasCity(prevCellId)) {
+                return false;
+            }
+            if (!map.hasRoad(cellId)) {
+                return false;
+            }
+            return true;
+        }
+*/
         protected void drawRoads() {
             int startItem = -2;
             int endItem = -2;
@@ -443,12 +494,20 @@ public class CanvasDrafter extends Drafter {
             int minItem = getMinItem();
             int maxItem = getMaxItem();
             for (int item = minItem; item < maxItem + 1; item++) {
+/*
+                if (isRoadIntoCity(item)) {
+                    boolean roadIntoCity = true;
+                }
+                if (isRoadOutOfCity(item)) {
+                    boolean roadOutOfCity = true;
+                }
+*/
                 int index = getIndex(item);
                 int cellId = insetMap.getCellId(index);
                 boolean isVoid = isVoid(index);
                 BitSet cellFeatures = map.getFeatures(cellId);
-                boolean road = Features.road.isChosen(cellFeatures);
-                boolean railroad = Features.railroad.isChosen(cellFeatures);
+                boolean road =     Features.road.isChosen(cellFeatures);
+                boolean railroad = Features.railroad.isChosen(cellFeatures) || Features.city.isChosen(cellFeatures);
                 if (road) {
                     if (roadInProgress) {
                         roadInProgress = true;
@@ -460,6 +519,7 @@ public class CanvasDrafter extends Drafter {
                         if ((item == minItem) || (isVoid(prevIndex)) || (!seenCells.get(insetMap.getCellId(prevIndex)))) {
                             if (   (doesIndexPointToFeature(index, backwards, Features.road))
                                 || (doesIndexPointToFeature(index, backwards, Features.railroad))
+                                || (doesIndexPointToFeature(index, backwards, Features.city))
                                ) {
                                 startAtCellCenter = false;
                                 startItem = item - 1;
@@ -507,6 +567,7 @@ public class CanvasDrafter extends Drafter {
                         int prevIndex = getIndex(item - 1);
                         if (   (doesIndexPointToFeature(prevIndex, forwards, Features.road))
                             || (doesIndexPointToFeature(prevIndex, forwards, Features.railroad))
+                            || (doesIndexPointToFeature(prevIndex, forwards, Features.city))
                            ) {
                             endAtCellCenter = false;
                             endItem = item;
@@ -535,6 +596,7 @@ public class CanvasDrafter extends Drafter {
                     if (roadInProgress) {
                         if (   (doesIndexPointToFeature(index, forwards, Features.road))
                             || (doesIndexPointToFeature(index, forwards, Features.railroad))
+                            || (doesIndexPointToFeature(index, forwards, Features.city))
                            ) {
                             roadInProgress = false;
                             roadJustEnded = true;

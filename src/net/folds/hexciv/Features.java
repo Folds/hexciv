@@ -11,9 +11,11 @@ public enum Features {
     bonus(0),
     road(1),
     railroad(2),
-    irrigation(3),
-    village(4),
-    city(5);
+    pollution(3),
+    irrigation(4),
+    mine(5),
+    village(6),
+    city(7);
 
     private int value;
 
