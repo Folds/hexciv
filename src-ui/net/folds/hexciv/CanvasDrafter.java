@@ -425,65 +425,7 @@ public class CanvasDrafter extends Drafter {
                 }
             }
         }
-/*
-        protected boolean isRoadIntoCity(int item) {
-            if (insetMap.cellIds == null) {
-                return false;
-            }
-            int prevIndex = getIndex(item - 1);
-            if (prevIndex < 0) {
-                return false;
-            }
-            int prevCellId = insetMap.getCellId(prevIndex);
-            if (prevCellId < 0) {
-                return false;
-            }
-            int index = getIndex(item);
-            if (index < 0) {
-                return false;
-            }
-            int cellId = insetMap.getCellId(index);
-            if (cellId < 0) {
-                return false;
-            }
-            if (!map.hasRoad(prevCellId)) {
-                return false;
-            }
-            if (!map.hasCity(cellId)) {
-                return false;
-            }
-            return true;
-        }
 
-        protected boolean isRoadOutOfCity(int item) {
-            if (insetMap.cellIds == null) {
-                return false;
-            }
-            int prevIndex = getIndex(item - 1);
-            if (prevIndex < 0) {
-                return false;
-            }
-            int prevCellId = insetMap.getCellId(prevIndex);
-            if (prevCellId < 0) {
-                return false;
-            }
-            int index = getIndex(item);
-            if (index < 0) {
-                return false;
-            }
-            int cellId = insetMap.getCellId(index);
-            if (cellId < 0) {
-                return false;
-            }
-            if (!map.hasCity(prevCellId)) {
-                return false;
-            }
-            if (!map.hasRoad(cellId)) {
-                return false;
-            }
-            return true;
-        }
-*/
         protected void drawRoads() {
             int startItem = -2;
             int endItem = -2;
@@ -494,14 +436,6 @@ public class CanvasDrafter extends Drafter {
             int minItem = getMinItem();
             int maxItem = getMaxItem();
             for (int item = minItem; item < maxItem + 1; item++) {
-/*
-                if (isRoadIntoCity(item)) {
-                    boolean roadIntoCity = true;
-                }
-                if (isRoadOutOfCity(item)) {
-                    boolean roadOutOfCity = true;
-                }
-*/
                 int index = getIndex(item);
                 int cellId = insetMap.getCellId(index);
                 boolean isVoid = isVoid(index);
