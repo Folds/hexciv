@@ -186,22 +186,59 @@ public class CanvasDrafter extends Drafter {
                     if ((cellId != cityCellId) && (map.hasCity(cityCellId))) {
                         Point cellCenter = getCellCenter(row, col);
                         Color civColor = getCivColor(cellId);
+                        // Fill a small circle on the farm.
+                        int radius = Math.max(2, Math.min(hexWidthInPixels, 2 * hexSideInPixels) / 6);
+                        fillCircle(cellCenter, radius, civColor);
                         if (insetMap.alreadyIncludes(cityCellId)) {
                             int cityRow = insetMap.getRowGivenCellId(cityCellId);
                             int cityCol = insetMap.getColumnGivenCellId(cityCellId);
                             Point cityCenter = getCellCenter(cityRow, cityCol);
-                            int width = Math.max(3, Math.min(hexWidthInPixels, 2 * hexSideInPixels) / 3);
-                            BasicStroke stroke = new BasicStroke(width, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
-                            drawLine(cityCenter, cellCenter, civColor, stroke);
-                        } else {
-                            // City is not on inset map, so just fill a small circle on the farm.
-                            int radius = Math.max(2, Math.min(hexWidthInPixels, 2 * hexSideInPixels) / 6);
-                            fillCircle(cellCenter, radius, civColor);
+                            int cityRadius = Math.min(hexWidthInPixels, 2 * hexSideInPixels) / 3;
+                            loopAroundPulleys(cityCenter, cellCenter, cityRadius, radius, civColor);
                         }
                     }
                 }
             }
         }
+    }
+
+    // very approximate.
+    private void loopAroundPulleys(Point start, Point end, int startRadius, int endRadius, Color color) {
+        Color oldColor = comp2D.getColor();
+        int deltaX = end.x - start.x;
+        int deltaY = end.y - start.y;
+        int absDeltaX = Math.abs(deltaX);
+        int absDeltaY = Math.abs(deltaY);
+        int percentX = 70;
+        int percentY = 70;
+        if (absDeltaX < absDeltaY) {
+            percentX = 100 - (30 * absDeltaX) / absDeltaY;
+            percentY = (70 * absDeltaX) / absDeltaY;
+        }
+        if (absDeltaY < absDeltaX) {
+            percentX = (70 * absDeltaY) / absDeltaX;
+            percentY = 100 - (30 * absDeltaY) / absDeltaX;
+        }
+        int xStartAbsOffset = (percentX * startRadius) / 100;
+        int yStartAbsOffset = (percentY * startRadius) / 100;
+        int xEndAbsOffset   = (percentX *   endRadius) / 100;
+        int yEndAbsOffset   = (percentY *   endRadius) / 100;
+        int xSign = 1;
+        int ySign = 1;
+        if (deltaX >= 0) {
+            ySign = -1;
+        }
+        if (deltaY < 0) {
+            xSign = -1;
+        }
+        int xStartOffset = xSign * xStartAbsOffset;
+        int yStartOffset = ySign * yStartAbsOffset;
+        int xEndOffset   = xSign * xEndAbsOffset;
+        int yEndOffset   = ySign * yEndAbsOffset;
+        comp2D.setColor(color);
+        comp2D.drawLine(start.x + xStartOffset, start.y + yStartOffset, end.x + xEndOffset, end.y + yEndOffset);
+        comp2D.drawLine(start.x - xStartOffset, start.y - yStartOffset, end.x - xEndOffset, end.y - yEndOffset);
+        comp2D.setColor(oldColor);
     }
 
     private void drawLine(Point start, Point end, Color color, Stroke stroke) {
