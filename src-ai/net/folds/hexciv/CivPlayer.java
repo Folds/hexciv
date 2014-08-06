@@ -21,10 +21,6 @@ public class CivPlayer {
         this.referee = referee;
     }
 
-    protected void chooseFarms(WorldMap map, City city) {
-
-    }
-
     protected int chooseFarm(WorldMap map, City city) {
         int result = -1;
         int cellId = city.location;

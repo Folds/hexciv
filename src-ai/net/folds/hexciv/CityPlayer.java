@@ -1,5 +1,8 @@
 package net.folds.hexciv;
 
+import java.util.BitSet;
+import java.util.Vector;
+
 /**
  * Created by jasper on Jul 27, 2014.
  */
@@ -48,7 +51,7 @@ public class CityPlayer {
                     }
                 }
             }
-            ruler.chooseFarms(map, city);
+            chooseFarms();
         }
         if (city.storedFood >= 10 * city.size + 10) {
             city.size = city.size + 1;
@@ -61,7 +64,7 @@ public class CityPlayer {
             if (newFarm >= 0) {
                 city.farms.add(newFarm);
             }
-            ruler.chooseFarms(map, city);
+            chooseFarms();
             listener.repaintMaps(city.location);
         }
         if ((city.wip != null) && (city.storedProduction >= city.wip.getCapitalCost())) {
@@ -115,6 +118,176 @@ public class CityPlayer {
             ruler.chooseNextTech();
         }
         chooseWip();
+    }
+
+    protected void chooseFarms() {
+        Vector<Integer> region = map.getRegion(city.location, 2);
+        int regionSize = region.size();
+        Vector<Integer> potentialFarms = new Vector<>(regionSize);
+        for (int pos = 0; pos < regionSize; pos++) {
+            int cellId = region.get(pos);
+            if (   (cellId != city.location)
+                && (   (referee.isAvailable(cellId, civ))
+                    || (city.farms.contains((Integer) cellId))
+               )   ) {
+                potentialFarms.add(cellId);
+            }
+        }
+        int numChoices = potentialFarms.size();
+        int maxFarms = Math.min(city.size, numChoices);
+        int foodSupply  = civ.countFood(map, city.location);
+        int oreSupply   = civ.countOre(map, city.location);
+        int moneySupply = civ.countMoney(map, city.location);
+        int foodNeeded = 2 * city.size + city.countSettlers();
+        if (!civ.isMilitarist()) {
+            foodNeeded = foodNeeded + city.countSettlers();
+        }
+        int prodNeeded = civ.getLogisticsCost(city);
+        Vector<Integer> potentialFood  = new Vector<>(numChoices);
+        Vector<Integer> potentialOre   = new Vector<>(numChoices);
+        Vector<Integer> potentialMoney = new Vector<>(numChoices);
+        for (int pos = 0; pos < numChoices; pos++) {
+            int cellId = potentialFarms.get(pos);
+            potentialFood.add(civ.countFood(map, cellId));
+            potentialOre.add(civ.countOre(map, cellId));
+            potentialMoney.add(civ.countMoney(map, cellId));
+        }
+        BitSet choices = new BitSet(numChoices);
+        for (int i = 0; (i < maxFarms) && (foodSupply < foodNeeded); i++) {
+            int bestPosSoFar = -1;
+            int bestFoodSoFar = 0;
+            int tieBreakerOre = 0;
+            int tieBreakerBonus = 0;
+            for (int j = 0; j < numChoices; j++) {
+                if (!choices.get(j)) {
+                    int food = potentialFood.get(j);
+                    if (   (food > bestFoodSoFar)
+                        || ((food == bestFoodSoFar) && (potentialOre.get(j) > tieBreakerOre))
+                        || (   (food == bestFoodSoFar)
+                            && (potentialOre.get(j) == tieBreakerOre)
+                            && (getBonusValue(food, potentialOre.get(j), potentialMoney.get(j)) > tieBreakerBonus)
+                           )
+                       ) {
+                        int ore = potentialOre.get(j);
+                        int money = potentialMoney.get(j);
+                        bestPosSoFar = j;
+                        bestFoodSoFar = food;
+                        tieBreakerOre = ore;
+                        tieBreakerBonus = getBonusValue(food, ore, money);
+                    }
+                }
+            }
+            if (bestPosSoFar >= 0) {
+                choices.set(bestPosSoFar);
+                foodSupply = foodSupply + bestFoodSoFar;
+                oreSupply = oreSupply + tieBreakerOre;
+                moneySupply = moneySupply + potentialMoney.get(bestPosSoFar);
+            }
+        }
+        for (int i = choices.cardinality(); (i < maxFarms) && (oreSupply < prodNeeded); i++) {
+            int bestPosSoFar = -1;
+            int bestOreSoFar = 0;
+            int tieBreakerBonus = 0;
+            for (int j = 0; j < numChoices; j++) {
+                if (!choices.get(j)) {
+                    int ore = potentialOre.get(j);
+                    if (   (ore > bestOreSoFar)
+                        || (   (ore == bestOreSoFar)
+                            && (getBonusValue(potentialFood.get(j), ore, potentialMoney.get(j)) > tieBreakerBonus)
+                           )
+                       ) {
+                        int food = potentialFood.get(j);
+                        int money = potentialMoney.get(j);
+                        bestPosSoFar = j;
+                        bestOreSoFar = ore;
+                        tieBreakerBonus = getBonusValue(food, ore, money);
+                    }
+                }
+            }
+            if (bestPosSoFar >= 0) {
+                choices.set(bestPosSoFar);
+                foodSupply = foodSupply + potentialFood.get(bestPosSoFar);
+                oreSupply = oreSupply + bestOreSoFar;
+                moneySupply = moneySupply + potentialMoney.get(bestPosSoFar);
+            }
+        }
+        for (int i = choices.cardinality(); i < maxFarms; i++) {
+            int bestPosSoFar = -1;
+            int bestBonusSoFar = 0;
+            for (int j = 0; j < numChoices; j++) {
+                if (!choices.get(j)) {
+                    int food = potentialFood.get(j);
+                    int ore = potentialOre.get(j);
+                    int money = potentialMoney.get(j);
+                    int bonus = getBonusValue(food, ore, money);
+                    if (bonus > bestBonusSoFar) {
+                        bestPosSoFar = j;
+                        bestBonusSoFar = bonus;
+                    }
+                }
+            }
+            if (bestPosSoFar >= 0) {
+                choices.set(bestPosSoFar);
+                foodSupply  = foodSupply  + potentialFood.get(bestPosSoFar);
+                oreSupply   = oreSupply   + potentialOre.get(bestPosSoFar);
+                moneySupply = moneySupply + potentialMoney.get(bestPosSoFar);
+            }
+        }
+        if (   (foodSupply > foodNeeded) && (oreSupply < prodNeeded)
+            && (choices.cardinality() > 0) && (choices.cardinality() < numChoices)) {
+            boolean mightSwap = true;
+            while ((mightSwap) && (foodSupply > foodNeeded) && (oreSupply < prodNeeded)) {
+                int mostOreChosenSoFar = 0;
+                for (int i = 0; i < numChoices; i++) {
+                    if (choices.get(i) && (potentialOre.get(i) > mostOreChosenSoFar))
+                        mostOreChosenSoFar = potentialOre.get(i);
+                }
+                int posLeastOreChosen = -1;
+                int leastOreChosenSoFar = mostOreChosenSoFar;
+                for (int i = 0; i < numChoices; i++) {
+                    if (choices.get(i) && (potentialOre.get(i) < leastOreChosenSoFar)) {
+                        posLeastOreChosen = i;
+                        leastOreChosenSoFar = potentialOre.get(i);
+                    }
+                }
+                int posMostOreNotChosen = -1;
+                int mostOreNotChosenSoFar = 0;
+                for (int i = 0; i < numChoices; i++) {
+                    if ((!choices.get(i)) && (potentialOre.get(i) > mostOreNotChosenSoFar))
+                        posMostOreNotChosen = i;
+                        mostOreNotChosenSoFar = potentialOre.get(i);
+                }
+                if (   (mostOreNotChosenSoFar > leastOreChosenSoFar)
+                    && (foodSupply - potentialFood.get(posLeastOreChosen) + potentialFood.get(posMostOreNotChosen) >= foodNeeded)
+                   ) {
+                    choices.set(posLeastOreChosen, false);
+                    choices.set(posMostOreNotChosen);
+                } else {
+                    mightSwap = false;
+                }
+            }
+        }
+        // To-do:  further optimize choices.
+        city.farms.removeAllElements();
+        for (int i = 0; i < numChoices; i++) {
+            if (choices.get(i)) {
+                city.farms.add(potentialFarms.get(i));
+            }
+        }
+        int numFarmers = city.farms.size();
+        if (numFarmers + city.numEntertainers + city.numScientists + city.numTaxMen > city.size) {
+            city.numTaxMen = Math.max(0, city.size - city.numEntertainers - city.numScientists - numFarmers);
+            if (numFarmers + city.numEntertainers + city.numScientists > city.size) {
+                city.numScientists = Math.max(0, city.size - city.numEntertainers - numFarmers);
+                if (numFarmers + city.numEntertainers > city.size) {
+                    city.numEntertainers = Math.max(0, city.size - numFarmers);
+                }
+            }
+        }
+    }
+
+    protected int getBonusValue(int food, int ore, int money) {
+        return 30 * food + 15 * ore + 10 * money;
     }
 
     protected boolean canSustainExplorer() {
