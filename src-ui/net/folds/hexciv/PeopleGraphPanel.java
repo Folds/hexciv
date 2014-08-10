@@ -15,7 +15,8 @@ public class PeopleGraphPanel extends GraphPanel {
     // #             cities,                  (auto-adjusting scale, starts at 0 - 100)
     // #             citizens                 (auto-adjusting scale, starts at 0 - 100)
     // #             myriads                  (auto-adjusting scale, starts at 0 - 100)
-    // #             planes, settlers, ships, troops (background stacked graph, auto-adjusting scale, starts at 0 - 100)
+    // #             settlers, troops ships, planes, caravans
+    //                                        (background stacked graph, auto-adjusting scale, starts at 0 - 100)
 
     JLabel lblSeenCells = new JLabel("Seen cells (0 - 100%)", SwingConstants.CENTER);
     JLabel lblCities = new JLabel("Cities (0 - 10)", SwingConstants.CENTER);
@@ -23,10 +24,11 @@ public class PeopleGraphPanel extends GraphPanel {
     JLabel lblPopulation = new JLabel("Pop. (0 - 100 k)", SwingConstants.CENTER);
 
     JLabel lblUnits = new JLabel("Units (0 - 100):", SwingConstants.LEFT);
-    JLabel lblPlanes = new JLabel("Planes", SwingConstants.CENTER);
+    JLabel lblTroops = new JLabel("Army", SwingConstants.CENTER);
+    JLabel lblShips = new JLabel("Navy", SwingConstants.CENTER);
+    JLabel lblPlanes = new JLabel("Air", SwingConstants.CENTER);
     JLabel lblSettlers = new JLabel("Settlers", SwingConstants.CENTER);
-    JLabel lblShips = new JLabel("Ships", SwingConstants.CENTER);
-    JLabel lblTroops = new JLabel("Troops", SwingConstants.CENTER);
+    JLabel lblCaravans = new JLabel("Caravans", SwingConstants.CENTER);
 
     Vector<JLabel> lblBlanks = new Vector<JLabel>(2);
     StatSheet statSheet;
@@ -42,14 +44,15 @@ public class PeopleGraphPanel extends GraphPanel {
                   "(LEAF name=population weight=0.14) " +
                   "(LEAF name=units      weight=0.16) " +
                   "(ROW                  weight=0.14" +
-                    "(LEAF name=blank0   weight=0.1) " +
-                    "(LEAF name=planes   weight=0.45) " +
-                    "(LEAF name=settlers weight=0.45) " +
+                    "(LEAF name=blank0   weight=0.07) " +
+                    "(LEAF name=troops   weight=0.31) " +
+                    "(LEAF name=ships    weight=0.31) " +
+                    "(LEAF name=planes   weight=0.31) " +
                   ")" +
                   "(ROW                  weight=0.14" +
-                    "(LEAF name=blank1   weight=0.1) " +
-                    "(LEAF name=ships    weight=0.45) " +
-                    "(LEAF name=troops   weight=0.45) " +
+                    "(LEAF name=blank1   weight=0.07) " +
+                    "(LEAF name=settlers weight=0.46) " +
+                    "(LEAF name=caravans weight=0.47) " +
                   ")" +
                 ")"
                 ;
@@ -63,6 +66,7 @@ public class PeopleGraphPanel extends GraphPanel {
         Color darkRed    = new Color(153,  51,  51);
         Color darkGreen  = new Color( 51, 102,  51);
 
+        Color beige      = new Color(255, 255, 153);
         Color lightBlue  = new Color(153, 204, 255);
         Color turquoise  = new Color( 51, 255, 204);
         Color silver     = new Color(204, 204, 204);
@@ -73,11 +77,13 @@ public class PeopleGraphPanel extends GraphPanel {
         lblCitizens.setForeground(darkRed);
         lblCities.setForeground(darkGreen);
 
+        lblCaravans.setBackground(beige);
         lblPlanes.setBackground(lightBlue);
         lblShips.setBackground(turquoise);
         lblTroops.setBackground(silver);
         lblSettlers.setBackground(lightGreen);
 
+        lblCaravans.setOpaque(true);
         lblPlanes.setOpaque(true);
         lblShips.setOpaque(true);
         lblTroops.setOpaque(true);
@@ -90,6 +96,7 @@ public class PeopleGraphPanel extends GraphPanel {
 
         lblUnits.setVerticalAlignment(SwingConstants.BOTTOM);
         legendPane.add(lblUnits, "units");
+        legendPane.add(lblCaravans, "caravans");
         legendPane.add(lblPlanes,   "planes");
         legendPane.add(lblShips,    "ships");
         legendPane.add(lblTroops,   "troops");
@@ -105,8 +112,8 @@ public class PeopleGraphPanel extends GraphPanel {
         plotPane.addToBackground(statSheet.numTroops,    silver);
         plotPane.addToBackground(statSheet.numShips,     turquoise);
         plotPane.addToBackground(statSheet.numPlanes,    lightBlue);
-
-    }
+        plotPane.addToBackground(statSheet.numCaravans,  beige);
+     }
 
     protected void populateBlanks() {
         for (int i = 0; i < lblBlanks.capacity(); i++) {
@@ -116,7 +123,8 @@ public class PeopleGraphPanel extends GraphPanel {
     }
 
     public void updateStats() {
-        int totalUnits = statSheet.numPlanes.getCurrentValue() +
+        int totalUnits = statSheet.numCaravans.getCurrentValue() +
+                         statSheet.numPlanes.getCurrentValue() +
                          statSheet.numShips.getCurrentValue() +
                          statSheet.numTroops.getCurrentValue() +
                          statSheet.numSettlers.getCurrentValue();
@@ -125,7 +133,8 @@ public class PeopleGraphPanel extends GraphPanel {
         }
         
         int maxRangeOfUnits = coordinateMaxRanges(statSheet.numSettlers, statSheet.numTroops,
-                                                  statSheet.numShips, statSheet.numPlanes);
+                                                  statSheet.numShips, statSheet.numPlanes,
+                                                  statSheet.numCaravans);
         String unitCaption = getCaption("Units", 0, maxRangeOfUnits);
         if (!lblUnits.getText().equals(unitCaption)) {
             lblUnits.setText(unitCaption);

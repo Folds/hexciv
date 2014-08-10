@@ -16,8 +16,8 @@ public class PlotPanel extends JPanel {
     // private int minY = 0;
     // private int maxY = 100;
 
-    private Vector<StatColumn> backgroundColumns = new Vector<StatColumn>(4);
-    private Vector<Color>      backgroundColors  = new Vector<Color>(4);
+    private Vector<StatColumn> backgroundColumns = new Vector<StatColumn>(5);
+    private Vector<Color>      backgroundColors  = new Vector<Color>(5);
     private Vector<StatColumn> foregroundColumns = new Vector<StatColumn>(5);
     private Vector<Color>      foregroundColors  = new Vector<Color>(5);
 

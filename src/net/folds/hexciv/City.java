@@ -77,6 +77,19 @@ public class City {
         return result;
     }
 
+    protected int countCaravans() {
+        int result = 0;
+        if (units == null) {
+            return result;
+        }
+        for (Unit unit : units) {
+            if (unit.unitType.isCaravan) {
+                result = result + 1;
+            }
+        }
+        return result;
+    }
+
     protected int countNavalUnits() {
         int result = 0;
         if (units == null) {

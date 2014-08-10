@@ -990,6 +990,17 @@ public class Civilization {
         return result;
     }
 
+    protected int countCaravans() {
+        int result = 0;
+        if (cities == null) {
+            return result;
+        }
+        for (City city : cities) {
+            result = result + city.countCaravans();
+        }
+        return result;
+    }
+
     protected int countNavalUnits() {
         int result = 0;
         if (cities == null) {
@@ -1024,7 +1035,7 @@ public class Civilization {
     }
 
     protected int countTroops() {
-        return countTerrestrialUnits() - countSettlers();
+        return countTerrestrialUnits() - countSettlers() - countCaravans();
     }
 
     protected int countWonders() {
@@ -1816,7 +1827,7 @@ public class Civilization {
         statSheet.recordPercentages(getLuxuryPercentage(), sciencePercentage, taxPercentage);
         statSheet.recordTechs(countTechs(), getIdOfHighestDiscoveredTech());
         statSheet.recordCities(countCities(), countCitizens(), countMyriads());
-        statSheet.recordUnits(countAerialUnits(), countSettlers(), countNavalUnits(), countTroops());
+        statSheet.recordUnits(countCaravans(), countAerialUnits(), countNavalUnits(), countTroops(), countSettlers());
         statSheet.recordWip(storedMoney, countStoredProduction(), storedScience);
         statSheet.recordCells(countSeenCells());
         statSheet.recordThinkingTime((int) recentTurnLengthInMilliseconds);

@@ -14,10 +14,11 @@ public class StatSheet {
     StatColumn numCitizens;
     StatColumn numMyriads;
 
+    StatColumn numCaravans;
     StatColumn numPlanes;
-    StatColumn numSettlers;
     StatColumn numShips;
     StatColumn numTroops;
+    StatColumn numSettlers;
 
     StatColumn numTechs;
     StatColumn maxTechId;
@@ -53,15 +54,17 @@ public class StatSheet {
         numMyriads.setMaxRange(10);
 
         // units
+        numCaravans = new StatColumn(startTurn);  //  (0 - ~    200)
         numPlanes   = new StatColumn(startTurn);  //  (0 - ~    100)
-        numSettlers = new StatColumn(startTurn);  //  (0 - ~    500)
         numShips    = new StatColumn(startTurn);  //  (0 - ~    100)
         numTroops   = new StatColumn(startTurn);  //  (0 - ~  4,000)
+        numSettlers = new StatColumn(startTurn);  //  (0 - ~    500)
 
+        numCaravans.setMaxRange(10);
         numPlanes.setMaxRange(10);
-        numSettlers.setMaxRange(10);
         numShips.setMaxRange(10);
         numTroops.setMaxRange(10);
+        numSettlers.setMaxRange(10);
 
         // techs
         numTechs  = new StatColumn(startTurn);    //  (0 - ~    300)
@@ -85,10 +88,13 @@ public class StatSheet {
         numCities.clear();
         numCitizens.clear();
         numMyriads.clear();
+
+        numCaravans.clear();
         numPlanes.clear();
-        numSettlers.clear();
         numShips.clear();
         numTroops.clear();
+        numSettlers.clear();
+
         numTechs.clear();
         maxTechId.clear();
         storedMoney.clear();
@@ -101,10 +107,12 @@ public class StatSheet {
         numCitizens.setMaxRange(10);
         numMyriads.setMaxRange(10);
 
+        numCaravans.setMaxRange(10);
         numPlanes.setMaxRange(10);
-        numSettlers.setMaxRange(10);
         numShips.setMaxRange(10);
         numTroops.setMaxRange(10);
+        numSettlers.setMaxRange(10);
+
     }
 
     // reporting pages:
@@ -123,7 +131,8 @@ public class StatSheet {
     // #             cities,                  (auto-adjusting scale, starts at 0 - 100)
     // #             citizens                 (auto-adjusting scale, starts at 0 - 100)
     // #             myriads                  (auto-adjusting scale, starts at 0 - 100)
-    // #             planes, settlers, ships, troops (background stacked graph, auto-adjusting scale, starts at 0 - 100)
+    // #             settlers, troops, ships, planes, caravans
+    //                                        (background stacked graph, auto-adjusting scale, starts at 0 - 100)
 
 
     public void incrementTurn() {
@@ -147,11 +156,12 @@ public class StatSheet {
         numMyriads.record(currentTurn, myriads);
     }
 
-    public void recordUnits(int planes, int settlers, int ships, int troops) {
+    public void recordUnits(int caravans, int planes, int ships, int troops, int settlers) {
+        numCaravans.record(currentTurn, caravans);
         numPlanes.record(currentTurn, planes);
-        numSettlers.record(currentTurn, settlers);
         numShips.record(currentTurn, ships);
         numTroops.record(currentTurn, troops);
+        numSettlers.record(currentTurn, settlers);
     }
 
     public void recordWip(int money, int production, int science) {
