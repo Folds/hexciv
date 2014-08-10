@@ -55,6 +55,16 @@ public class CanvasPanel extends Panel {
         }
     }
 
+    protected boolean showsCell(int cellId) {
+        if (loupe == null) {
+            return false;
+        }
+        if (loupe.insetMap.alreadyIncludes(cellId)) {
+            return true;
+        }
+        return false;
+    }
+
     protected void setClaimReferee(ClaimReferee claimReferee) {
         this.claimReferee = claimReferee;
     }

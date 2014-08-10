@@ -627,14 +627,19 @@ public class CanvasDrafter extends Drafter {
             }
             Color color = feature.getColor();
             BasicStroke stroke = new BasicStroke(3, BasicStroke.CAP_BUTT, BasicStroke.JOIN_ROUND);
-            Point startCellCenter = getCellCenter(tier, startItem);
-            Point endCellCenter = getCellCenter(tier, endItem);
-            if ((startItem == endItem) && (startAtCellCenter) && (endAtCellCenter)) {
-                drawRoad(startCellCenter, endCellCenter, color, stroke);
-                return;
-            }
+//            Point startCellCenter = getCellCenter(tier, startItem);
+//            Point endCellCenter = getCellCenter(tier, endItem);
+//            if ((startItem == endItem) && (startAtCellCenter) && (endAtCellCenter)) {
+//                drawRoad(startCellCenter, endCellCenter, color, stroke);
+//                return;
+//            }
             Point start = getStartPoint();
             Point end = getEndPoint();
+            if (Math.abs(start.x - end.x) > 200) {
+                boolean stopHere = true;
+                Point ss = getStartPoint();
+                Point ee = getEndPoint();
+            }
             drawRoad(start, end, color, stroke);
         }
 
@@ -720,7 +725,16 @@ public class CanvasDrafter extends Drafter {
         }
 
         protected Point getStartPoint() {
+            if ((endItem > startItem) && (!insetMap.canGetIndexFromSlash(tier, startItem))) {
+                startItem = startItem + 1;
+                startAtCellCenter = false;
+            }
             int index = insetMap.getIndexFromSlash(tier, startItem);
+            if ((index < 0) && (endItem > startItem)) {
+                startItem = startItem + 1;
+                startAtCellCenter = false;
+                index = insetMap.getIndexFromSlash(tier, startItem);
+            }
             Point cellCenter = getCellCenterFromIndex(index);
             Point result = new Point(cellCenter.x, cellCenter.y);
             if (!startAtCellCenter) {
@@ -731,6 +745,10 @@ public class CanvasDrafter extends Drafter {
         }
 
         protected Point getEndPoint() {
+            if ((endItem > startItem) && (!insetMap.canGetIndexFromSlash(tier, endItem))) {
+                endItem = endItem - 1;
+                endAtCellCenter = false;
+            }
             int index = insetMap.getIndexFromSlash(tier, endItem);
             Point cellCenter = getCellCenterFromIndex(index);
             Point result = new Point(cellCenter.x, cellCenter.y);
@@ -773,7 +791,16 @@ public class CanvasDrafter extends Drafter {
         }
 
         protected Point getStartPoint() {
+            if ((endItem > startItem) && (!insetMap.canGetIndexFromWhack(tier, startItem))) {
+                startItem = startItem + 1;
+                startAtCellCenter = false;
+            }
             int index = insetMap.getIndexFromWhack(tier, startItem);
+            if ((index < 0) && (endItem > startItem)) {
+                startItem = startItem + 1;
+                startAtCellCenter = false;
+                index = insetMap.getIndexFromWhack(tier, startItem);
+            }
             Point cellCenter = getCellCenterFromIndex(index);
             Point result = new Point(cellCenter.x, cellCenter.y);
             if (!startAtCellCenter) {

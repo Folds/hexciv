@@ -190,6 +190,10 @@ public class GameScreen extends JFrame
     public void celebrateNewCity(Unit unit, City city) {
         int year = gameState.getYear();
         logPane.log(city.name + " est. " + formatYear(year) + " at " + gameState.describeLocation(city));
+        if (!canvasPane.showsCell(city.location)) {
+            canvasPane.setCenterCell(city.location);
+        }
+        canvasPane.repaint();
     }
 
     public void celebrateRevolution(Civilization civ, GovernmentType governmentType) {

@@ -1083,7 +1083,7 @@ public class Civilization {
         int farmLocation = ruler.chooseFarm(map, cellId, referee);
         if (farmLocation >= 0) {
             if (city.farms == null) {
-                city.farms = new Vector<>(20);
+                city.farms = new Vector<>(18);
             }
             city.farms.add((Integer) farmLocation);
             if (city.numEntertainers > 0) {
@@ -1095,6 +1095,17 @@ public class Civilization {
             }
         }
         return city;
+    }
+
+    protected String formatGovernment() {
+        String name = governmentTypes.get(governmentTypeId).name;
+        if (name.equals("Undefined")) {
+            return name;
+        }
+        if (name.substring(1, 1).equals("A")) {
+            return "an " + name;
+        }
+        return "a " + name;
     }
 
     protected String formatPopulation() {
@@ -1123,7 +1134,7 @@ public class Civilization {
         unitSummary = accumulateSummary(unitSummary, countAerialUnits(), " plane", " planes");
         unitSummary = accumulateSummary(unitSummary, countTroops(), " troop", " troops");
         if (countCities() > 0) {
-            result.add(name + " has " + formatPopulation() + " in " + countCities() + " cities, with");
+            result.add(name + " is " + formatGovernment() + " with " + formatPopulation() + " in " + countCities() + " cities, with");
             result.add(  countHappyCitizens(map, referee) + " happy, "
                     + countContentCitizens(map, referee) + " content, and "
                     + countUnhappyCitizens(map, referee) + " unhappy citizens;");

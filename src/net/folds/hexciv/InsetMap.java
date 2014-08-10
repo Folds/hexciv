@@ -598,11 +598,31 @@ public class InsetMap {
         return 2 * (whack - numColumns) + adjustment;
     }
 
+    protected boolean canGetIndexFromSlash(int slash, int row) {
+        int centerRow = getCenterRow();
+        int adjustment = (centerRow + 1) % 2;
+        int col = slash + (row + adjustment) / 2;
+        if ((col < 0) || (col >= numColumns))  {
+            return false;
+        }
+        return true;
+    }
+
     protected int getIndexFromSlash(int slash, int row) {
         int centerRow = getCenterRow();
         int adjustment = (centerRow + 1) % 2;
         int col = slash + (row + adjustment) / 2;
         return getIndex(row, col);
+    }
+
+    protected boolean canGetIndexFromWhack(int whack, int row) {
+        int centerRow = getCenterRow();
+        int adjustment = centerRow % 2;
+        int col = whack - (row + adjustment) / 2;
+        if (col >= numColumns)  {
+            return false;
+        }
+        return true;
     }
 
     protected int getIndexFromWhack(int whack, int row) {
