@@ -1141,9 +1141,10 @@ public class Civilization {
         Vector<String> result = new Vector<>();
         String unitSummary = "";
         unitSummary = accumulateSummary(unitSummary, countSettlers(), " settler", " settlers");
+        unitSummary = accumulateSummary(unitSummary, countTroops(), " troop", " troops");
         unitSummary = accumulateSummary(unitSummary, countNavalUnits(), " ship", " ships");
         unitSummary = accumulateSummary(unitSummary, countAerialUnits(), " plane", " planes");
-        unitSummary = accumulateSummary(unitSummary, countTroops(), " troop", " troops");
+        unitSummary = accumulateSummary(unitSummary, countCaravans(), " caravan", " caravans");
         if (countCities() > 0) {
             result.add(name + " is " + formatGovernment() + " with " + formatPopulation() + " in " + countCities() + " cities, with");
             result.add(  countHappyCitizens(map, referee) + " happy, "
