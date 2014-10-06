@@ -127,6 +127,10 @@ public class WorldMap {
         return mesh.getNeighbor(cellId, dir);
     }
 
+    protected Directions getDirection(int fromCellId, int toCellId) {
+        return mesh.getDirection(fromCellId, toCellId);
+    }
+
     public int numHexesFromEquatorToCenterOfPole() {
         return mesh.getDistanceInCellsBetweenPoles() / 2;
     }
@@ -321,6 +325,10 @@ public class WorldMap {
 
     int getDistanceInCells(int cellId1, int cellId2) {
         return mesh.getDistanceInCells(cellId1, cellId2);
+    }
+
+    Vector<Integer> proposePath(int cellId1, int cellId2) {
+        return mesh.proposePath(cellId1, cellId2);
     }
 
     Vector<Integer> getNeighbors(int cellId) {

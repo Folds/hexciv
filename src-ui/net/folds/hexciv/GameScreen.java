@@ -205,6 +205,10 @@ public class GameScreen extends JFrame
         logPane.log(city.name + " sells " + improvementType.name);
     }
 
+    public void celebrateUnsupported(City city, Unit unit) {
+        logPane.log(city.name + " disbands " + unit.unitType.name);
+    }
+
     public void celebrateWonder(City city, int wonderId) {
         if ((city == null) || (wonderId < 0)) {
             return;

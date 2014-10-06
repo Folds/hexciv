@@ -523,6 +523,15 @@ public class InsetMap {
     }
 
     int getCellId(int index) {
+        if (cellIds == null) {
+            return -2;
+        }
+        if (index < 0) {
+            return -3;
+        }
+        if (index >= cellIds.size()) {
+            return -4;
+        }
         return cellIds.get(index);
     }
 

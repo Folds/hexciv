@@ -36,67 +36,375 @@ public class UnitPlayer {
         if (unit.unitType.isSettler) {
             result = playTurnAsSettler(keepTroops);
         } else if (unit.unitType.isCaravan) {
-            result = playTurnAsCaravan(keepTroops);
+            result = playTurnAsCaravan();
         } else if (unit.unitType.isTerrestrial) {
             result = playTurnAsExplorer(keepTroops);
         }
         return result;
     }
 
-    protected boolean playTurnAsCaravan (boolean keepTroops) {
-        boolean result = true;
-        Vector<Integer> neighbors = map.getNeighbors(unit.getLocation());
-        for (int neighbor : neighbors) {
-            if (map.hasCity(neighbor)) {
-                if (civ.hasCityAt(neighbor)) {
-                    City neighborCity = civ.getCityAt(neighbor);
-                    if (civ.canBuildWonder(referee)) {
-                        if (ruler.isCityOnVergeOfImprovement(map, neighborCity, referee)) {
-                            if (neighborCity.wip.getCapitalCost() > neighborCity.storedProduction + unit.unitType.capitalCost) {
-                                if (!neighborCity.wip.isUnitType && neighborCity.wip.improvementType.isWonder()) {
-                                    neighborCity.storedProduction = neighborCity.storedProduction + unit.unitType.capitalCost;
-                                    return false;
-                                }
-                            } else {
-                                ProductType oldType = neighborCity.wip;
-                                ImprovementType tempWonder = civ.availableWonderThatCostsAtLeast(oldType.getCapitalCost(), referee);
-                                if (tempWonder != null) {
-                                    neighborCity.wip = new ProductType(tempWonder);
-                                    neighborCity.storedProduction = neighborCity.storedProduction + unit.unitType.capitalCost;
-                                    neighborCity.wip = oldType;
-                                    return false;
-                                }
-                            }
+    protected boolean distractCaravan(int neighbor) {
+        boolean result = true; // default to caravan not disbanded
+        if (!unit.unitType.isCaravan) {
+            return result;
+        }
+        if (unit.cellId == neighbor) {
+            return result;
+        }
+        if (map.getDistanceInCells(unit.cellId, neighbor) != 1) {
+            return result;
+        }
+        if (!map.hasCity(neighbor)) {
+            return result;
+        }
+        if (civ.hasCityAt(neighbor)) {
+            City neighborCity = civ.getCityAt(neighbor);
+            if (civ.canBuildWonder(referee)) {
+                if (ruler.isCityOnVergeOfImprovement(map, neighborCity, referee)) {
+                    if (neighborCity.wip.getCapitalCost() > neighborCity.storedProduction + unit.unitType.capitalCost) {
+                        if (!neighborCity.wip.isUnitType && neighborCity.wip.improvementType.isWonder()) {
+                            neighborCity.storedProduction = neighborCity.storedProduction + unit.unitType.capitalCost;
+                            return false;
+                        }
+                    } else {
+                        ProductType oldType = neighborCity.wip;
+                        ImprovementType tempWonder = civ.availableWonderThatCostsAtLeast(oldType.getCapitalCost(), referee);
+                        if (tempWonder != null) {
+                            neighborCity.wip = new ProductType(tempWonder);
+                            neighborCity.storedProduction = neighborCity.storedProduction + unit.unitType.capitalCost;
+                            neighborCity.wip = oldType;
+                            return false;
                         }
                     }
                 }
-                if  (   (!city.tradePartnerLocations.contains((Integer) neighbor))
-                        && (map.getDistanceInCells(city.location, neighbor) >= 8)) {
-                    CityPlayer governor = ruler.getGovernor(city);
-                    if (governor.isGoodTradeRoute(neighbor)) {
-                        int bonus = civ.getTradeRouteBonus(map, city, neighbor, referee);
-                        civ.storedMoney = civ.storedMoney + bonus;
-                        city.tradePartnerLocations.add((Integer) neighbor);
-                        return false;
-                    }
-                }
+            }
+        }
+        if  (   (!city.tradePartnerLocations.contains((Integer) neighbor))
+             && (map.getDistanceInCells(city.location, neighbor) >= 8)) {
+            CityPlayer governor = ruler.getGovernor(city);
+            if (governor.isGoodTradeRoute(neighbor)) {
+                int bonus = civ.getTradeRouteBonus(map, city, neighbor, referee);
+                civ.storedMoney = civ.storedMoney + bonus;
+                city.tradePartnerLocations.add((Integer) neighbor);
                 if (city.tradePartnerLocations.size() > 3) {
                     int worstTradePartner = civ.getWorstTradePartner(map, city, referee);
                     city.tradePartnerLocations.remove((Integer) worstTradePartner);
                 }
+                return false;
+            }
+        }
+/*
                 if (civ.hasCityAt(neighbor)) {
                     City neighborCity = civ.getCityAt(neighbor);
                     if (   (!(neighborCity == null))
-                            && (!(neighborCity.wip == null))
-                            && (!neighborCity.wip.isUnitType)
-                            && (neighborCity.wip.improvementType.isWonder())
-                            ) {
+                        && (!(neighborCity.wip == null))
+                        && (!neighborCity.wip.isUnitType)
+                        && (neighborCity.wip.improvementType.isWonder())
+                       ) {
                         return true;
                     }
                 }
+*/
+        return result;
+    }
+
+    protected boolean distractCaravan() {
+        boolean result = true;
+        Vector<Integer> neighbors = map.getNeighbors(unit.getLocation());
+        for (int neighbor : neighbors) {
+            if (map.hasCity(neighbor)) {
+                result = distractCaravan(neighbor);
+                if (!result) {
+                    return result;
+                }
             }
-            playTurnAsExplorer(keepTroops);
         }
+        return true;
+    }
+
+    protected boolean playTurnAsCaravan() {
+        boolean result = true;
+        int roadRemaining = 3 * unit.unitType.mobility;
+        if (roadRemaining <= 0) {
+            return result;
+        }
+        result = distractCaravan();
+        if (!result) {
+            return result;
+        }
+        int destinationCellId = chooseCaravanDestinationOnSameContinent();
+        while ((roadRemaining > 0) && (unit.cellId != destinationCellId)) {
+            result = distractCaravan();
+            if (!result) {
+                return result;
+            }
+            if (!civ.cellsExploredByLand.get(unit.cellId)) {
+                civ.seeNeighborsOf(map, unit.cellId);
+            }
+            boolean onRoad = (map.hasRoad(unit.cellId) || map.hasCity(unit.cellId));
+            int nextCellId = chooseNextStepViaLand(destinationCellId);
+            unit.cellId = nextCellId;
+            boolean wasOnRoad = onRoad;
+            onRoad = (map.hasRoad(unit.cellId) || map.hasCity(unit.cellId));
+            if (wasOnRoad && onRoad) {
+                roadRemaining = roadRemaining - 1;
+            } else {
+                roadRemaining = roadRemaining - 3;
+            }
+        }
+        return result;
+    }
+
+    protected int chooseCaravanDestinationOnSameContinent() {
+        Vector<Integer> knownCityLocations = referee.getKnownCityLocations(civ);
+        Vector<Integer> knownCityLocationsOnSameContinent = restrictContinent(knownCityLocations);
+        if (city.tradePartnerLocations.size() < 3) {
+            Vector<Integer> potentialTradeCities = restrictByMinimumDistance(knownCityLocations, 8);
+            Vector<Integer> bestPotentialTradeLocations = referee.chooseBestTradeLocations(city, potentialTradeCities);
+            Vector<Integer> caravanLocations = new Vector<>(city.countCaravans());
+            for (Unit unit : city.units) {
+                if (unit.unitType.isCaravan) {
+                    caravanLocations.add(unit.getLocation());
+                }
+            }
+            Vector<Integer> partnerCaravanIndexes = new Vector<>(bestPotentialTradeLocations.size());
+            if (city.countCaravans() < bestPotentialTradeLocations.size()) {
+                for (int i = 0; i < city.countCaravans(); i++) {
+                    partnerCaravanIndexes.add(i, -1);
+                }
+            } else {
+                for (int i = 0; i < bestPotentialTradeLocations.size(); i++) {
+                    partnerCaravanIndexes.add(i, -1);
+                }
+            }
+            partnerCaravanIndexes.trimToSize();
+            for (int i = 0; i < partnerCaravanIndexes.size(); i++) {
+                int bestMatchIndex = -1;
+                int shortestDistance = map.countCells(); // guaranteed to be larger than any possible distance
+                for (int j = 0; j < bestPotentialTradeLocations.size(); j++) {
+                    boolean alreadyMatched = false;
+                    for (int k = 0; k < i; k++) {
+                        if (partnerCaravanIndexes.get(k) == j) {
+                            alreadyMatched = true;
+                            break;
+                        }
+                    }
+                    if (!alreadyMatched) {
+                        int distance = map.getDistanceInCells(caravanLocations.get(i), bestPotentialTradeLocations.get(j));
+                        if (distance < shortestDistance) {
+                            bestMatchIndex = j;
+                            shortestDistance = distance;
+                        }
+                    }
+                }
+                partnerCaravanIndexes.set(i, bestMatchIndex);
+                if (bestMatchIndex >= 0) {
+                    if (caravanLocations.get(bestMatchIndex) == unit.getLocation()) {
+                        return bestPotentialTradeLocations.get(i);
+                    }
+                }
+            }
+        }
+        // send to nearest city building (either an improvement or a wonder) (that costs more than a caravan)
+        int result = -1;
+        int bestDistance = map.countCells(); // guaranteed to be larger than any possible distance
+        for (City possibleCity : civ.cities) {
+            if (   (possibleCity != null) && (possibleCity.wip != null)
+                && (!possibleCity.wip.isUnitType) && (possibleCity.wip.getCapitalCost() >= unit.unitType.capitalCost)
+               ) {
+                int distance = map.getDistanceInCells(unit.cellId, possibleCity.location);
+                if (distance < bestDistance) {
+                    result = possibleCity.location;
+                    bestDistance = distance;
+                }
+            }
+        }
+        if (result >= 0) {
+            return result;
+        }
+        return chooseNextStepViaLandRandomly();
+    }
+
+    protected int chooseNextStepViaLandRandomly() {
+        Vector<Integer> landNeighbors = civ.getLandNeighbors(map, unit.cellId);
+        if (landNeighbors.size() == 0) {
+            return unit.cellId;
+        }
+        Random random = new Random();
+        int numChoices = landNeighbors.size();
+        return landNeighbors.get(random.nextInt(numChoices));
+    }
+
+    protected int chooseNextStepViaLand(int destinationCellId) {
+        if (!civ.areOnSameContinent(map, unit.cellId, destinationCellId)) {
+            return chooseNextStepViaLandRandomly();
+        }
+        Vector<Integer> path = map.proposePath(unit.cellId, destinationCellId);
+        for (int i = 0; i < path.size(); i++) {
+            if (!civ.seenCells.get(path.get(i)) || !civ.areOnSameContinent(map, unit.cellId, path.get(i))) {
+                Vector<Integer> leftDetour = new Vector<Integer>();
+                Vector<Integer> rightDetour = new Vector<Integer>();
+                boolean hasLeftLoop = false;
+                boolean hasRightLoop = false;
+                boolean isLeftDetourComplete = false;
+                boolean isRightDetourComplete = false;
+                int prevLeft = path.get(i - 1);
+                int prevRight = path.get(i - 1);
+                int prevLeftGap = path.get(i);
+                int prevRightGap = path.get(i);
+                while (!hasLeftLoop && !hasRightLoop && !isLeftDetourComplete && !isRightDetourComplete) {
+                    Directions leftOf = map.getDirection(prevLeft, prevLeftGap);
+                    int leftNeighbor = -1;
+                    int leftIndex;
+                    for (leftIndex = 1; leftIndex < 6; leftIndex++) {
+                        Directions left = leftOf.rotate(60 * leftIndex);
+                        leftNeighbor = map.getAdjacentCellId(path.get(i - 1), left);
+                        if (civ.seenCells.get(leftNeighbor) && civ.areOnSameContinent(map, unit.cellId, leftNeighbor)) {
+                            break;
+                        }
+                    }
+                    prevLeftGap = map.getAdjacentCellId(prevLeft, leftOf.rotate(60 * (leftIndex - 1)));
+                    if (leftNeighbor < 0) {
+                        hasLeftLoop = true;
+                    }
+                    if (!hasLeftLoop) {
+                        if (leftDetour.size() > 0) {
+                            for (int detourCellId : leftDetour) {
+                                if (detourCellId == leftNeighbor) {
+                                    hasLeftLoop = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    if (!hasLeftLoop) {
+                        for (int j = 0; j < i; j++) {
+                            if (path.get(j) == leftNeighbor) {
+                                if (   (j == path.size() - 1)
+                                    || (leftDetour.size() < 1)
+                                    || (path.get(j + 1) != leftDetour.get(leftDetour.size() - 1))
+                                   ) {
+                                    hasLeftLoop = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    if (!hasLeftLoop) {
+                        leftDetour.add(leftNeighbor);
+                    }
+                    if (!hasLeftLoop) {
+                        for (int j = path.size() - 1; j > i; j--) {
+                            if (path.get(j) == leftNeighbor) {
+                                isLeftDetourComplete = true;
+                            }
+                        }
+                    }
+                    Directions rightOf = map.getDirection(prevRight, prevRightGap);
+                    int rightNeighbor = -1;
+                    int rightIndex;
+                    for (rightIndex = 1; rightIndex < 6; rightIndex++) {
+                        Directions right = rightOf.rotate(-60 * rightIndex);
+                        rightNeighbor = map.getAdjacentCellId(prevRight, right);
+                        if (civ.seenCells.get(rightNeighbor) && civ.areOnSameContinent(map, unit.cellId, rightNeighbor)) {
+                            break;
+                        }
+                    }
+                    prevRightGap = map.getAdjacentCellId(prevRight, rightOf.rotate(-60 * (rightIndex - 1)));
+                    if (rightNeighbor < 0) {
+                        hasRightLoop = true;
+                    }
+                    if (!hasRightLoop) {
+                        if (rightDetour.size() > 0) {
+                            for (int detourCellId : rightDetour) {
+                                if (detourCellId == rightNeighbor) {
+                                    hasRightLoop = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    if (!hasRightLoop) {
+                        for (int j = 0; j < i; j++) {
+                            if (path.get(j) == rightNeighbor) {
+                                if (   (j == path.size() - 1)
+                                    || (rightDetour.size() < 1)
+                                    || (path.get(j + 1) != rightDetour.get(rightDetour.size() - 1))
+                                   ) {
+                                    hasRightLoop = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    if (!hasRightLoop) {
+                        rightDetour.add(rightNeighbor);
+                    }
+                    if (!hasRightLoop) {
+                        for (int j = path.size() - 1; j > i; j--) {
+                            if (path.get(j) == rightNeighbor) {
+                                isRightDetourComplete = true;
+                            }
+                        }
+                    }
+                    prevLeft = leftNeighbor;
+                    prevRight = rightNeighbor;
+                }
+                if (!hasLeftLoop && isLeftDetourComplete) {
+                    int junctionId = leftDetour.get(leftDetour.size() - 1);
+                    while ((i < path.size()) && (path.get(i) != junctionId)) {
+                        path.remove(i);
+                    }
+                    if (path.capacity() < path.size() + leftDetour.size() - 1) {
+                        path.ensureCapacity(path.size() + leftDetour.size() - 1);
+                    }
+                    for (int k = 0; k < leftDetour.size() - 1; k++) {
+                        path.add(i + k, leftDetour.get(k));
+                    }
+                } else {
+                    int junctionId = leftDetour.get(leftDetour.size() - 1);
+                    while ((i < path.size()) && (path.get(i) != junctionId)) {
+                        path.remove(i);
+                    }
+                    if (path.capacity() < path.size() + leftDetour.size() - 1) {
+                        path.ensureCapacity(path.size() + leftDetour.size() - 1);
+                    }
+                    if (!hasRightLoop && isRightDetourComplete) {
+                        for (int k = 0; k < rightDetour.size() - 1; k++) {
+                            path.add(i + k, rightDetour.get(k));
+                        }
+                    }
+                }
+                if (hasLeftLoop && hasRightLoop) {
+                    return chooseNextStepViaLandRandomly();
+                }
+            }
+        }
+        if (path.size() > 1) {
+            return path.get(1);
+        }
+        return chooseNextStepViaLandRandomly();
+    }
+
+    protected Vector<Integer> restrictContinent(Vector<Integer> locations) {
+        Vector<Integer> result = new Vector<>(locations.size());
+        for (int location : locations) {
+            if (civ.areOnSameContinent(map, unit.cellId, location)) {
+                result.add(location);
+            }
+        }
+        result.trimToSize();
+        return result;
+    }
+
+    protected Vector<Integer> restrictByMinimumDistance(Vector<Integer> locations, int minimumDistanceInCells) {
+        Vector<Integer> result = new Vector<>(locations.size());
+        for (int location : locations) {
+            if (map.getDistanceInCells(city.location, location) >= minimumDistanceInCells) {
+                result.add(location);
+            }
+        }
+        result.trimToSize();
         return result;
     }
 
@@ -120,7 +428,9 @@ public class UnitPlayer {
                         }
                     } else {
                         civ.cellsExploredByLand.set(unit.getLocation());
-                        if ((!civ.canAttack(unit)) || (civ.countHappyCitizens(map, city, referee) > civ.countUnhappyCitizens(map, city, referee))) {
+                        if (   (!civ.canAttack(unit))
+                            || (   (civ.isMilitarist())
+                                && (civ.countHappyCitizens(map, city, referee) > civ.countUnhappyCitizens(map, city, referee)))) {
                             if (civ.countMilitaryUnitsIn(city) > 1) {
                                 if (unit.unitType.mobility == civ.getMaximumMilitaryMobility(city)) {
                                     Random random = new Random();
@@ -134,8 +444,10 @@ public class UnitPlayer {
                             return keepTroops;
                         }
                     }
-                } else {
-                    if ((!civ.canAttack(unit)) || (civ.countHappyCitizens(map, city, referee) > civ.countUnhappyCitizens(map, city, referee))) {
+                } else { // civ has already explored the unit's current location.
+                    if (   (!civ.canAttack(unit))
+                        || (   (civ.isMilitarist())
+                            && (civ.countHappyCitizens(map, city, referee) > civ.countUnhappyCitizens(map, city, referee)))) {
                         if (civ.countMilitaryUnitsIn(city) > 1) {
                             if (unit.unitType.mobility == civ.getMaximumMilitaryMobility(city)) {
                                 Random random = new Random();
@@ -352,6 +664,5 @@ public class UnitPlayer {
         }
         return true;
     }
-
 
 }

@@ -833,6 +833,38 @@ public class IcosahedralMesh {
         }
     }
 
+    protected Directions getDirection(int fromCellId, int toCellId) {
+        if (fromCellId > countCells() - 1) {
+            return Directions.none;
+        }
+        if (fromCellId < 0) {
+            return Directions.none;
+        }
+        if (toCellId > countCells() - 1) {
+            return Directions.none;
+        }
+        if (toCellId < 0) {
+            return Directions.none;
+        }
+        Vector<Integer> sortedNeighbors = getSortedNeighbors(fromCellId);
+        for (int i = 0; i < sortedNeighbors.size(); i++) {
+            if (sortedNeighbors.get(i) == toCellId) {
+                if (i == 0) {
+                    return Directions.none.getDirection(6);
+                }
+                return Directions.none.getDirection(i);
+            }
+        }
+        Vector<Integer> path = proposePath(fromCellId, toCellId);
+        if (path.size() <= 1) {
+            return Directions.none;
+        }
+        if (path.get(1) == toCellId) {
+            return Directions.none;
+        }
+        return getDirection(fromCellId, path.get(1));
+    }
+
     Vector<Integer> getSortedNeighbors(int cellId) {
         if (isPentagon(cellId)) {
             return getSortedPentagonNeighbors(cellId);

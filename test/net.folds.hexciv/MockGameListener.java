@@ -14,6 +14,7 @@ public class MockGameListener implements GameListener {
     public void celebrateRevolution(Civilization civ, GovernmentType governmentType) {}
     public void celebrateTechnology (Civilization civ, TechKey key) {}
     public void celebrateUnsupported(City city, ImprovementType improvementType) {}
+    public void celebrateUnsupported(City city, Unit unit) {}
     public void celebrateWonder(City city, int wonderId) {}
     public void celebrateYear(int year, WorldMap map, ClaimReferee referee) {}
     public void bemoanDisorder(City city) {}

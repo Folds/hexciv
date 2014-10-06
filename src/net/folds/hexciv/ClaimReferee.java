@@ -1,6 +1,7 @@
 package net.folds.hexciv;
 
 import java.awt.*;
+import java.util.Vector;
 
 /**
  * Created by jasper on May 02, 2014.
@@ -19,4 +20,6 @@ public interface ClaimReferee {
     Color getCityColor(int cellId);
     int getCitySize(int cellId);
     String getCityName(int cellId);
+    Vector<Integer> chooseBestTradeLocations(City city, Vector<Integer> potentialTradeCities);
+    Vector<Integer> getKnownCityLocations(Civilization civ);
 }

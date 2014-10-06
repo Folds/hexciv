@@ -13,22 +13,22 @@ public class ImprovementVector {
     }
 
     protected void initialize() {
-        add("Barracks",    40, 1, 10); getLast().isBarracks = true;
+        add("Barracks",    40, 1, 10); getLast().isBarracks = true;            //  0
         add("Temple",      40, 1, 16); getLast().unhappyReductionPerCity = 1;
         add("Granary",     60, 1, 19); getLast().isGranary = true;
         add("City Walls", 120, 2, 19); getLast().preventsFlood = true;
         add("Palace",     200, 5, 19);
-        add("Library",     80, 1, 21); getLast().scienceBonus = 50;
+        add("Library",     80, 1, 21); getLast().scienceBonus = 50;            //  5
         add("Market",      80, 1, 24); getLast().tradeBonus = 50;
         add("Courthouse",  80, 1, 25);
         add("Aqueduct",   120, 2, 32); getLast().preventsFire = true;
         add("Colosseum",  100, 4, 32);
-        add("Cathedral",  160, 3, 40);
+        add("Cathedral",  160, 3, 40);                                         // 10
         add("University", 160, 3, 45); getLast().scienceBonus = 100;
         add("Bank",       120, 3, 51); getLast().tradeBonus = 100;
         add("Factory",    200, 4, 62); getLast().productionBonus = 50;
         add("Hydro Plant",240, 4, 65); getLast().isElectrified = true;
-        add("Power Plant",160, 4, 72); getLast().isElectrified = true;
+        add("Power Plant",160, 4, 72); getLast().isElectrified = true;        // 15
         add("Subway",     160, 4, 81); getLast().plural = "Subways";
         add("Recycler",   200, 2, 83);
         add("Manufactory",320, 6, 85); getLast().productionBonus = 100;

@@ -11,6 +11,7 @@ public interface GameListener {
     void celebrateNewCity(Unit unit, City cityName);
     void celebrateRevolution(Civilization civ, GovernmentType governmentType);
     void celebrateTechnology(Civilization civ, TechKey key);
+    void celebrateUnsupported(City city, Unit unit);
     void celebrateUnsupported(City city, ImprovementType improvementType);
     void celebrateWonder(City city, int wonderId);
     void celebrateYear(int year, WorldMap map, ClaimReferee referee);

@@ -235,6 +235,21 @@ public class City {
         return false;
     }
 
+    protected int getDefenseBonus() {
+        int result = 0;
+        int numImprovements = improvements.key.cardinality();
+        int improvementId = -1;
+        for (int i = 0; i < numImprovements; i++) {
+            improvementId = improvements.key.nextSetBit(improvementId + 1);
+            if (improvementId < 0) {
+                break;
+            }
+            ImprovementType improvement = improvements.types.get(improvementId);
+            result = result + improvement.defenseBonus;
+        }
+        return result;
+    }
+
     protected static City proposeNone(Civilization civ) {
         City none = new City(civ, -1, "None");
         none.size = 0;

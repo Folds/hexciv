@@ -117,7 +117,57 @@ public class CityPlayer {
         if ((civ.storedScience > 0) && (civ.techKey.isUndecided())) {
             ruler.chooseNextTech();
         }
+        if (!civ.isMilitarist()) {
+            if (!city.isNone()) {
+                int paranoiaLevel = ruler.getParanoiaLevel();
+                int numNativeOccupationUnits = civ.countNativeMilitaryUnitsIn(city);
+                if (numNativeOccupationUnits > paranoiaLevel) {
+                    tryToDisbandLeastUsefulNativeOccupationUnit();
+                }
+            }
+        }
         chooseWip();
+    }
+
+    protected void tryToDisbandLeastUsefulNativeOccupationUnit() {
+        if (city.units == null) {
+            return;
+        }
+        int worstUnitId = -1;
+        int worstValue = -1;
+        for (int i = 0; i < city.units.size(); i++) {
+            Unit unit = city.units.get(i);
+            if (!unit.unitType.isCaravan && unit.unitType.isTerrestrial && !unit.unitType.hasExtraLandVision
+                && !unit.unitType.hasExtraNavalVision && !unit.unitType.ignoresWalls && !unit.unitType.isDiplomat
+                && !unit.unitType.isSlippery && (unit.unitType.aviatorCapacity == 0) && (unit.unitType.capacity == 0)) {
+                int rawDefenseValue = unit.unitType.defenseStrength;
+                int rawOffenseValue = unit.unitType.attackStrength * unit.unitType.mobility;
+                int vets = 100;
+                if (unit.isVeteran) {
+                    vets = 150;
+                }
+                int walls = 100 + city.getDefenseBonus();
+                int defenseValue = (walls * 150 * vets * rawDefenseValue) / (100 * 100 * 100);
+                int offenseValue = (vets * rawOffenseValue) / 100;
+
+                int value = defenseValue;
+                if (offenseValue > value) {
+                    value = offenseValue;
+                }
+                value = 10 * value - 3 * unit.unitType.feedingCost;
+                if (worstUnitId < 0) {
+                    worstValue = value;
+                }
+                if (value <= worstValue) {
+                    worstValue = value;
+                    worstUnitId = i;
+                }
+            }
+        }
+        if (worstUnitId >= 0) {
+            listener.celebrateUnsupported(city, city.units.get(worstUnitId));
+            city.units.remove(worstUnitId);
+        }
     }
 
     protected void chooseFarms() {
@@ -416,13 +466,22 @@ public class CityPlayer {
         }
         if (city.countSettlers() > 0) {
             civ.requestUnit(city, 9); // Caravan
-            requestProfitableImprovement(12); // University
-            requestProfitableImprovement(13); // Bank
-            requestProfitableImprovement(11); // Cathedral
-            requestProfitableImprovement( 6); // Library
-            requestProfitableImprovement( 7); // Market
-            requestProfitableImprovement(19); // Manufactory
-            if (civ.isWonderCity(map, city, referee)) {
+            requestProfitableImprovement(13); // Factory
+            requestProfitableImprovement(14); // Hydro Plant
+            requestProfitableImprovement(15); // Power Plant
+            requestProfitableImprovement(19); // Nuclear Plant
+            requestProfitableImprovement( 9); // Colosseum
+            requestProfitableImprovement(11); // University
+            requestProfitableImprovement(12); // Bank
+            requestProfitableImprovement(10); // Cathedral
+            requestProfitableImprovement( 5); // Library
+            requestProfitableImprovement( 7); // Courthouse
+            requestProfitableImprovement( 6); // Market
+            requestProfitableImprovement( 8); // Aqueduct
+            requestProfitableImprovement(18); // Manufactory
+            requestProfitableImprovement(16); // Subway
+            requestProfitableImprovement(17); // Recycler
+            if (isWonderCity()) {
                 requestProfitableWonder(31); // Circumnavigation
                 requestProfitableWonder(23); // Pyramids
                 requestProfitableWonder(35); // Timocracy
@@ -430,9 +489,16 @@ public class CityPlayer {
                 requestProfitableWonder(39); // Hypertext
                 requestProfitableWonder(37); // Great Dam
             }
-            requestProfitableImprovement( 2); // Temple
-            requestProfitableImprovement( 3); // Granary
+            requestProfitableImprovement( 8); // Aqueduct
+            requestProfitableImprovement( 1); // Temple
+            requestProfitableImprovement( 2); // Granary
         }
+        /*
+            requestProfitableImprovement( 0); // Barracks
+            requestProfitableImprovement( 3); // City Walls
+            requestProfitableImprovement( 4); // Palace
+            requestProfitableImprovement(20); // Missile Defense
+         */
         if ((civ.isMilitarist()) && (unhappy > 0) && (happy < unhappy)) {
             UnitType cheapestOccupier = civ.getCheapestOccupier();
             if (   (cheapestOccupier != null)
@@ -523,6 +589,9 @@ public class CityPlayer {
 
     protected boolean isImmediatelyProfitable(int improvementId) {
         ImprovementType impType = civ.improvements.get(improvementId);
+        if (city.storedProduction > impType.capitalCost) {
+            return false;
+        }
         if ((impType.isGranary) && (civ.countFoodSurplus(map, city) > 0)) {
             return true;
         }
@@ -532,6 +601,13 @@ public class CityPlayer {
         int taxValue = (impType.tradeBonus * civ.countScience(map, city, referee) * 100) /  civ.getTaxFactor(map, city, referee);
         int incrementalValue = scienceValue + productionValue + luxuryValue + taxValue;
         if (incrementalValue > 100 * impType.upkeepCost) {
+            return true;
+        }
+        return false;
+    }
+
+    protected boolean isWonderCity() {
+        if (civ.countProductionSurplus(map, city, referee) >= 5) {
             return true;
         }
         return false;
@@ -633,6 +709,5 @@ public class CityPlayer {
     protected boolean wantBarracks() {
         return false;
     }
-
 
 }

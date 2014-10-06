@@ -57,6 +57,76 @@ public class GameState implements ClaimReferee {
         }
     }
 
+    public Vector<Integer> chooseBestTradeLocations(City city, Vector<Integer> potentialTradeCities) {
+        int homeMoney = city.civ.countMoney(map, city, this);
+        int numUnfilledSlots = 3 - city.tradePartnerLocations.size();
+        if (numUnfilledSlots < 0) {
+            numUnfilledSlots = 0;
+        }
+        Vector<Integer> results = new Vector<Integer>(numUnfilledSlots + 1);
+        Vector<Integer> values  = new Vector<Integer>(numUnfilledSlots + 1);
+        if (numUnfilledSlots == 0) {
+            return results;
+        }
+        Vector<Integer> potentialValues = new Vector<Integer>(potentialTradeCities.size());
+        for (int i = 0; i < potentialTradeCities.size(); i++) {
+            int partnerLocation = potentialTradeCities.get(i);
+            if (partnerLocation == city.location) {
+                potentialValues.add(0);
+            } else if (map.hasCity(partnerLocation)) {
+                int rawValue = countCityMoney(partnerLocation);
+                int value = rawValue + homeMoney;
+                if (!city.civ.hasCityAt(partnerLocation)) {
+                    value = 2 * value;
+                }
+                if (!city.civ.areOnSameContinent(map, city.location, partnerLocation)) {
+                    value = 2 * value;
+                }
+                potentialValues.add(rawValue);
+            } else {
+                potentialValues.add(0);
+            }
+        }
+        for (int i = 0; i < potentialTradeCities.size(); i++) {
+            if (potentialValues.get(i) > 0) {
+                if ((values.size() < numUnfilledSlots) || (potentialValues.get(i) > values.get(numUnfilledSlots - 1))) {
+                    for (int j = 0; j < results.size(); j++) {
+                        if (values.get(j) < potentialValues.get(i)) {
+                            results.add(j, potentialTradeCities.get(i));
+                            values.add(j,  potentialValues.get(i));
+                            break;
+                        }
+                    }
+                    if ((results.size() == 0) || (potentialTradeCities.get(i) != results.get(results.size() - 1))) {
+                        results.add(potentialTradeCities.get(i));
+                        results.add(potentialValues.get(i));
+                    }
+                    while (results.size() > numUnfilledSlots) {
+                        results.remove(numUnfilledSlots);
+                    }
+                    while (values.size() > numUnfilledSlots) {
+                        values.remove(numUnfilledSlots);
+                    }
+                }
+            }
+        }
+        results.trimToSize();
+        return results;
+    }
+
+    public Vector<Integer> getKnownCityLocations(Civilization civ) {
+        Vector<Integer> results = new Vector<>(civ.seenCells.cardinality() / 19 + 5);
+        for (Civilization civilization : civs) {
+            for (City city : civilization.cities) {
+                if ((city.location >= 0) && (civ.seenCells.get(city.location))) {
+                    results.add(city.location);
+                }
+            }
+        }
+        results.trimToSize();
+        return results;
+    }
+
     public void claimTech(int techId) {
         discoveries.claimTech(techId);
     }
@@ -310,13 +380,13 @@ public class GameState implements ClaimReferee {
     public boolean isAvailable(int wonderId) {
         for (Civilization civ : civs) {
             if (civ.hasWonder(wonderId)) {
-                return true;
+                return false;
             }
             if (civ.hadWonder(wonderId)) {
-                return true;
+                return false;
             }
         }
-        return false;
+        return true;
     }
 
     public boolean isAvailable(int cellId, Civilization civ) {
@@ -461,6 +531,19 @@ public class GameState implements ClaimReferee {
         return Color.WHITE;
     }
 
+    protected int countCityMoney(int cellId) {
+        if (!map.hasCity(cellId)) {
+            return 0;
+        }
+        for (Civilization civ : civs) {
+            for (City city : civ.cities) {
+                if (city.location == cellId) {
+                    return civ.countMoney(map, city, this);
+                }
+            }
+        }
+        return 0;
+    }
 
     public String getCityName(int cellId) {
         if (map.hasCity(cellId)) {

@@ -230,6 +230,13 @@ public class CivPlayer {
         return result;
     }
 
+    protected int getParanoiaLevel() {
+        if (civ.isMilitarist()) {
+            return 99;
+        }
+        return 2;
+    }
+
     protected Vector<Integer> getPotentialCities(WorldMap map, Vector<Integer> candidates) {
         Vector<Integer> result = new Vector<Integer>(candidates.size());
         for (int candidate : candidates) {
@@ -263,7 +270,6 @@ public class CivPlayer {
         Collections.sort(result);
         return result;
     }
-
 
     protected int getStartLocationMetric(WorldMap map, int cellId) {
         int result = 0;
@@ -325,11 +331,13 @@ public class CivPlayer {
         Vector<Integer> neighbors = map.getNeighbors(city.location);
         int totalCaravanValue = 0;
         for (City homeCity : civ.cities) {
-            for (Unit unit : homeCity.units) {
-                if (   (unit.unitType.isCaravan)
-                        && (neighbors.contains((Integer) unit.getLocation()))
-                        ) {
-                    totalCaravanValue = totalCaravanValue + unit.unitType.capitalCost;
+            if ((homeCity != null) && (homeCity.units != null) && (homeCity.units.size() > 0)) {
+                for (Unit unit : homeCity.units) {
+                    if (   (unit.unitType.isCaravan)
+                            && (neighbors.contains((Integer) unit.getLocation()))
+                            ) {
+                        totalCaravanValue = totalCaravanValue + unit.unitType.capitalCost;
+                    }
                 }
             }
         }

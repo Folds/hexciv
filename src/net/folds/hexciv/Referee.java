@@ -158,4 +158,14 @@ public class Referee implements ClaimReferee {
         return 0;
     }
 
+    public Vector<Integer> getKnownCityLocations(Civilization civ) {
+        Vector<Integer> results = new Vector<>(0);
+        return results;
+    }
+
+    public Vector<Integer> chooseBestTradeLocations(City city, Vector<Integer> potentialTradeCities) {
+        Vector<Integer> results = new Vector<>(0);
+        return results;
+    }
+
 }

@@ -655,6 +655,21 @@ public class Civilization {
         return result;
     }
 
+    protected int countNativeMilitaryUnitsIn(City city) {
+        int result = 0;
+        if (city.units == null) {
+            return result;
+        }
+        for (Unit unit : city.units) {
+            if (unit.getLocation() == city.location) {
+                if (canAttack(unit)) {
+                    result = result + 1;
+                }
+            }
+        }
+        return result;
+    }
+
     protected int countMoney(WorldMap map, City city, ClaimReferee referee) {
         if (city.location < 0) {
             return 0;
@@ -1229,7 +1244,7 @@ public class Civilization {
         for (UnitType unitType : unitTypes) {
             if ((unitType.capitalCost <= lowestCostSoFar) && (canAttack(unitType))) {
                 if (   (techKey.hasTech(unitType.technologyIndex))
-                        && (!techKey.hasTech(unitType.obsolescerTechnologyIndex))
+                    && (!isObsolete(unitType))
                         ) {
                     lowestCostSoFar = unitType.capitalCost;
                     result = unitType;
@@ -1735,6 +1750,12 @@ public class Civilization {
     }
 
     protected boolean isObsolete(UnitType unitType) {
+        if (unitType.obsolescerTechnologyIndex < 0) {
+            return false;
+        }
+        if (techKey.hasTech(unitType.obsolescerTechnologyIndex)) {
+            return true;
+        }
         return false;
     }
 
@@ -1747,13 +1768,6 @@ public class Civilization {
             return false;
         }
         return !isAvailable(productType.improvementType, city, referee);
-    }
-
-    protected boolean isWonderCity(WorldMap map, City city, ClaimReferee referee) {
-        if (countProductionSurplus(map, city, referee) >= 5) {
-            return true;
-        }
-        return false;
     }
 
     protected Vector<Integer> landCells(WorldMap map, Vector<Integer> cells) {
@@ -1853,6 +1867,7 @@ public class Civilization {
     }
 
     protected boolean isNonObsoleteWonder(int wonderId, ClaimReferee referee) {
+
         if (   (improvements.get(wonderId).isWonder())
             && (!referee.isObsolete(wonderId))
             && (referee.isAvailable(wonderId))
@@ -1860,6 +1875,7 @@ public class Civilization {
            ) {
             return true;
         }
+
         return false;
     }
 
