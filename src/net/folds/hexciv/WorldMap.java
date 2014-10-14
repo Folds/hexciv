@@ -151,6 +151,12 @@ public class WorldMap {
         return mesh.countCells();
     }
 
+    public BitSet getAllCells() {
+        BitSet result = new BitSet(countCells());
+        result.set(0, countCells() - 1);
+        return result;
+    }
+
     public int getRow(int cellId) {
         return mesh.getRow(cellId);
     }

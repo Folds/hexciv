@@ -179,6 +179,8 @@ public class TestIcosahedralMesh {
                             "Expected distance between prime equator and dateline equator = 54 cells");
         Assert.assertEquals(earthMesh.getDistanceInCells(2161, 2107),54,
                             "Expected distance between dateline equator and prime equator = 54 cells");
+        Assert.assertEquals(earthMesh.getDistanceInCells(3368, 3456), 2,
+                            "Expected distance across southeast Anatolia = 2 cells");
     }
 
     @Test

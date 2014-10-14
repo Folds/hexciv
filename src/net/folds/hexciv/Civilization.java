@@ -136,21 +136,8 @@ public class Civilization {
     }
 
     protected boolean areOnSameContinent(WorldMap map, int firstCellId, int secondCellId) {
-        if ((!map.isLand(firstCellId)) || (!map.isLand(secondCellId))) {
-            return false;
-        }
-        int firstCont = getContinentNumber(map, firstCellId);
-        if (firstCont < 0) {
-            return false;
-        }
-        int secondCont = getContinentNumber(map, secondCellId);
-        if (secondCont < 0) {
-            return false;
-        }
-        if (firstCont == secondCont) {
-            return true;
-        }
-        return false;
+        Pathfinder pathfinder = new Pathfinder(map, seenCells, continents);
+        return pathfinder.areOnSameContinent(firstCellId, secondCellId);
     }
 
     protected boolean atPeace() {
@@ -1289,16 +1276,8 @@ public class Civilization {
     }
 
     protected int getContinentNumber(WorldMap map, int cellId) {
-        if (!map.isLand(cellId)) {
-            return -1;
-        }
-        int numContinents = continents.size();
-        for (int i = 0; i < numContinents; i++) {
-            if (continents.get(i).get(cellId)) {
-                return i;
-            }
-        }
-        return -1;
+        Pathfinder pathfinder = new Pathfinder(map, seenCells, continents);
+        return pathfinder.getContinentNumber(cellId);
     }
 
     protected GovernmentType getGovernmentType() {

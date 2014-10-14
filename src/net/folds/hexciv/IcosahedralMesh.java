@@ -462,7 +462,10 @@ public class IcosahedralMesh {
         double areaOfHexagonalCellInCircularDegrees = areaOfHexagonalCellInSquareDegrees * 4.0 / Math.PI;
         double typicalCellDiameterInDegrees = Math.sqrt(areaOfHexagonalCellInCircularDegrees);
         double distanceInCells = distanceInDegrees / typicalCellDiameterInDegrees;
-        return (int) Math.round(distanceInCells);
+        if ((distanceInCells > 1.6) || (distanceInCells < 1.25)) {
+            return (int) Math.round(distanceInCells);
+        }
+        return 2;
     }
 
     int getDistanceInCells(int cellId1, int cellId2) {

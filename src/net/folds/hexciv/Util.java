@@ -128,6 +128,21 @@ public class Util {
         return result;
     }
 
+    static BitSet convertToBitSet(Vector<Integer> arg) {
+        if (arg.size() == 0) {
+            return new BitSet(0);
+        }
+        int sizeGuess = 0;
+        if (arg.get(arg.size() - 1) >= 0) {
+            sizeGuess = arg.get(arg.size() - 1) + 1;
+        }
+        BitSet result = new BitSet(sizeGuess);
+        for (int i : arg) {
+            result.set(i);
+        }
+        return result;
+    }
+
     static int getNthPosition(BitSet bits, int n) {
         int result = -1;
         for (int i = 0; i < n; i++) {
