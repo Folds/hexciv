@@ -142,4 +142,59 @@ public class ImprovementVector {
         return improvements.get(improvements.size() - 1);
     }
 
+    protected boolean isWonder(int i) {
+        if (!isInVector(i)) {
+            return false;
+        }
+        return improvements.get(i).isWonder();
+    }
+
+    protected boolean helpsScience(int i) {
+        if (!isInVector(i)) {
+            return false;
+        }
+        return improvements.get(i).helpsScience();
+    }
+
+    protected boolean helpsHappiness(int i) {
+        if (!isInVector(i)) {
+            return false;
+        }
+        return improvements.get(i).helpsHappiness();
+    }
+
+    protected boolean helpsFood(int i) {
+        if (!isInVector(i)) {
+            return false;
+        }
+        return improvements.get(i).helpsFood();
+    }
+
+    protected boolean helpsProduction(int i) {
+        if (!isInVector(i)) {
+            return false;
+        }
+        return improvements.get(i).helpsProduction();
+    }
+
+    protected boolean helpsMilitary(int i) {
+        if (!isInVector(i)) {
+            return false;
+        }
+        return improvements.get(i).helpsMilitary();
+    }
+
+    protected boolean isInVector(int i) {
+        if (i < 0) {
+            return false;
+        }
+        if (improvements == null) {
+            return false;
+        }
+        if (i >= improvements.size()) {
+            return false;
+        }
+        return true;
+    }
+
 }

@@ -31,6 +31,14 @@ public class GovernmentType {
         return -1;
     }
 
+    protected static int getMaxId() {
+        return 5;
+    }
+
+    protected static String listAbbreviations() {
+        return "ADsMCRDm";
+    }
+
     protected static int proposeTech(int id) {
         switch(id) {
             case 0: return  0; // Hooting -> Anarchy
@@ -44,8 +52,9 @@ public class GovernmentType {
     }
 
     protected static Vector<GovernmentType> getChoices() {
-        Vector<GovernmentType> result = new Vector<>(6);
-        for (int i = 0; i < 6; i++) {
+        int numChoices = getMaxId() + 1;
+        Vector<GovernmentType> result = new Vector<>(numChoices);
+        for (int i = 0; i < numChoices; i++) {
             GovernmentType choice = new GovernmentType();
             choice.name = GovernmentType.proposeName(i);
             choice.technologyIndex = proposeTech(i);

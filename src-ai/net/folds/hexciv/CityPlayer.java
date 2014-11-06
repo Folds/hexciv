@@ -308,6 +308,8 @@ public class CityPlayer {
                         mostOreNotChosenSoFar = potentialOre.get(i);
                 }
                 if (   (mostOreNotChosenSoFar > leastOreChosenSoFar)
+                    && (posLeastOreChosen >= 0)
+                    && (posMostOreNotChosen >= 0)
                     && (foodSupply - potentialFood.get(posLeastOreChosen) + potentialFood.get(posMostOreNotChosen) >= foodNeeded)
                    ) {
                     choices.set(posLeastOreChosen, false);

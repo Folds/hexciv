@@ -13,6 +13,15 @@ public class StatSheet {
     StatColumn numCities;
     StatColumn numCitizens;
     StatColumn numMyriads;
+    StatColumn governmentTypeId;
+    StatColumn numTradeRoutes;
+
+    StatColumn numWonders;
+    StatColumn numSciImps;
+    StatColumn numHappyImps;
+    StatColumn numFoodImps;
+    StatColumn numProdImps;
+    StatColumn numMilImps;
 
     StatColumn numCaravans;
     StatColumn numPlanes;
@@ -48,10 +57,28 @@ public class StatSheet {
         numCities   = new StatColumn(startTurn);  //  (0 - ~    200)
         numCitizens = new StatColumn(startTurn);  //  (0 - ~  4,000)
         numMyriads  = new StatColumn(startTurn);  //  (0 - ~ 40,000)
+        governmentTypeId = new StatColumn(startTurn); // 0 ~     10)
+
+        numTradeRoutes = new StatColumn(startTurn); //(0 - ~    600)
+        numWonders   = new StatColumn(startTurn); //  (0 - ~     22)
+        numSciImps   = new StatColumn(startTurn); //  (0 - ~    400)
+        numHappyImps = new StatColumn(startTurn); //  (0 - ~  1,400)
+        numFoodImps  = new StatColumn(startTurn); //  (0 - ~    800)
+        numProdImps  = new StatColumn(startTurn); //  (0 - ~  1,000)
+        numMilImps   = new StatColumn(startTurn); //  (0 - ~    600)
 
         numCities.setMaxRange(10);
         numCitizens.setMaxRange(10);
         numMyriads.setMaxRange(10);
+        governmentTypeId.setMaxRange(GovernmentType.getMaxId());
+
+        numTradeRoutes.setMaxRange(10);
+        numWonders.setMaxRange(10);
+        numSciImps.setMaxRange(10);
+        numHappyImps.setMaxRange(10);
+        numFoodImps.setMaxRange(10);
+        numProdImps.setMaxRange(10);
+        numMilImps.setMaxRange(10);
 
         // units
         numCaravans = new StatColumn(startTurn);  //  (0 - ~    200)
@@ -85,9 +112,19 @@ public class StatSheet {
         luxuryPercentage.clear();
         taxPercentage.clear();
         sciencePercentage.clear();
+
         numCities.clear();
         numCitizens.clear();
         numMyriads.clear();
+        governmentTypeId.clear();
+        numTradeRoutes.clear();
+
+        numWonders.clear();
+        numSciImps.clear();
+        numHappyImps.clear();
+        numFoodImps.clear();
+        numProdImps.clear();
+        numMilImps.clear();
 
         numCaravans.clear();
         numPlanes.clear();
@@ -139,6 +176,56 @@ public class StatSheet {
         currentTurn = currentTurn + 1;
     }
 
+    public void recordCells(int numSeenCells) {
+        this.numSeenCells.record(currentTurn, numSeenCells);
+    }
+
+    public void recordCities(int cities, int citizens, int myriads) {
+        numCities.record(currentTurn, cities);
+        numCitizens.record(currentTurn, citizens);
+        numMyriads.record(currentTurn, myriads);
+    }
+
+    public void recordGovernmentType(int governmentTypeId) {
+        this.governmentTypeId.record(currentTurn, governmentTypeId);
+    }
+
+    public void recordImprovements(Vector<Integer> counts, ImprovementVector improvementVector) {
+        int numWonders = 0;
+        int numSciImps = 0;
+        int numHappyImps = 0;
+        int numFoodImps = 0;
+        int numProdImps = 0;
+        int numMilImps = 0;
+        if (counts == null) {
+            return;
+        }
+        if (improvementVector == null) {
+            return;
+        }
+        for (int i = 0; i < counts.size(); i++) {
+            if (improvementVector.isWonder(i)) {
+                numWonders += counts.get(i);
+            } else if (improvementVector.helpsScience(i)) {
+                numSciImps += counts.get(i);
+            } else if (improvementVector.helpsHappiness(i)) {
+                numHappyImps += counts.get(i);
+            } else if (improvementVector.helpsFood(i)) {
+                numFoodImps += counts.get(i);
+            } else if (improvementVector.helpsProduction(i)) {
+                numProdImps += counts.get(i);
+            } else if (improvementVector.helpsMilitary(i)) {
+                numMilImps += counts.get(i);
+            }
+        }
+        this.numWonders.record(currentTurn, numWonders);
+        this.numSciImps.record(currentTurn, numSciImps);
+        this.numHappyImps.record(currentTurn, numHappyImps);
+        this.numFoodImps.record(currentTurn, numFoodImps);
+        this.numProdImps.record(currentTurn, numProdImps);
+        this.numMilImps.record(currentTurn, numMilImps);
+    }
+
     public void recordPercentages(int luxuries, int science, int taxes) {
         luxuryPercentage.record(currentTurn, luxuries);
         sciencePercentage.record(currentTurn, science);
@@ -150,10 +237,12 @@ public class StatSheet {
         this.maxTechId.record(currentTurn, maxTechId);
     }
 
-    public void recordCities(int cities, int citizens, int myriads) {
-        numCities.record(currentTurn, cities);
-        numCitizens.record(currentTurn, citizens);
-        numMyriads.record(currentTurn, myriads);
+    public void recordThinkingTime(int thinkingTimeInMilliseconds) {
+        this.thinkingTimeInMilliseconds.record(currentTurn, thinkingTimeInMilliseconds);
+    }
+
+    public void recordTradeRoutes(int numTradeRoutes) {
+        this.numTradeRoutes.record(currentTurn, numTradeRoutes);
     }
 
     public void recordUnits(int caravans, int planes, int ships, int troops, int settlers) {
@@ -170,11 +259,4 @@ public class StatSheet {
         storedScience.record(currentTurn, science);
     }
 
-    public void recordCells(int numSeenCells) {
-        this.numSeenCells.record(currentTurn, numSeenCells);
-    }
-
-    public void recordThinkingTime(int thinkingTimeInMilliseconds) {
-        this.thinkingTimeInMilliseconds.record(currentTurn, thinkingTimeInMilliseconds);
-    }
 }

@@ -128,7 +128,7 @@ public class PlotPanel extends JPanel {
     private int stackBackgrounds(int id, int x) {
         int result = 0;
         for (int i = 0; i <= id; i++) {
-            result = result + backgroundColumns.get(id).lookUp(x);
+            result = result + backgroundColumns.get(i).lookUp(x);
         }
         return result;
     }

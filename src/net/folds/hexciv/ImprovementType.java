@@ -155,4 +155,69 @@ public class ImprovementType {
         return false;
     }
 
+    public boolean helpsScience() {
+        if (scienceBonus > 0) {
+            return true;
+        }
+        return false;
+    }
+
+    public boolean helpsHappiness() {
+        if (happyBonusPerCity > 0) {
+            return true;
+        }
+        if (unhappyReductionPerCity > 0) {
+            return true;
+        }
+        if (unhappyReductionPerMissedExplorer > 0) {
+            return true;
+        }
+        if (tradeBonus > 0) {
+            return true;
+        }
+        // Palace
+        // Courthouse
+        // Colosseum
+        // Cathedral
+        return false;
+    }
+
+    public boolean helpsFood() {
+        if (isGranary) {
+            return true;
+        }
+        if (preventsFire) {
+            return true;
+        }
+        // Subway
+        // Recycler
+        return false;
+    }
+
+    public boolean helpsProduction() {
+        if (productionBonus > 0) {
+            return true;
+        }
+        if (isElectrified) {
+            return true;
+        }
+        return false;
+    }
+
+    public boolean helpsMilitary() {
+        if (defenseBonus > 0) {
+            return true;
+        }
+        if (isBarracks) {
+            return true;
+        }
+        if (preventsFlood) {
+            return true;
+        }
+        if (allowsNukes) {
+            return true;
+        }
+        return false;
+    }
+
 }

@@ -617,6 +617,27 @@ public class Civilization {
         return countBenefit(map, city, referee, 4);
     }
 
+    protected Vector<Integer> countImprovements() {
+        int numImprovementTypes = 0;
+        if (improvements == null) {
+            Vector<Integer> result = new Vector<Integer>(numImprovementTypes);
+            Util.initialize(result, 0);
+            return result;
+        }
+        numImprovementTypes = improvements.countTypes();
+        Vector<Integer> result = new Vector<Integer>(numImprovementTypes);
+        Util.initialize(result, 0);
+
+        for (City city : cities) {
+            for (int i = 0; i < numImprovementTypes; i++) {
+                if (city.improvements.get(i)) {
+                    Util.incrementVectorElement(result, i);
+                }
+            }
+        }
+        return result;
+    }
+
     protected int countLuxuries(WorldMap map, City city, ClaimReferee referee) {
         int money = countMoney(map, city, referee);
         int result = 2 * city.numEntertainers;
@@ -1036,6 +1057,17 @@ public class Civilization {
         return result;
     }
 
+    protected int countTradeRoutes() {
+        int result = 0;
+        if (cities == null) {
+            return result;
+        }
+        for (City city : cities) {
+            result = result + city.countTradeRoutes();
+        }
+        return result;
+    }
+
     protected int countTroops() {
         return countTerrestrialUnits() - countSettlers() - countCaravans();
     }
@@ -1148,7 +1180,11 @@ public class Civilization {
         unitSummary = accumulateSummary(unitSummary, countAerialUnits(), " plane", " planes");
         unitSummary = accumulateSummary(unitSummary, countCaravans(), " caravan", " caravans");
         if (countCities() > 0) {
-            result.add(name + " is " + formatGovernment() + " with " + formatPopulation() + " in " + countCities() + " cities, with");
+            if (countCities() == 1) {
+                result.add(name + " is " + formatGovernment() + " with " + formatPopulation() + " in " + countCities() + " city, with");
+            } else {
+                result.add(name + " is " + formatGovernment() + " with " + formatPopulation() + " in " + countCities() + " cities, with");
+            }
             result.add(  countHappyCitizens(map, referee) + " happy, "
                     + countContentCitizens(map, referee) + " content, and "
                     + countUnhappyCitizens(map, referee) + " unhappy citizens;");
@@ -1173,7 +1209,9 @@ public class Civilization {
         result.add("knows " + countTechs() + " technologies, including " + maxTechName+ ";");
         Vector<String> improvementSummary = summarizeImprovements();
         result.addAll(improvementSummary);
-        result.add("has " + storedMoney + " gold; and scores " + getScore(map, referee) + ".");
+        result.add("has " + storedMoney + " gold; " +
+                   "has " + countTradeRoutes() + " trade routes; " +
+                   "and scores " + getScore(map, referee) + ".");
         return result;
     }
 
@@ -1820,7 +1858,10 @@ public class Civilization {
         }
         statSheet.recordPercentages(getLuxuryPercentage(), sciencePercentage, taxPercentage);
         statSheet.recordTechs(countTechs(), getIdOfHighestDiscoveredTech());
+        statSheet.recordGovernmentType(governmentTypeId);
         statSheet.recordCities(countCities(), countCitizens(), countMyriads());
+        statSheet.recordImprovements(countImprovements(), improvements);
+        statSheet.recordTradeRoutes(countTradeRoutes());
         statSheet.recordUnits(countCaravans(), countAerialUnits(), countNavalUnits(), countTroops(), countSettlers());
         statSheet.recordWip(storedMoney, countStoredProduction(), storedScience);
         statSheet.recordCells(countSeenCells());

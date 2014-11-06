@@ -86,4 +86,36 @@ public class GraphPanel extends JXMultiSplitPane {
         return result;
     }
 
+    protected int coordinateMaxRanges(StatColumn a, StatColumn b, StatColumn c,
+                                      StatColumn d, StatColumn e, StatColumn f) {
+        int maxA = a.getMaxRange();
+        int maxB = b.getMaxRange();
+        int maxC = c.getMaxRange();
+        int maxD = d.getMaxRange();
+        int maxE = e.getMaxRange();
+        int maxF = f.getMaxRange();
+        int result = Math.max(maxA, maxB);
+        result = Math.max(result, Math.max(maxC, maxD));
+        result = Math.max(result, Math.max(maxE, maxF));
+        if (maxA != result) {
+            a.setMaxRange(result);
+        }
+        if (maxB != result) {
+            b.setMaxRange(result);
+        }
+        if (maxC != result) {
+            c.setMaxRange(result);
+        }
+        if (maxD != result) {
+            d.setMaxRange(result);
+        }
+        if (maxE != result) {
+            e.setMaxRange(result);
+        }
+        if (maxF != result) {
+            f.setMaxRange(result);
+        }
+        return result;
+    }
+
 }

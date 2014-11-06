@@ -150,4 +150,19 @@ public class Util {
         }
         return result;
     }
+
+    static void incrementVectorElement(Vector<Integer> vector, int i) {
+        if (vector == null) {
+            return;
+        }
+        if (i < 0) {
+            return;
+        }
+        if (i >= vector.size()) {
+            return;
+        }
+        int oldValue = vector.get(i);
+        int newValue = oldValue + 1;
+        vector.set(i, newValue);
+    }
 }

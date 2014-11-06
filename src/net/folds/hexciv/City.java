@@ -90,6 +90,14 @@ public class City {
         return result;
     }
 
+    protected int countImprovements() {
+        int result = 0;
+        if (improvements == null) {
+            return result;
+        }
+        return improvements.count();
+    }
+
     protected int countNavalUnits() {
         int result = 0;
         if (units == null) {
@@ -110,6 +118,19 @@ public class City {
         }
         for (Unit unit : units) {
             if (unit.unitType.isSettler) {
+                result = result + 1;
+            }
+        }
+        return result;
+    }
+
+    protected int countTradeRoutes() {
+        int result = 0;
+        if (tradePartnerLocations == null) {
+            return result;
+        }
+        for (int tradePartnerLocation : tradePartnerLocations) {
+            if ((tradePartnerLocation >= 0) && (tradePartnerLocation != location)) {
                 result = result + 1;
             }
         }

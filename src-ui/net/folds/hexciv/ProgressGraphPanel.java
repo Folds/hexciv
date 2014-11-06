@@ -93,8 +93,8 @@ public class ProgressGraphPanel extends GraphPanel {
         lblWip.setVerticalAlignment(SwingConstants.BOTTOM);
         legendPane.add(lblWip,        "wip");
         legendPane.add(lblScienceWip, "sciwip");
-        legendPane.add(lblCashWip,    "cash");
-        legendPane.add(lblProdWip,    "prod");
+        legendPane.add(lblCashWip, "cash");
+        legendPane.add(lblProdWip, "prod");
 
         lblNumTechs.setForeground(blue);
         lblMaxTech.setForeground(turquoise);
@@ -109,9 +109,9 @@ public class ProgressGraphPanel extends GraphPanel {
         plotPane.addToBackground(statSheet.taxPercentage,     lightGreen);
         plotPane.addToBackground(statSheet.luxuryPercentage,  pink);
 
-        plotPane.addToForeground(statSheet.storedScience, darkBlue);
-        plotPane.addToForeground(statSheet.storedMoney, darkGreen);
-        plotPane.addToForeground(statSheet.storedProduction, darkRed);
+        plotPane.addToForeground(statSheet.storedScience,     darkBlue);
+        plotPane.addToForeground(statSheet.storedMoney,       darkGreen);
+        plotPane.addToForeground(statSheet.storedProduction,  darkRed);
 
         plotPane.addToForeground(statSheet.maxTechId,         turquoise);
         plotPane.addToForeground(statSheet.numTechs,          blue);

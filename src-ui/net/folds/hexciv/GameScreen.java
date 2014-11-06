@@ -38,6 +38,7 @@ public class GameScreen extends JFrame
     Timer timer;
     ProgressGraphPanel progressPane;
     PeopleGraphPanel peoplePane;
+    AssetGraphPanel assetPane;
     PerformanceGraphPanel performancePane;
     MapPanel miniMapPane;
 
@@ -71,6 +72,9 @@ public class GameScreen extends JFrame
 
         progressPane = new ProgressGraphPanel(gameState.civs.get(0).statSheet);
         tabPane.addTab("Progress", progressPane, "Graph of cash, production, and tech progress", KeyEvent.VK_R);
+
+        assetPane = new AssetGraphPanel(gameState.civs.get(0).statSheet);
+        tabPane.addTab("Assets", assetPane, "Graph of improvements and trade routes", KeyEvent.VK_A);
 
         logPane        = new LogPanel();
         tabPane.addTab("Log", logPane, "Log", KeyEvent.VK_L);
@@ -295,6 +299,7 @@ public class GameScreen extends JFrame
             gameState.clearStatSheets();
             progressPane.updateStats();
             peoplePane.updateStats();
+            assetPane.updateStats();
             peoplePane.statSheet.numSeenCells.setMaxRange(getMap().countCells());
             mapPane.setMap(editorState.map);
             miniMapPane.setMap(editorState.map);
@@ -434,5 +439,6 @@ public class GameScreen extends JFrame
     public void updateStats() {
         peoplePane.updateStats();
         progressPane.updateStats();
+        assetPane.updateStats();
     }
 }

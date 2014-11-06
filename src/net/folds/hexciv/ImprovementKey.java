@@ -20,6 +20,10 @@ public class ImprovementKey {
         }
     }
 
+    protected int count() {
+        return key.cardinality();
+    }
+
     protected int countWonders() {
         int result = 0;
         int id = -1;
