@@ -75,6 +75,15 @@ public class GovernmentType {
         return result;
     }
 
+    protected static Vector<String> getNames() {
+        int numChoices = getMaxId() + 1;
+        Vector<String> result = new Vector<>(numChoices);
+        for (int i = 0; i < numChoices; i++) {
+            result.add(GovernmentType.proposeName(i));
+        }
+        return result;
+    }
+
     protected int bonus() {
         if (name.equalsIgnoreCase("Anarchy"))   { return -1; }
         if (name.equalsIgnoreCase("Despotism")) { return -1; }

@@ -109,6 +109,15 @@ public class TechTree {
         return getFutureTech(id - numNamedTechs + 1);
     }
 
+    protected Vector<String> getNames() {
+        int numTechs = techs.size();
+        Vector<String> result = new Vector<>(numTechs);
+        for (int i = 0; i < numTechs; i++) {
+            result.add(i, techs.get(i).name);
+        }
+        return result;
+    }
+
     protected void initialize() {
         add(-1, -1, "Hoot");           //  0
         add(-1,  0, "Clap");

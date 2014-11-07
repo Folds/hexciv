@@ -13,8 +13,10 @@ public class StatColumn {
     int cachedPos;
     int minRange;
     int maxRange;
+    String name;
+    Vector<String> valueNames;
 
-    public StatColumn(int startTurn) {
+    public StatColumn(int startTurn, String name) {
         this.startTurn = startTurn;
         currentTurn = startTurn - 1;
         data = new Vector<StatDatum>();
@@ -22,6 +24,17 @@ public class StatColumn {
         cachedPos = -1;
         minRange =   0;
         maxRange = 100;
+        this.name = name;
+    }
+
+    public void setValueNames(Vector<String> valueNames) {
+        if ((this.valueNames != null) && (this.valueNames != valueNames)) {
+            this.valueNames.clear();
+            this.valueNames.addAll(valueNames);
+        } else if ((valueNames != null) && (!valueNames.isEmpty())) {
+            this.valueNames = new Vector<String>(valueNames.size());
+            this.valueNames.addAll(valueNames);
+        }
     }
 
     public void clear() {

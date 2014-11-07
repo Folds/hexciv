@@ -49,23 +49,24 @@ public class StatSheet {
         this.maxPossibleTurn = maxPossibleTurn;
 
         // percentages (0 - 100)
-        luxuryPercentage  = new StatColumn(startTurn);
-        taxPercentage     = new StatColumn(startTurn);
-        sciencePercentage = new StatColumn(startTurn);
+        luxuryPercentage  = new StatColumn(startTurn, "% Luxury");
+        taxPercentage     = new StatColumn(startTurn, "% Tax");
+        sciencePercentage = new StatColumn(startTurn, "% Science");
 
         // cities
-        numCities   = new StatColumn(startTurn);  //  (0 - ~    200)
-        numCitizens = new StatColumn(startTurn);  //  (0 - ~  4,000)
-        numMyriads  = new StatColumn(startTurn);  //  (0 - ~ 40,000)
-        governmentTypeId = new StatColumn(startTurn); // 0 ~     10)
+        numCities   = new StatColumn(startTurn, "Cities");  //  (0 - ~    200)
+        numCitizens = new StatColumn(startTurn, "Citizens");  //  (0 - ~  4,000)
+        numMyriads  = new StatColumn(startTurn, "0,000 People");  //  (0 - ~ 40,000)
+        governmentTypeId = new StatColumn(startTurn, "Govt Type"); // 0 ~     10)
+        governmentTypeId.setValueNames(GovernmentType.getNames());
 
-        numTradeRoutes = new StatColumn(startTurn); //(0 - ~    600)
-        numWonders   = new StatColumn(startTurn); //  (0 - ~     22)
-        numSciImps   = new StatColumn(startTurn); //  (0 - ~    400)
-        numHappyImps = new StatColumn(startTurn); //  (0 - ~  1,400)
-        numFoodImps  = new StatColumn(startTurn); //  (0 - ~    800)
-        numProdImps  = new StatColumn(startTurn); //  (0 - ~  1,000)
-        numMilImps   = new StatColumn(startTurn); //  (0 - ~    600)
+        numTradeRoutes = new StatColumn(startTurn, "Trade Routes"); //(0 - ~    600)
+        numWonders   = new StatColumn(startTurn, "Wonders"); //  (0 - ~     22)
+        numSciImps   = new StatColumn(startTurn, "Science Labs"); //  (0 - ~    400)
+        numHappyImps = new StatColumn(startTurn, "Happy Bldgs"); //  (0 - ~  1,400)
+        numFoodImps  = new StatColumn(startTurn, "Food Bldgs"); //  (0 - ~    800)
+        numProdImps  = new StatColumn(startTurn, "Prod Bldgs"); //  (0 - ~  1,000)
+        numMilImps   = new StatColumn(startTurn, "Military Bldgs"); //  (0 - ~    600)
 
         numCities.setMaxRange(10);
         numCitizens.setMaxRange(10);
@@ -81,11 +82,11 @@ public class StatSheet {
         numMilImps.setMaxRange(10);
 
         // units
-        numCaravans = new StatColumn(startTurn);  //  (0 - ~    200)
-        numPlanes   = new StatColumn(startTurn);  //  (0 - ~    100)
-        numShips    = new StatColumn(startTurn);  //  (0 - ~    100)
-        numTroops   = new StatColumn(startTurn);  //  (0 - ~  4,000)
-        numSettlers = new StatColumn(startTurn);  //  (0 - ~    500)
+        numCaravans = new StatColumn(startTurn, "Caravans");  //  (0 - ~    200)
+        numPlanes   = new StatColumn(startTurn, "Planes");  //  (0 - ~    100)
+        numShips    = new StatColumn(startTurn, "Ships");  //  (0 - ~    100)
+        numTroops   = new StatColumn(startTurn, "Troops");  //  (0 - ~  4,000)
+        numSettlers = new StatColumn(startTurn, "Settlers");  //  (0 - ~    500)
 
         numCaravans.setMaxRange(10);
         numPlanes.setMaxRange(10);
@@ -94,17 +95,17 @@ public class StatSheet {
         numSettlers.setMaxRange(10);
 
         // techs
-        numTechs  = new StatColumn(startTurn);    //  (0 - ~    300)
-        maxTechId = new StatColumn(startTurn);    //  (0 - ~    300)
+        numTechs  = new StatColumn(startTurn, "Techs");    //  (0 - ~    300)
+        maxTechId = new StatColumn(startTurn, "Max Tech=");    //  (0 - ~    300)
 
         // work in process (wip)
-        storedMoney = new StatColumn(startTurn);  //  (0 - ~100,000)
-        storedProduction = new StatColumn(startTurn);//(0- ~ 40,000)
-        storedScience = new StatColumn(startTurn); // (0 - ~ 15,000)
+        storedMoney = new StatColumn(startTurn, "Money=");  //  (0 - ~100,000)
+        storedProduction = new StatColumn(startTurn, "Production in Process=");//(0- ~ 40,000)
+        storedScience = new StatColumn(startTurn, "Science="); // (0 - ~ 15,000)
 
-        numSeenCells = new StatColumn(startTurn);  // (0 -    4,332)
+        numSeenCells = new StatColumn(startTurn, "Seen Cells");  // (0 -    4,332)
 
-        thinkingTimeInMilliseconds = new StatColumn(startTurn);
+        thinkingTimeInMilliseconds = new StatColumn(startTurn, "ms/turn Think time");
     }
 
     protected void clear() {

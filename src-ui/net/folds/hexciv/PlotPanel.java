@@ -2,6 +2,9 @@ package net.folds.hexciv;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
 import java.util.Vector;
 
 /**
@@ -23,6 +26,9 @@ public class PlotPanel extends JPanel {
 
     public PlotPanel() {
         super();
+        PlotMouseListener m = new PlotMouseListener();
+        addMouseListener(m);
+        addMouseMotionListener(m);
     }
 
     protected void addToBackground(StatColumn column, Color color) {
@@ -196,5 +202,121 @@ public class PlotPanel extends JPanel {
         int screenY = getHeight() - 1 - (int)(getHeight() * relativeY);
         return screenY;
     }
+
+    private int getBackgroundColumnId(int screenX, int screenY) {
+        int numColumns = backgroundColumns.size();
+        int functionX = toFunctionX(screenX);
+        for (int i = 0; i < numColumns; i++) {
+            int functionY = stackBackgrounds(i, functionX);
+            int minFunctionY = backgroundColumns.get(i).getMinRange();
+            int maxFunctionY = backgroundColumns.get(i).getMaxRange();
+            int potentialScreenY = toScreenY(functionY, minFunctionY, maxFunctionY);
+            if (potentialScreenY <= screenY) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private class PlotMouseListener implements MouseListener, MouseMotionListener {
+        public void mouseEntered(MouseEvent e)  {updateToolTip(e);}
+        public void mouseMoved(MouseEvent e)    {updateToolTip(e);}
+        public void mouseDragged(MouseEvent e)  {updateToolTip(e);}
+        public void mousePressed(MouseEvent e)  {updateToolTip(e);}
+        public void mouseReleased(MouseEvent e) {updateToolTip(e);}
+
+        // useless, because it only occurs if no motion during click.
+        public void mouseClicked(MouseEvent e)  {updateToolTip(e);}
+        public void mouseExited(MouseEvent e)   {updateToolTip(e);}
+
+        private void updateToolTip(MouseEvent e) {
+            int turn = getFunctionX(e);
+            int backgroundColumnId = getBackgroundColumnId(e.getX(), e.getY());
+            String strBackground = "";
+            if (backgroundColumnId >= 0) {
+                int columnFunctionY = backgroundColumns.get(backgroundColumnId).lookUp(turn);
+                String bgColumnName = backgroundColumns.get(backgroundColumnId).name;
+                strBackground = "";
+                if (   (columnFunctionY < 0)
+                    || (backgroundColumns.get(backgroundColumnId).valueNames == null)
+                    || (columnFunctionY >= backgroundColumns.get(backgroundColumnId).valueNames.size())
+                    || (backgroundColumns.get(backgroundColumnId).valueNames.get(columnFunctionY) == null)
+                    || (backgroundColumns.get(backgroundColumnId).valueNames.get(columnFunctionY).equals(""))
+                   ) {
+                    if (isPrefix(bgColumnName)) {
+                        strBackground = bgColumnName + columnFunctionY;
+                    } else {
+                        if (needsSpace(bgColumnName)) {
+                            strBackground = columnFunctionY + " " + bgColumnName;
+                        } else {
+                            strBackground = columnFunctionY + bgColumnName;
+                        }
+                    }
+                } else {
+                    strBackground = bgColumnName + "=" + backgroundColumns.get(backgroundColumnId).valueNames.get(columnFunctionY);
+                }
+            }
+            int year = getYear(turn);
+            String strYear = formatYear(year);
+            String str = strYear + " (turn " + turn + "/" + maxX + ")";
+            if (!(strBackground.equals(""))) {
+                str = str + "; " + strBackground;
+            }
+            setToolTipText(str);
+        }
+
+        private boolean isPrefix(String arg) {
+            if (arg == null) {
+                return false;
+            }
+            if (arg.length() < 1) {
+                return false;
+            }
+            if (arg.endsWith("=")) {
+                return true;
+            }
+            return false;
+        }
+
+        private boolean needsSpace(String suffix) {
+            if (suffix == null) {
+                return false;
+            }
+            if (suffix.length() < 1) {
+                return false;
+            }
+            if (suffix.startsWith("%")) {
+                return false;
+            }
+            return true;
+        }
+
+        private int getFunctionX(MouseEvent e) {
+            int x = e.getX();
+            return toFunctionX(x);
+            // int y = e.getY();
+        }
+
+        // To-do:  recombine with GameState.getYear(int turn)
+        protected int getYear(int turn) {
+            if (turn <= 0)   { return -4004; }
+            if (turn == 200) { return 1; }
+            if (turn <= 250) { return 20 * turn - 4000; }
+            if (turn <= 300) { return 10 * turn - 1500; }
+            if (turn <= 350) { return  5 * turn; }
+            if (turn <= 400) { return  2 * turn + 1050; }
+            return turn + 1450;
+        }
+
+        // To-do:  recombine with GameScreen.formatYear(int year)
+        protected String formatYear(int year) {
+            if (year == 0) { return "1 A.D."; }
+            if (year > 0)  { return year + " A.D."; }
+            return -year + " B.C.";
+        }
+
+
+    }
+
 
 }

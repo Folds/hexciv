@@ -350,6 +350,10 @@ public class GameState implements ClaimReferee {
     }
 
     protected int getYear() {
+        return getYear(turn);
+    }
+
+    protected int getYear(int turn) {
         if (turn <= 0)   { return -4004; }
         if (turn == 200) { return 1; }
         if (turn <= 250) { return 20 * turn - 4000; }
