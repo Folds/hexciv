@@ -108,6 +108,15 @@ public class AssetGraphPanel extends GraphPanel {
 
         populateBlanks();
 
+        lblWonders.setToolTipText("Wonders");
+        lblScience.setToolTipText("Science:  Libraries, Universities");
+        lblHappiness.setToolTipText("Happiness:  Markets, Banks, Temples");
+        lblFood.setToolTipText("Food:  Granaries, Aqueducts");
+        lblProduction.setToolTipText("Production:  Factories, Manufactories, Power Plants, Hydro Plants, Nuclear Plants");
+        lblMilitary.setToolTipText("Military:  Barracks, City Walls");
+
+        lblGovernment.setToolTipText("Government:  " + GovernmentType.listNames());
+
         plotPane.addToBackground(statSheet.numWonders,   lblWonders.getBackground());
         plotPane.addToBackground(statSheet.numSciImps,   lblScience.getBackground());
         plotPane.addToBackground(statSheet.numHappyImps, lblHappiness.getBackground());

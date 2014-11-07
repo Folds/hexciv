@@ -86,9 +86,17 @@ public class ProgressGraphPanel extends GraphPanel {
         legendPane.add(lblTaxPercentage,     "taxes");
         legendPane.add(lblLuxuryPercentage,  "luxuries");
 
+        lblSciencePercentage.setToolTipText("Percentage of trade allocated to science");
+        lblTaxPercentage.setToolTipText("Percentage of trade collected as taxes");
+        lblLuxuryPercentage.setToolTipText("Percentage of trade allocated to luxuries");
+
         lblScienceWip.setForeground(darkBlue);
         lblCashWip.setForeground(darkGreen);
         lblProdWip.setForeground(darkRed);
+
+        lblScienceWip.setToolTipText("Science in progress -- amound of work done towards next discovery");
+        lblCashWip.setToolTipText("Amount of gold in treasury");
+        lblProdWip.setToolTipText("Production in progress -- total of all cities' inventories");
 
         lblWip.setVerticalAlignment(SwingConstants.BOTTOM);
         legendPane.add(lblWip,        "wip");
@@ -104,6 +112,9 @@ public class ProgressGraphPanel extends GraphPanel {
         legendPane.add(lblNumTechs,   "numtechs");
         legendPane.add(lblMaxTech,    "maxtech");
         populateBlanks();
+
+        lblNumTechs.setToolTipText("Number of known technologies");
+        lblMaxTech.setToolTipText("ID of most advanced (known) technology");
 
         plotPane.addToBackground(statSheet.sciencePercentage, lightBlue);
         plotPane.addToBackground(statSheet.taxPercentage,     lightGreen);

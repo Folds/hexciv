@@ -39,6 +39,18 @@ public class GovernmentType {
         return "ADsMCRDm";
     }
 
+    protected static String listNames() {
+        String result = "";
+        int numChoices = getMaxId() + 1;
+        for (int i = 0; i < numChoices; i++) {
+            if (i > 0) {
+                result = result + ", ";
+            }
+            result = result + GovernmentType.proposeName(i);
+        }
+        return result;
+    }
+
     protected static int proposeTech(int id) {
         switch(id) {
             case 0: return  0; // Hooting -> Anarchy
