@@ -58,6 +58,7 @@ public class Civilization {
         int maxPossibleTurn = 550;
         statSheet = new StatSheet(startTurn, maxPossibleTurn);
         color = Color.WHITE;
+        statSheet.maxTechId.setValueNames(techKey.allNames());
     }
 
     protected void initialize(WorldMap map, Vector<Integer> foreignLocations, GameListener listener, ClaimReferee referee) {

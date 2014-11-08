@@ -31,6 +31,10 @@ public class TechKey {
         return result;
     }
 
+    protected Vector<String> allNames() {
+        return techs.getNames();
+    }
+
     protected void claimTech(int techId) {
         if (techId >= 0) {
             key.set(techId);

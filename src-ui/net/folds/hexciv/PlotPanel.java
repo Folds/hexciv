@@ -218,6 +218,25 @@ public class PlotPanel extends JPanel {
         return -1;
     }
 
+    private int getForegroundColumnId(int screenX, int screenY) {
+        int numColumns = foregroundColumns.size();
+        int functionX = toFunctionX(screenX);
+        int result = -1;
+        int leastDifference = 2 * this.getHeight();
+        for (int i = 0; i < numColumns; i++) {
+            int functionY = foregroundColumns.get(i).lookUp(functionX);
+            int minFunctionY = foregroundColumns.get(i).getMinRange();
+            int maxFunctionY = foregroundColumns.get(i).getMaxRange();
+            int potentialScreenY = toScreenY(functionY, minFunctionY, maxFunctionY);
+            int difference = Math.abs(potentialScreenY - screenY);
+            if (difference <= leastDifference) {
+                result = i;
+                leastDifference = difference;
+            }
+        }
+        return result;
+    }
+
     private class PlotMouseListener implements MouseListener, MouseMotionListener {
         public void mouseEntered(MouseEvent e)  {updateToolTip(e);}
         public void mouseMoved(MouseEvent e)    {updateToolTip(e);}
@@ -230,93 +249,130 @@ public class PlotPanel extends JPanel {
         public void mouseExited(MouseEvent e)   {updateToolTip(e);}
 
         private void updateToolTip(MouseEvent e) {
-            int turn = getFunctionX(e);
-            int backgroundColumnId = getBackgroundColumnId(e.getX(), e.getY());
-            String strBackground = "";
-            if (backgroundColumnId >= 0) {
-                int columnFunctionY = backgroundColumns.get(backgroundColumnId).lookUp(turn);
-                String bgColumnName = backgroundColumns.get(backgroundColumnId).name;
-                strBackground = "";
-                if (   (columnFunctionY < 0)
-                    || (backgroundColumns.get(backgroundColumnId).valueNames == null)
-                    || (columnFunctionY >= backgroundColumns.get(backgroundColumnId).valueNames.size())
-                    || (backgroundColumns.get(backgroundColumnId).valueNames.get(columnFunctionY) == null)
-                    || (backgroundColumns.get(backgroundColumnId).valueNames.get(columnFunctionY).equals(""))
-                   ) {
-                    if (isPrefix(bgColumnName)) {
-                        strBackground = bgColumnName + columnFunctionY;
-                    } else {
-                        if (needsSpace(bgColumnName)) {
-                            strBackground = columnFunctionY + " " + bgColumnName;
-                        } else {
-                            strBackground = columnFunctionY + bgColumnName;
-                        }
-                    }
-                } else {
-                    strBackground = bgColumnName + "=" + backgroundColumns.get(backgroundColumnId).valueNames.get(columnFunctionY);
-                }
-            }
-            int year = getYear(turn);
-            String strYear = formatYear(year);
-            String str = strYear + " (turn " + turn + "/" + maxX + ")";
-            if (!(strBackground.equals(""))) {
-                str = str + "; " + strBackground;
-            }
+            String str = describe(e.getX(), e.getY());
             setToolTipText(str);
         }
+    }
 
-        private boolean isPrefix(String arg) {
-            if (arg == null) {
-                return false;
-            }
-            if (arg.length() < 1) {
-                return false;
-            }
-            if (arg.endsWith("=")) {
-                return true;
-            }
-            return false;
+    private String combineTips(String a, String b, String c) {
+        if ((a == null) || (a.equals(""))) {
+            return combineTips(b, c);
         }
-
-        private boolean needsSpace(String suffix) {
-            if (suffix == null) {
-                return false;
-            }
-            if (suffix.length() < 1) {
-                return false;
-            }
-            if (suffix.startsWith("%")) {
-                return false;
-            }
-            return true;
+        if ((b == null) || (b.equals(""))) {
+            return combineTips(a, c);
         }
-
-        private int getFunctionX(MouseEvent e) {
-            int x = e.getX();
-            return toFunctionX(x);
-            // int y = e.getY();
+        if ((c == null) || (c.equals(""))) {
+            return combineTips(a, b);
         }
+        return "<HTML>" + a + "<BR>" + b + "<BR>" + c + "</HTML>";
+    }
 
-        // To-do:  recombine with GameState.getYear(int turn)
-        protected int getYear(int turn) {
-            if (turn <= 0)   { return -4004; }
-            if (turn == 200) { return 1; }
-            if (turn <= 250) { return 20 * turn - 4000; }
-            if (turn <= 300) { return 10 * turn - 1500; }
-            if (turn <= 350) { return  5 * turn; }
-            if (turn <= 400) { return  2 * turn + 1050; }
-            return turn + 1450;
+    private String combineTips(String a, String b) {
+        if ((a == null) || (a.equals(""))) {
+            return b;
         }
-
-        // To-do:  recombine with GameScreen.formatYear(int year)
-        protected String formatYear(int year) {
-            if (year == 0) { return "1 A.D."; }
-            if (year > 0)  { return year + " A.D."; }
-            return -year + " B.C.";
+        if ((b == null) || (b.equals(""))) {
+            return a;
         }
+        return "<HTML>" + a + "<BR>" + b + "</HTML>";
+    }
 
+    private String describe(int screenX, int screenY) {
+        int turn = toFunctionX(screenX);
+        int backgroundColumnId = getBackgroundColumnId(screenX, screenY);
+        String strBackground = describeBackground(backgroundColumnId, turn);
+        int foregroundColumnId = getForegroundColumnId(screenX, screenY);
+        String strForeground = describeForeground(foregroundColumnId, turn);
+        String strTurn = describeFunctionX(turn);
+        return combineTips(strTurn, strBackground, strForeground);
+    }
+
+    private String describe(Vector<StatColumn> columns, int columnId, int functionX) {
+        if ((columns == null) || (columnId < 0)) {
+            return "";
+        }
+        StatColumn column = columns.get(columnId);
+        if ((column.name == null) || (column.name.equals(""))) {
+            return "";
+        }
+        int columnFunctionY = column.lookUp(functionX);
+        if (   (columnFunctionY >= 0)
+            && (column.valueNames != null)
+            && (columnFunctionY < column.valueNames.size())
+            && (column.valueNames.get(columnFunctionY) != null)
+            && (!(column.valueNames.get(columnFunctionY).equals("")))
+           ) {
+            return column.name + "=" + column.valueNames.get(columnFunctionY);
+        }
+        if (isPrefix(column.name)) {
+            return column.name + columnFunctionY;
+        }
+        if (needsSpace(column.name)) {
+            return columnFunctionY + " " + column.name;
+        }
+        return columnFunctionY + column.name;
 
     }
 
+    private String describeBackground(int columnId, int functionX) {
+        return describe(backgroundColumns, columnId, functionX);
+    }
+
+    private String describeForeground(int columnId, int functionX) {
+        return describe(foregroundColumns, columnId, functionX);
+    }
+
+    private String describeFunctionX(int functionX) {
+        int year = getYear(functionX);
+        String strYear = formatYear(year);
+        return strYear + " (turn " + functionX + "/" + maxX + ")";
+    }
+
+    // To-do:  recombine with GameScreen.formatYear(int year)
+    protected String formatYear(int year) {
+        if (year == 0) { return "1 A.D."; }
+        if (year > 0)  { return year + " A.D."; }
+        return -year + " B.C.";
+    }
+
+    // To-do:  recombine with GameState.getYear(int turn)
+    protected int getYear(int turn) {
+        if (turn <= 0)   { return -4004; }
+        if (turn == 200) { return 1; }
+        if (turn <= 250) { return 20 * turn - 4000; }
+        if (turn <= 300) { return 10 * turn - 1500; }
+        if (turn <= 350) { return  5 * turn; }
+        if (turn <= 400) { return  2 * turn + 1050; }
+        return turn + 1450;
+    }
+
+    private boolean isPrefix(String arg) {
+        if (arg == null) {
+            return false;
+        }
+        if (arg.length() < 1) {
+            return false;
+        }
+        if (arg.endsWith("=")) {
+            return true;
+        }
+        return false;
+    }
+
+    private boolean needsSpace(String suffix) {
+        if (suffix == null) {
+            return false;
+        }
+        if (suffix.length() < 1) {
+            return false;
+        }
+        if (suffix.startsWith("%")) {
+            return false;
+        }
+        if (suffix.startsWith("0")) {
+            return false;
+        }
+        return true;
+    }
 
 }
