@@ -302,7 +302,11 @@ public class PlotPanel extends JPanel {
             && (column.valueNames.get(columnFunctionY) != null)
             && (!(column.valueNames.get(columnFunctionY).equals("")))
            ) {
-            return column.name + "=" + column.valueNames.get(columnFunctionY);
+            if (column.name.endsWith("=")) {
+                return column.name + column.valueNames.get(columnFunctionY);
+            } else {
+                return column.name + "=" + column.valueNames.get(columnFunctionY);
+            }
         }
         if (isPrefix(column.name)) {
             return column.name + columnFunctionY;
