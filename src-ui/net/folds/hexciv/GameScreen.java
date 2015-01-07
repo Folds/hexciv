@@ -18,7 +18,7 @@ import java.util.Vector;
  * Created by jasper on Apr 18, 2014.
  */
 public class GameScreen extends JFrame
-        implements PaintableScreen, MovableMap, CellDescriber, Playable, GameListener, ActionListener {
+        implements PaintableScreen, MovableMap, CellDescriber, CityDescriber, Playable, GameListener, ActionListener {
     EditorState editorState;
     JXMultiSplitPane multiSplitPane;
     JXMultiSplitPane wherePane;
@@ -41,9 +41,15 @@ public class GameScreen extends JFrame
     AssetGraphPanel assetPane;
     PerformanceGraphPanel performancePane;
     MapPanel miniMapPane;
+    CityPanel cityPane;
+    boolean isInteractive;
+    boolean isPaused;
 
     public GameScreen() {
         super("HexCiv");
+        isInteractive = true;
+        isPaused = false;
+        //masterPane.resync();
         WorldMap map =  WorldMap.getEarthMap();
         editorState = EditorState.get(map);
         listener = new RepaintRequester(this);
@@ -87,6 +93,9 @@ public class GameScreen extends JFrame
         // http://stackoverflow.com/questions/8660687/how-to-use-multisplitlayout-in-swingx?rq=1
         initializeWherePane();
         tabPane.addTab("Cell info", wherePane, "Info about cell mouse is hovering over", KeyEvent.VK_C);
+
+        cityPane       = new CityPanel(this);
+//        tabPane.addTab("City", cityPane, "Info about recently viewed city", KeyEvent.VK_T);
 
         performancePane = new PerformanceGraphPanel(gameState.civs.get(0).statSheet);
         tabPane.addTab("Performance", performancePane, "Graph of AI thinking time", KeyEvent.VK_F);
@@ -171,11 +180,15 @@ public class GameScreen extends JFrame
     public void actionPerformed(ActionEvent event) {
         if (gameState.isGameOver()) {
             timer.stop();
+            unPause();
             celebrateEnd();
             return;
         }
-        if (!gameState.isTurnInProgress) {
+        if (!gameState.isTurnInProgress && !isPaused) {
             gameState.playTurn();
+        }
+        if (isPaused) {
+            masterPane.resync();
         }
     }
 
@@ -229,6 +242,9 @@ public class GameScreen extends JFrame
             Vector<String> summary = civ.getBrag(map, referee);
             logPane.log(summary);
         }
+        if (isInteractive) {
+            pause();
+        }
     }
 
     public void bemoanDisorder(City city) {
@@ -277,6 +293,10 @@ public class GameScreen extends JFrame
         return editorState.getCellSnapshot(cellId);
     }
 
+    public CitySnapshot getCitySnapshot(int cellId) {
+        return editorState.getCitySnapshot(cellId);
+    }
+
     public BitSet getDesiredFeatures() {
         return editorState.getFeatures();
     }
@@ -287,6 +307,10 @@ public class GameScreen extends JFrame
 
     public WorldMap getMap() {
         return editorState.map;
+    }
+
+    public boolean isPaused() {
+        return isPaused;
     }
 
     public void open() {
@@ -300,12 +324,23 @@ public class GameScreen extends JFrame
             progressPane.updateStats();
             peoplePane.updateStats();
             assetPane.updateStats();
+            performancePane.updateStats();
             peoplePane.statSheet.numSeenCells.setMaxRange(getMap().countCells());
             mapPane.setMap(editorState.map);
             miniMapPane.setMap(editorState.map);
             repaintMaps();
             logPane.log("Opened '" + editorState.file.getName() + "'");
         }
+    }
+
+    public void pause() {
+        isPaused = true;
+        masterPane.resync();
+    }
+
+    public void unPause() {
+        isPaused = false;
+        masterPane.resync();
     }
 
     public void recenterCanvas(int cellId) {
@@ -440,5 +475,6 @@ public class GameScreen extends JFrame
         peoplePane.updateStats();
         progressPane.updateStats();
         assetPane.updateStats();
+        performancePane.updateStats();
     }
 }

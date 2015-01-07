@@ -121,6 +121,10 @@ public class EditorState {
         return map.getCellSnapshot(cellId);
     }
 
+    protected CitySnapshot getCitySnapshot(int cellId) {
+        return map.getCitySnapshot(cellId);
+    }
+
     protected BitSet getFeatures() {
         BitSet result = new BitSet(8);
         result.set(0, bonus);

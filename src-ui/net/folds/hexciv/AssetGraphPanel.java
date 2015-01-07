@@ -26,7 +26,8 @@ public class AssetGraphPanel extends GraphPanel {
     JLabel lblProduction = new JLabel("Prod", SwingConstants.CENTER);
     JLabel lblMilitary   = new JLabel("Mil",  SwingConstants.CENTER);
 
-    JLabel lblGovernment = new JLabel("Govt Type (" + GovernmentType.listAbbreviations() + ")", SwingConstants.LEFT);
+    // JLabel lblGovernment = new JLabel("Govt Type (" + GovernmentType.listAbbreviations() + ")", SwingConstants.LEFT);
+    JLabel lblGovernment = new JLabel("Govt Type", SwingConstants.LEFT);
     JLabel lblTradeRoutes = new JLabel("Trade Routes", SwingConstants.LEFT);
 
     Vector<JLabel> lblBlanks = new Vector<JLabel>(2);

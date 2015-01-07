@@ -15,7 +15,7 @@ import org.jdesktop.swingx.MultiSplitLayout;
 /**
  * Created by Jasper on Sep 18, 2011
  */
-public class EditScreen extends JFrame implements PaintableScreen, MovableMap, CellDescriber, Revertible {
+public class EditScreen extends JFrame implements PaintableScreen, MovableMap, CellDescriber, CityDescriber, Revertible {
     EditorState editorState;
 
     JXMultiSplitPane multiSplitPane;
@@ -102,6 +102,10 @@ public class EditScreen extends JFrame implements PaintableScreen, MovableMap, C
 
     public CellSnapshot getCellSnapshot(int cellId) {
         return editorState.getCellSnapshot(cellId);
+    }
+
+    public CitySnapshot getCitySnapshot(int cellId) {
+        return editorState.getCitySnapshot(cellId);
     }
 
     public BitSet getDesiredFeatures() {

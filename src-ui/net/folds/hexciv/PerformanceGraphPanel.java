@@ -46,10 +46,10 @@ public class PerformanceGraphPanel extends GraphPanel {
         String strMaxRange = maxRange + " ms";
         if (maxRange > 1000000) {
             strMaxRange = (maxRange / 1000000) + " ks";
-        } else if (maxRange > 1000) {
+        } else if (maxRange >= 1000) {
             strMaxRange = (maxRange /    1000) + " s";
         }
-        return summary + " (" + minRange + " - " + maxRange + "):";
+        return summary + " (" + minRange + " - " + strMaxRange + ")";
     }
 
 }

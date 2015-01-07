@@ -250,6 +250,28 @@ public class WorldMap {
                                 noFeatures(), description, color);
     }
 
+    protected CitySnapshot getCitySnapshot(int cellId) {
+        int row = getRow(cellId);
+        int positionInRow = mesh.getPositionInRow(cellId);
+        double area = getAreaInSquareKilometers(cellId);
+        double diameter = getMeanDiameterInKilometers(cellId);
+        double longitude = mesh.getLongitudeInDegrees(cellId);
+        double latitude = mesh.getLatitudeInDegrees(cellId);
+        if ((cellId >= 0) && (cellId <= countCells() - 1)) {
+            BitSet hasFeatures = getFeatures(cellId);
+            String description = terrain[cellId].getDescription(Features.bonus.isChosen(hasFeatures));
+            Color color = terrain[cellId].getColor();
+
+            return new CitySnapshot(cellId, row, positionInRow, area, diameter, longitude, latitude,
+                    hasFeatures, description, color);
+        }
+        String description = "Void";
+        Color color = new Color(0, 0, 0);
+
+        return new CitySnapshot(cellId, row, positionInRow, area, diameter, longitude, latitude,
+                noFeatures(), description, color);
+    }
+
     BitSet noFeatures() {
         return new BitSet(Features.count());
     }

@@ -292,7 +292,7 @@ public class PlotPanel extends JPanel {
             return "";
         }
         StatColumn column = columns.get(columnId);
-        if ((column.name == null) || (column.name.equals(""))) {
+        if ((column.name == null) || (column.name.equals("")) || (column.getCurrentTurn() < functionX)) {
             return "";
         }
         int columnFunctionY = column.lookUp(functionX);

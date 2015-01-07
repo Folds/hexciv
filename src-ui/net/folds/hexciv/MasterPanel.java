@@ -14,6 +14,12 @@ public class MasterPanel extends JPanel {
     JButton cmdOpen = new JButton("Open");
     JButton cmdSave = new JButton("Save");
     JButton cmdStart = new JButton("Start");
+    JLabel  lblYear = new JLabel();
+    String strContinue;
+    JButton cmdContinue = new JButton();
+    int counter;
+    int maxCount;
+    int divisor;
 
     public MasterPanel(Playable parent) {
         this.parent = parent;
@@ -22,10 +28,53 @@ public class MasterPanel extends JPanel {
         this.add(lblFile);
         this.add(cmdOpen);
         this.add(cmdSave);
+        this.add(lblYear);
         this.add(cmdStart);
+        strContinue = "Go on…";
+        cmdContinue.setText(strContinue);
+        counter = -1;
+        divisor = 20; // 1000 milliseconds / 50 milliseconds per timer activation
+        // int countdownFrom = 30;
+        int countdownFrom = 5;
+        maxCount = countdownFrom * divisor;
+        this.add(cmdContinue);
         cmdOpen.addMouseListener(new OpenButtonListener());
         cmdSave.addMouseListener(new SaveButtonListener());
         cmdStart.addMouseListener(new StartButtonListener());
+        cmdContinue.addMouseListener(new ContinueButtonListener());
+        cmdContinue.setVisible(false);
+    }
+
+    public void resync() {
+        boolean isPaused = parent.isPaused();
+        if (isPaused) {
+            if (counter < 0) {
+                counter = maxCount;
+            } else {
+                counter = counter - 1;
+            }
+            if (counter == 0) {
+                if (maxCount == 0) {
+                    // prevent infinite loops
+                    maxCount = 2;
+                }
+                parent.unPause();
+                return;
+            }
+        } else {
+            counter = -1;
+        }
+        if (counter > 0) {
+            cmdContinue.setText((1 + (counter - 1)/divisor) + "…");
+        } else {
+            cmdContinue.setText("Go on…");
+        }
+        cmdContinue.setVisible(isPaused);
+        if (cmdStart.isVisible()) {
+            if (isPaused) {
+                cmdStart.setVisible(false);
+            }
+        }
     }
 
     public void paintComponent(Graphics comp) {
@@ -52,6 +101,13 @@ public class MasterPanel extends JPanel {
     private class StartButtonListener extends MouseAdapter {
         public void mouseReleased(MouseEvent e) {
             parent.startGame();
+            cmdOpen.setVisible(false);
+        }
+    }
+
+    private class ContinueButtonListener extends MouseAdapter {
+        public void mouseReleased(MouseEvent e) {
+            parent.unPause();
         }
     }
 }

@@ -342,11 +342,14 @@ public class GameState implements ClaimReferee {
     }
 
     protected int getTechPriceFactor() {
+        return 10;
+/*
         if (turn <= 175) { return 10; }
         if (turn <= 225) { return 10 + 10 * (turn - 175) / 50; }
         if (turn <= 325) { return 20; }
         if (turn <= 375) { return 20 + 20 * (turn - 325) / 50; }
         return 40;
+*/
     }
 
     protected int getYear() {

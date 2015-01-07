@@ -7,4 +7,6 @@ public interface Playable {
     void open();
     void save();
     void startGame();
+    void unPause();
+    boolean isPaused();
 }
